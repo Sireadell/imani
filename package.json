@@ -14,6 +14,7 @@
   "scripts": {
     "test": "tsx --test test/*.test.ts",
     "test:login": "tsx --test test/login/*.test.ts",
+    "test:fetch": "tsx --test test/fetch/*.test.ts",
     "typecheck": "tsc --noEmit",
     "demo": "node --disable-warning=ExperimentalWarning tools/demo.ts",
     "examples": "node --disable-warning=ExperimentalWarning tools/make-examples.ts"
