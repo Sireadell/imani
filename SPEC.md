@@ -123,7 +123,7 @@ The slow part is the download. The fetch helper opens a new connection for every
 
 ## Privacy rules in the checker
 
-The checker accepts only `uview1` or `uviewtest1` keys and refuses seed phrases, spending keys, incoming-only keys and keys for the wrong network. It never prints the key and never writes it to a file; reports show a 12-character fingerprint instead. By default it is offline: it reads only the files given and contacts no server, and says so. Only `--scan --fetch` goes online; it asks light servers for blocks by height, never sends a key, and prints every server contacted. `--discreet` hides amounts and memos everywhere. `report.html` contains no scripts and loads nothing.
+The checker accepts only `uview1` or `uviewtest1` keys and refuses seed phrases, spending keys, incoming-only keys and keys for the wrong network. It never prints the key and never writes it to a file; reports show a 12-character fingerprint instead. By default it is offline: it reads only the files given and contacts no server, and says so. Only `--scan --fetch` goes online; it asks light servers for blocks by height, never sends a key, and prints every server contacted. `--discreet` hides amounts, memos and addresses everywhere. Before anything is printed or written, the text is checked and blocked if it holds something shaped like a viewing key, spending key or seed phrase. `--offline` refuses `--fetch`. `report.html` contains no scripts and loads nothing.
 
 ## Known limits (this version)
 

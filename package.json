@@ -19,6 +19,7 @@
     "test:scan": "tsx --test test/scan/*.test.ts",
     "demo:app": "tsx demo/server.ts",
     "typecheck": "tsc --noEmit",
+    "leak-scan": "node --disable-warning=ExperimentalWarning tools/leak-scan.ts",
     "demo": "node --disable-warning=ExperimentalWarning tools/demo.ts",
     "examples": "node --disable-warning=ExperimentalWarning tools/make-examples.ts",
     "test:site": "tsx --test test/site/*.test.ts",
