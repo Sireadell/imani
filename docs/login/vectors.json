@@ -1,0 +1,279 @@
+{
+  "format": "imani-login:1",
+  "about": "Conformance vectors for imani login memos (LOGIN_SPEC.md). Throwaway seeds only. memoCheck cases use context siteId=shop.example, network=test, now=1790000000 (seconds). Reasons are checked in this order: memo_too_long, not_a_login_memo, memo_malformed, wrong_site, wrong_network, code_expired, bad_signature.",
+  "context": {
+    "siteId": "shop.example",
+    "network": "test",
+    "now": 1790000000
+  },
+  "derive": [
+    {
+      "accountSeedHex": "6315d1658068e7206e11fa2bac2fc42d3c3d077e1e6ab1f940c57581c3d2a050",
+      "siteId": "shop.example",
+      "accountId": "_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I"
+    },
+    {
+      "accountSeedHex": "6315d1658068e7206e11fa2bac2fc42d3c3d077e1e6ab1f940c57581c3d2a050",
+      "siteId": "forum.example",
+      "accountId": "q2bbVL35elvLCFoLoAMH0OeuaYQTB-AZ7zmieoWkxXg"
+    },
+    {
+      "accountSeedHex": "fb9e90e67fc103580ef627fb8753557adacbead7414c67639ab77a0b95902481",
+      "siteId": "shop.example",
+      "accountId": "TiG1tBkdiLF39cPA77L6XCd-1cIX3eUMhasEvQJWAl4"
+    },
+    {
+      "accountSeedHex": "fb9e90e67fc103580ef627fb8753557adacbead7414c67639ab77a0b95902481",
+      "siteId": "localhost:3000",
+      "accountId": "2h-3h08-Q7eXRFBXAf9ORrQUpbIi8koemH72MJyyoZ0"
+    }
+  ],
+  "build": [
+    {
+      "accountSeedHex": "6315d1658068e7206e11fa2bac2fc42d3c3d077e1e6ab1f940c57581c3d2a050",
+      "challenge": {
+        "siteId": "shop.example",
+        "network": "test",
+        "nonce": "8BX6-JZB6-V2D7-9G4N-44KJ",
+        "expiresAt": 1790000600,
+        "siteAddress": "utest1tjdul4tkqcq73y9rswhestu750ssp7qsw4g5ak3xrm9nvu5gdtng46xqaq3cucxrs58y69wf2rgg0x4tlunja5mxkmm9caqgh5vudxju",
+        "minZat": 10000
+      },
+      "signedText": "imani-login:1\nsite:shop.example\nnet:test\ncode:8BX6-JZB6-V2D7-9G4N-44KJ\nexp:1790000600\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I",
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:8BX6-JZB6-V2D7-9G4N-44KJ\nexp:1790000600\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:NdxuA7bjHXzGob9jA-HT9hlrgwTVOEh8x7HUJqfRWobp7iRC-6Q6ijIdj2d4ZgFeBUaap3BqYEq15NQxdrrJAA",
+      "memoBytes": 224,
+      "paymentUri": "zcash:utest1tjdul4tkqcq73y9rswhestu750ssp7qsw4g5ak3xrm9nvu5gdtng46xqaq3cucxrs58y69wf2rgg0x4tlunja5mxkmm9caqgh5vudxju?amount=0.0001&memo=aW1hbmktbG9naW46MQpzaXRlOnNob3AuZXhhbXBsZQpuZXQ6dGVzdApjb2RlOjhCWDYtSlpCNi1WMkQ3LTlHNE4tNDRLSgpleHA6MTc5MDAwMDYwMAprZXk6X09VcjRuaWdfYV8zXzFzUzMzLVBiMHo5cmhDOVZRa1hFR0tsaS1vcWM4SQpzaWc6TmR4dUE3YmpIWHpHb2I5akEtSFQ5aGxyZ3dUVk9FaDh4N0hVSnFmUldvYnA3aVJDLTZRNmlqSWRqMmQ0WmdGZUJVYWFwM0JxWUVxMTVOUXhkcnJKQUE"
+    },
+    {
+      "accountSeedHex": "fb9e90e67fc103580ef627fb8753557adacbead7414c67639ab77a0b95902481",
+      "challenge": {
+        "siteId": "localhost:3000",
+        "network": "main",
+        "nonce": "F5R6-AA7K-KGDC-8NA2-S6GG",
+        "expiresAt": 1790000600,
+        "siteAddress": "u1tjdul4tkqcq73y9rswhestu750ssp7qsw4g5ak3xrm9nvu5gdtng46xqaq3cucxrs58y69wf2rgg0x4tlunja5mxkmm9caqgh5vudxju",
+        "minZat": 123456789
+      },
+      "signedText": "imani-login:1\nsite:localhost:3000\nnet:main\ncode:F5R6-AA7K-KGDC-8NA2-S6GG\nexp:1790000600\nkey:2h-3h08-Q7eXRFBXAf9ORrQUpbIi8koemH72MJyyoZ0",
+      "memo": "imani-login:1\nsite:localhost:3000\nnet:main\ncode:F5R6-AA7K-KGDC-8NA2-S6GG\nexp:1790000600\nkey:2h-3h08-Q7eXRFBXAf9ORrQUpbIi8koemH72MJyyoZ0\nsig:Q3Fkwrt9-WFdYLcXq79myKEzcG-4mxOn1GmNWsRRBmH5lDA0qeJwly_-QtMv_AquYBddFKauge5_UQ_AV2mxCA",
+      "memoBytes": 226,
+      "paymentUri": "zcash:u1tjdul4tkqcq73y9rswhestu750ssp7qsw4g5ak3xrm9nvu5gdtng46xqaq3cucxrs58y69wf2rgg0x4tlunja5mxkmm9caqgh5vudxju?amount=1.23456789&memo=aW1hbmktbG9naW46MQpzaXRlOmxvY2FsaG9zdDozMDAwCm5ldDptYWluCmNvZGU6RjVSNi1BQTdLLUtHREMtOE5BMi1TNkdHCmV4cDoxNzkwMDAwNjAwCmtleToyaC0zaDA4LVE3ZVhSRkJYQWY5T1JyUVVwYklpOGtvZW1INzJNSnl5b1owCnNpZzpRM0Zrd3J0OS1XRmRZTGNYcTc5bXlLRXpjRy00bXhPbjFHbU5Xc1JSQm1INWxEQTBxZUp3bHlfLVF0TXZfQXF1WUJkZEZLYXVnZTVfVVFfQVYybXhDQQ"
+    }
+  ],
+  "memoCheck": [
+    {
+      "name": "valid",
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:HSFE-KASE-9PZB-5TG8-TN6Y\nexp:1790000600\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OCA",
+      "expect": {
+        "ok": true,
+        "accountId": "_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I"
+      }
+    },
+    {
+      "name": "valid_with_trailing_zero_bytes",
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:HSFE-KASE-9PZB-5TG8-TN6Y\nexp:1790000600\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OCA\u0000\u0000\u0000",
+      "expect": {
+        "ok": true,
+        "accountId": "_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I"
+      }
+    },
+    {
+      "name": "valid_expires_exactly_now",
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:TVPJ-3KK7-KWDZ-PA73-2QFF\nexp:1790000000\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:vI6av0-io93f7xlP7BE9cmrvIyZPHlAHsuS_8Vz7K7zW-DIETa1wDc0Fj5bIuYxIu1n0-oLAMuP9TJNdQi3WDQ",
+      "expect": {
+        "ok": true,
+        "accountId": "_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I"
+      }
+    },
+    {
+      "name": "wrong_site",
+      "memo": "imani-login:1\nsite:other.example\nnet:test\ncode:3T7W-BMVW-SYKB-FTQQ-CH3B\nexp:1790000600\nkey:SWDixfUAx-yBsgoq0DII2VudInimzwfrH9IBjt2ypZE\nsig:G3TwmkVzgbLiQ1S0nwg8rXuAKMb4y2O_PNAyPMhl1DKKnybeleggAsQIhioiQ1Y5RcEDDJZCdRaZ06P2pGiGBw",
+      "expect": {
+        "ok": false,
+        "reason": "wrong_site"
+      }
+    },
+    {
+      "name": "wrong_network",
+      "memo": "imani-login:1\nsite:shop.example\nnet:main\ncode:W78J-EFUQ-C672-H895-2F2W\nexp:1790000600\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:Be3yUg0drS66h3IWpPELKxKPvhCvMSV6HdyhaAT4o1eFa8xtiOlsk6vUArtfIlC2OjMvxGq6GuZ8pzyES3qJCQ",
+      "expect": {
+        "ok": false,
+        "reason": "wrong_network"
+      }
+    },
+    {
+      "name": "expired",
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:DB5T-RG5B-8V5N-P29S-GJKU\nexp:1789999999\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:14422lELSifg4GyCrZSROf4XQoAEXpVDNOj-h_Pw-ZW01GHcZ6FvsjQdTLbILgvfsqK162aBlA0NmMJ0ltSUDQ",
+      "expect": {
+        "ok": false,
+        "reason": "code_expired"
+      }
+    },
+    {
+      "name": "signature_flipped",
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:HSFE-KASE-9PZB-5TG8-TN6Y\nexp:1790000600\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OAA",
+      "expect": {
+        "ok": false,
+        "reason": "bad_signature"
+      }
+    },
+    {
+      "name": "key_swapped",
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:HSFE-KASE-9PZB-5TG8-TN6Y\nexp:1790000600\nkey:TiG1tBkdiLF39cPA77L6XCd-1cIX3eUMhasEvQJWAl4\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OCA",
+      "expect": {
+        "ok": false,
+        "reason": "bad_signature"
+      }
+    },
+    {
+      "name": "nonce_changed_after_signing",
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:2222-KASE-9PZB-5TG8-TN6Y\nexp:1790000600\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OCA",
+      "expect": {
+        "ok": false,
+        "reason": "bad_signature"
+      }
+    },
+    {
+      "name": "expiry_changed_after_signing",
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:HSFE-KASE-9PZB-5TG8-TN6Y\nexp:1790999999\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OCA",
+      "expect": {
+        "ok": false,
+        "reason": "bad_signature"
+      }
+    },
+    {
+      "name": "signature_from_other_site_key",
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:HSFE-KASE-9PZB-5TG8-TN6Y\nexp:1790000600\nkey:SWDixfUAx-yBsgoq0DII2VudInimzwfrH9IBjt2ypZE\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OCA",
+      "expect": {
+        "ok": false,
+        "reason": "bad_signature"
+      }
+    },
+    {
+      "name": "unknown_version",
+      "memo": "imani-login:2\nsite:shop.example\nnet:test\ncode:HSFE-KASE-9PZB-5TG8-TN6Y\nexp:1790000600\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OCA",
+      "expect": {
+        "ok": false,
+        "reason": "not_a_login_memo"
+      }
+    },
+    {
+      "name": "missing_line",
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:HSFE-KASE-9PZB-5TG8-TN6Y\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OCA",
+      "expect": {
+        "ok": false,
+        "reason": "memo_malformed"
+      }
+    },
+    {
+      "name": "extra_line",
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:HSFE-KASE-9PZB-5TG8-TN6Y\nexp:1790000600\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OCA\nnote:hi",
+      "expect": {
+        "ok": false,
+        "reason": "memo_malformed"
+      }
+    },
+    {
+      "name": "space_after_colon",
+      "memo": "imani-login:1\nsite: shop.example\nnet:test\ncode:HSFE-KASE-9PZB-5TG8-TN6Y\nexp:1790000600\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OCA",
+      "expect": {
+        "ok": false,
+        "reason": "memo_malformed"
+      }
+    },
+    {
+      "name": "windows_line_endings",
+      "memo": "imani-login:1\r\nsite:shop.example\r\nnet:test\r\ncode:HSFE-KASE-9PZB-5TG8-TN6Y\r\nexp:1790000600\r\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\r\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OCA",
+      "expect": {
+        "ok": false,
+        "reason": "not_a_login_memo"
+      }
+    },
+    {
+      "name": "lower_case_code",
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:hsfe-kase-9pzb-5tg8-tn6y\nexp:1790000600\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OCA",
+      "expect": {
+        "ok": false,
+        "reason": "memo_malformed"
+      }
+    },
+    {
+      "name": "code_with_ambiguous_letter",
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:OSFE-KASE-9PZB-5TG8-TN6Y\nexp:1790000600\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OCA",
+      "expect": {
+        "ok": false,
+        "reason": "memo_malformed"
+      }
+    },
+    {
+      "name": "expiry_leading_zero",
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:HSFE-KASE-9PZB-5TG8-TN6Y\nexp:01790000600\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OCA",
+      "expect": {
+        "ok": false,
+        "reason": "memo_malformed"
+      }
+    },
+    {
+      "name": "base64_padding_in_key",
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:HSFE-KASE-9PZB-5TG8-TN6Y\nexp:1790000600\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I=\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OCA",
+      "expect": {
+        "ok": false,
+        "reason": "memo_malformed"
+      }
+    },
+    {
+      "name": "upper_case_site",
+      "memo": "imani-login:1\nsite:SHOP.example\nnet:test\ncode:HSFE-KASE-9PZB-5TG8-TN6Y\nexp:1790000600\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OCA",
+      "expect": {
+        "ok": false,
+        "reason": "memo_malformed"
+      }
+    },
+    {
+      "name": "too_long",
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:HSFE-KASE-9PZB-5TG8-TN6Y\nexp:1790000600\nkey:_OUr4nig_a_3_1sS33-Pb0z9rhC9VQkXEGKli-oqc8I\nsig:Eatw1P3WYGiQ_7pM0StSgdmDL9NimHnzJMXxf08V5jZhti8fXQmNzy8sC-PcKIjxbbDrTglWmpNfjZkkd02OCAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "expect": {
+        "ok": false,
+        "reason": "memo_too_long"
+      }
+    },
+    {
+      "name": "empty",
+      "memo": "",
+      "expect": {
+        "ok": false,
+        "reason": "not_a_login_memo"
+      }
+    },
+    {
+      "name": "plain_text_memo",
+      "memo": "thanks for the coffee",
+      "expect": {
+        "ok": false,
+        "reason": "not_a_login_memo"
+      }
+    }
+  ],
+  "singlePayee": [
+    {
+      "uri": "zcash:utest1tjdul4tkqcq73y9rswhestu750ssp7qsw4g5ak3xrm9nvu5gdtng46xqaq3cucxrs58y69wf2rgg0x4tlunja5mxkmm9caqgh5vudxju?amount=0.0001&memo=aW1hbmktbG9naW46MQpzaXRlOnNob3AuZXhhbXBsZQpuZXQ6dGVzdApjb2RlOjhCWDYtSlpCNi1WMkQ3LTlHNE4tNDRLSgpleHA6MTc5MDAwMDYwMAprZXk6X09VcjRuaWdfYV8zXzFzUzMzLVBiMHo5cmhDOVZRa1hFR0tsaS1vcWM4SQpzaWc6TmR4dUE3YmpIWHpHb2I5akEtSFQ5aGxyZ3dUVk9FaDh4N0hVSnFmUldvYnA3aVJDLTZRNmlqSWRqMmQ0WmdGZUJVYWFwM0JxWUVxMTVOUXhkcnJKQUE",
+      "singlePayee": true
+    },
+    {
+      "uri": "zcash:utest1tjdul4tkqcq73y9rswhestu750ssp7qsw4g5ak3xrm9nvu5gdtng46xqaq3cucxrs58y69wf2rgg0x4tlunja5mxkmm9caqgh5vudxju?amount=0.0001&address.1=utest1other&amount.1=1",
+      "singlePayee": false
+    },
+    {
+      "uri": "zcash:utest1tjdul4tkqcq73y9rswhestu750ssp7qsw4g5ak3xrm9nvu5gdtng46xqaq3cucxrs58y69wf2rgg0x4tlunja5mxkmm9caqgh5vudxju?amount=0.0001&amount=0.0002",
+      "singlePayee": false
+    },
+    {
+      "uri": "zcash:utest1tjdul4tkqcq73y9rswhestu750ssp7qsw4g5ak3xrm9nvu5gdtng46xqaq3cucxrs58y69wf2rgg0x4tlunja5mxkmm9caqgh5vudxju?amount=0.0001&req-pay-later=1",
+      "singlePayee": false
+    },
+    {
+      "uri": "zcash:?address=utest1tjdul4tkqcq73y9rswhestu750ssp7qsw4g5ak3xrm9nvu5gdtng46xqaq3cucxrs58y69wf2rgg0x4tlunja5mxkmm9caqgh5vudxju&amount=0.0001",
+      "singlePayee": false
+    }
+  ]
+}

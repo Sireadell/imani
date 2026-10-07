@@ -1,0 +1,85 @@
+{
+  "payments": [
+    {
+      "label": "login_wallet_a",
+      "to": "site shop.example",
+      "wallet": "user wallet A",
+      "pool": "ironwood",
+      "height": 4200010,
+      "amountZat": 10000,
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:GCVP-V58F-TH9H-6KJ5-AZA3\nexp:1790000600\nkey:aIGtI3fQ0xGekuk0IxIGQLnjpbc6GZISP_c0bgQ2jMA\nsig:D2ffcs8FNcqGBwuBLuDUC_rlLih0yu-2vGm4piFL1Ub7VuScmx3fArbAARwy7VX34kbDWP2C1AaOBSFTIymMBg"
+    },
+    {
+      "label": "login_wallet_b",
+      "to": "site shop.example",
+      "wallet": "user wallet B",
+      "pool": "ironwood",
+      "height": 4200011,
+      "amountZat": 10000,
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:8UFB-2JWY-ZD3B-PXP3-NW2H\nexp:1790000600\nkey:aIGtI3fQ0xGekuk0IxIGQLnjpbc6GZISP_c0bgQ2jMA\nsig:k0CvsEnBE2NQquesfv9wJPSQ_Ax0H7s3wutRwnLqc4qHu1-3VeO2vkDbnWHOrhi2wYVSU3peu52GJF_0poe1Cw"
+    },
+    {
+      "label": "login_orchard_wallet_a",
+      "to": "site shop.example",
+      "wallet": "user wallet A",
+      "pool": "orchard",
+      "height": 3600012,
+      "amountZat": 25000,
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:QBG2-HGCP-Z65B-54QF-XQ5B\nexp:1790000600\nkey:aIGtI3fQ0xGekuk0IxIGQLnjpbc6GZISP_c0bgQ2jMA\nsig:sMg4RrNfxG7gDp-__JeqNqro2bpd64hSCgxC_wrwDMIA7vp47TGNi3qQQUR6lI8x9R3LZwTNY0dXAX6YEUITCg"
+    },
+    {
+      "label": "copied_memo_other_wallet",
+      "to": "site shop.example",
+      "wallet": "someone else",
+      "pool": "ironwood",
+      "height": 4200013,
+      "amountZat": 10000,
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:GCVP-V58F-TH9H-6KJ5-AZA3\nexp:1790000600\nkey:aIGtI3fQ0xGekuk0IxIGQLnjpbc6GZISP_c0bgQ2jMA\nsig:D2ffcs8FNcqGBwuBLuDUC_rlLih0yu-2vGm4piFL1Ub7VuScmx3fArbAARwy7VX34kbDWP2C1AaOBSFTIymMBg"
+    },
+    {
+      "label": "memo_for_other_site",
+      "to": "site shop.example",
+      "wallet": "user wallet A",
+      "pool": "ironwood",
+      "height": 4200014,
+      "amountZat": 10000,
+      "memo": "imani-login:1\nsite:other.example\nnet:test\ncode:8UTP-BPKJ-SZXD-MG2P-AJUM\nexp:1790000600\nkey:9Gh3-NgbpLm23QAVM6Rg8JjdtUnjH-LNpG1hpvY1be8\nsig:SJ_2XWIGz3_H15zE_5UPUPHk735Y9vGDzs6t46nP1waJWjB6Wx3Bwn3N8dQ4QO5stx-LzkWlwDjvuQX9NjLdAw"
+    },
+    {
+      "label": "paid_to_other_site",
+      "to": "site other.example",
+      "wallet": "user wallet A",
+      "pool": "ironwood",
+      "height": 4200015,
+      "amountZat": 10000,
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:M2PS-XW8D-NY4B-VPZH-DJHH\nexp:1790000600\nkey:aIGtI3fQ0xGekuk0IxIGQLnjpbc6GZISP_c0bgQ2jMA\nsig:sbW5B6rDsD-PNb4GMkCnmMSSPu2XPkSBsIKMqZJ9M7OE5xXgARDeuru1569eACcneZtLojqXh7a1JwrPjpvCCQ"
+    },
+    {
+      "label": "below_minimum",
+      "to": "site shop.example",
+      "wallet": "user wallet A",
+      "pool": "ironwood",
+      "height": 4200016,
+      "amountZat": 5000,
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:4X2N-SG36-HKWU-K3FY-BCSA\nexp:1790000600\nkey:aIGtI3fQ0xGekuk0IxIGQLnjpbc6GZISP_c0bgQ2jMA\nsig:TnHgen53J3zrGfqgbAdM2xACY9ivjV4lUwYXNWZRdf7fhBbkYr1EMI7k8MqOWDnY8QCcbf9l7vMzQhuhbB4VBQ"
+    },
+    {
+      "label": "late_payment",
+      "to": "site shop.example",
+      "wallet": "user wallet B",
+      "pool": "ironwood",
+      "height": 4200017,
+      "amountZat": 10000,
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:RAWE-SW24-R8QU-898B-RSW7\nexp:1790000600\nkey:aIGtI3fQ0xGekuk0IxIGQLnjpbc6GZISP_c0bgQ2jMA\nsig:cNSZK9mGBR1tyw8VflNv40nPeft9wUl8q1swjIaJZLd2_vpYh_gwm5FOm5eTrHsZkn_H5Vp-uqRtwM6MgtEHDg"
+    },
+    {
+      "label": "second_account_same_wallet",
+      "to": "site shop.example",
+      "wallet": "user wallet A",
+      "pool": "ironwood",
+      "height": 4200018,
+      "amountZat": 10000,
+      "memo": "imani-login:1\nsite:shop.example\nnet:test\ncode:B5W4-WPDU-UKYF-Z3G5-GEA6\nexp:1790000600\nkey:kztZKJ1pbRqrkWWlDvWVxSp2ZJ3Ci1ngASkLv9DT8F0\nsig:yPPV4ZfMnDO7ppU8nfz9HRjkEgTi5FRSRdLiWkSh3qCv_Z4_MiKY7_nYaxXgROB_Yjlttb0Raxu9sNVGWu47BA"
+    }
+  ]
+}
