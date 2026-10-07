@@ -19,7 +19,7 @@ Scan level (reads every block from the lot's open height to its refund deadline)
   --grace <blocks>       read at least this many blocks past the close (default ${DEFAULT_GRACE_BLOCKS})
   --bidder-keys <file>   bidders' own viewing keys, to prove their refunds reached them
   --proxy <url>          with --fetch: SOCKS5 proxy, for example socks5h://127.0.0.1:9050 (Tor)
-  --concurrency <n>      with --fetch: block groups downloaded at the same time (default 6)
+  --concurrency <n>      with --fetch: blocks downloaded at the same time (default 12)
 
 Exit code: 0 PASS, 1 FAIL, 2 refused or bad input.`;
 

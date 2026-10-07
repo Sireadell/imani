@@ -1,7 +1,7 @@
 // Measures the full-range scan on real mainnet blocks: how long the download takes, how many
 // bytes come in, and how long reading every transaction with a viewing key takes.
 // Online, so it only runs with LIVE=1:
-//   LIVE=1 node --disable-warning=ExperimentalWarning tools/measure-scan.ts [from] [count] [concurrency]
+//   LIVE=1 node --disable-warning=ExperimentalWarning tools/measure-scan.ts [from] [count] [concurrency] [blocks per group]
 // No key is ever sent: blocks are asked for by height. The key used for reading is a public
 // test key from the Zcash unified address test vectors (ZIP 316, zcash-test-vectors,
 // unified_full_viewing_keys.json, entry 9). Its seed is public, so it owns nothing and
@@ -18,7 +18,7 @@ if (process.env.LIVE !== "1") {
 }
 const from = Number(process.argv[2] ?? 3_509_000);
 const count = Number(process.argv[3] ?? 500);
-const concurrency = Number(process.argv[4] ?? 24);
+const concurrency = Number(process.argv[4] ?? 12);
 const groupSize = Number(process.argv[5] ?? 1);
 
 const t0 = Date.now();

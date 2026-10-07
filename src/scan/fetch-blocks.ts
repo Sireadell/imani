@@ -19,9 +19,9 @@ export interface FetchBlocksOptions {
   servers?: string[];
   /** SOCKS5 proxy, for example "socks5h://127.0.0.1:9050" for a local Tor. */
   proxy?: string;
-  /** How many groups of blocks are downloaded at the same time. Default 6. */
+  /** How many groups of blocks are downloaded at the same time. Default 12 (measured on mainnet, see SPEC.md). */
   concurrency?: number;
-  /** Blocks per request group. Default 4. */
+  /** Blocks per request group. Default 1. */
   groupSize?: number;
   timeoutMs?: number;
   /** Extra attempts for a group of blocks after a busy or dropped server. Default 3. */
@@ -47,7 +47,7 @@ export async function fetchBlocks(opts: FetchBlocksOptions): Promise<{ blocks: C
   }
   const heights: number[] = [];
   for (let h = from; h <= to; h++) heights.push(h);
-  const groupSize = Math.max(1, opts.groupSize ?? 4);
+  const groupSize = Math.max(1, opts.groupSize ?? 1);
   const groups: number[][] = [];
   for (let i = 0; i < heights.length; i += groupSize) groups.push(heights.slice(i, i + groupSize));
 
@@ -109,7 +109,7 @@ export async function fetchBlocks(opts: FetchBlocksOptions): Promise<{ blocks: C
       }
     }
   }
-  const n = Math.max(1, Math.min(opts.concurrency ?? 6, groups.length));
+  const n = Math.max(1, Math.min(opts.concurrency ?? 12, groups.length));
   await Promise.all(Array.from({ length: n }, worker));
   if (failure) {
     throw new BlockFetchError(`could not download every block from ${from} to ${to}: ${(failure as Error).message}`, contacted);
