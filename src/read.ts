@@ -41,12 +41,17 @@ interface DecodedTx {
  * version and network upgrade come from the transaction bytes, so no block height is needed.
  */
 export function readTransaction(txHex: string, viewingKey: string): ReadOutput[] {
+  return readTransactionWithId(txHex, viewingKey).outputs;
+}
+
+/** Same as readTransaction, plus the transaction id computed from the bytes. */
+export function readTransactionWithId(txHex: string, viewingKey: string): { txid: string; outputs: ReadOutput[] } {
   const result = decoder.decryptTx(txHex, viewingKey);
-  const out: ReadOutput[] = [];
+  const outputs: ReadOutput[] = [];
   for (const pool of ["orchard", "ironwood", "sapling"] as const) {
     for (const o of result[pool]) {
-      out.push({ pool, amountZat: o.amountZat, memo: o.memo, transferType: o.transferType });
+      outputs.push({ pool, amountZat: o.amountZat, memo: o.memo, transferType: o.transferType });
     }
   }
-  return out;
+  return { txid: result.txid, outputs };
 }

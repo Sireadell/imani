@@ -5,9 +5,17 @@
   "type": "module",
   "license": "MIT",
   "private": true,
+  "bin": {
+    "imani": "bin/imani.js"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
   "scripts": {
     "test": "tsx --test test/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "demo": "node --disable-warning=ExperimentalWarning tools/demo.ts",
+    "examples": "node --disable-warning=ExperimentalWarning tools/make-examples.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
