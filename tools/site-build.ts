@@ -67,7 +67,7 @@ export async function initGlue() {
   wasm = r.instance.exports;
   wasm.__wbindgen_start();
 }
-export { decryptTx, decoderInfo };
+export { decryptTx, decoderInfo, parseAddress };
 `;
 }
 
@@ -87,10 +87,10 @@ export function examplesModule(): string {
     return t[0].toUpperCase() + t.slice(1);
   };
   const entries: unknown[] = [];
-  const honest = (id: string, dir: string, title: string, story: string, scan: boolean) =>
+  const honest = (id: string, dir: string, title: string, story: string, scan: boolean, groupName?: "receivers-honest") =>
     entries.push({
       id,
-      group: scan ? "scan-honest" : "honest",
+      group: groupName ?? (scan ? "scan-honest" : "honest"),
       title,
       story,
       expectedFailingCheck: null,
@@ -105,7 +105,7 @@ export function examplesModule(): string {
     "A small test auction: 2 items, reserve 1,000,000 zatoshis, four bids (one arrives after the close). The seller's files are exactly right.",
     false,
   );
-  const group = (base: string, baseDir: string, groupName: "tampered" | "scan-tampered") => {
+  const group = (base: string, baseDir: string, groupName: "tampered" | "scan-tampered" | "receivers-tampered") => {
     const manifest = JSON.parse(readText(p("examples", base, "manifest.json")));
     for (const c of manifest.copies) {
       const dir = join(base, c.name);
@@ -131,6 +131,15 @@ export function examplesModule(): string {
     true,
   );
   group("scan-broken", "scan-01", "scan-tampered");
+  honest(
+    "receivers-01",
+    "receivers-01",
+    "Honest round with refund addresses (receivers 01)",
+    "The same auction, with the address each bid's refund must go to listed in the disclosure. Every refund went where it should.",
+    false,
+    "receivers-honest",
+  );
+  group("receivers-broken", "receivers-01", "receivers-tampered");
   return `export const examples = ${JSON.stringify(entries)};\nexport const blobs = ${JSON.stringify(blobs)};\n`;
 }
 

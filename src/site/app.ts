@@ -221,6 +221,7 @@ async function takeFiles(files: FileList | File[]): Promise<void> {
 async function start(): Promise<void> {
   for (const e of byGroup("tampered")) $("chips-tampered").appendChild(chip(e));
   for (const e of [...byGroup("scan-honest"), ...byGroup("scan-tampered")]) $("chips-scan").appendChild(chip(e));
+  for (const e of [...byGroup("receivers-honest"), ...byGroup("receivers-tampered")]) $("chips-receivers").appendChild(chip(e));
   $("btn-honest").addEventListener("click", () => choose("round-01"));
   $("btn-tamper").addEventListener("click", () => {
     const t = byGroup("tampered");

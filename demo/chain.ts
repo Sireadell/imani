@@ -111,7 +111,7 @@ export class SimChain implements Chain {
         txid,
         outputs: outs
           .filter((o) => o.to === this.#loginAddress)
-          .map((o) => ({ pool: "orchard" as const, amountZat: o.amountZat, memo: o.memo, transferType: "incoming" as const })),
+          .map((o) => ({ pool: "orchard" as const, amountZat: o.amountZat, memo: o.memo, transferType: "incoming" as const, recipientHex: "" })),
       };
     };
   }

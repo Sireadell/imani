@@ -43,8 +43,10 @@ decryptTx(txHex, ufvk);
 // { txid, txVersion, branchId, upgrade: "NU7",
 //   shape: { transparentInputs, transparentOutputs, saplingSpends, saplingOutputs,
 //            orchardActions, ironwoodActions },
-//   orchard:  [{ index, amountZat, memo, memoHex, transferType }],
+//   orchard:  [{ index, amountZat, memo, memoHex, transferType, recipientHex }],
 //   ironwood: [...], sapling: [...] }
+parseAddress(address);
+// { network: "test", orchard: "<43 bytes hex>" | null, sapling: "<43 bytes hex>" | null }
 decoderInfo();
 // { decoder: "0.1.0",
 //   librustzcash: { zcash_client_backend: "0.25.0-pre.1", zcash_primitives: "0.31.0-pre.1", ... },
@@ -55,6 +57,8 @@ decoderInfo();
 `decoderInfo()` reads the crate versions from `Cargo.lock` at build time (see `build.rs`), so
 it always reports what was really compiled in. From TypeScript use `decoderInfo()` in
 `src/read.ts`.
+
+`recipientHex` is the raw address (43 bytes, hex) the output was paid to. For an `outgoing` output, for example a refund the lot sent, the key's outgoing viewing key recovers the receiver; for an `incoming` one it is the key's own address. `parseAddress` splits a unified or Sapling address into the same form, so the two can be compared (Orchard and Ironwood outputs share the `orchard` receiver). Transparent addresses are refused.
 
 `transferType` is `"incoming"`, `"outgoing"` (found with the key's outgoing viewing key,
 for example a refund the seller sent) or `"internal"` (change). `memo` is the text memo
@@ -102,7 +106,7 @@ bash tools/decoder/build.sh
 
 The script installs the `wasm32-unknown-unknown` target and the matching `wasm-bindgen`
 command line tool, runs the native tests (`tests/vectors.rs` against
-`test/vectors/offline-vectors.json`, and `tests/nu7.rs` against `test/vectors/nu7-offline.json`,
+`test/vectors/offline-vectors.json`, `tests/recipient.rs` (the receiver of each refund in `test/vectors/auction-round.json` equals the bidder's address), and `tests/nu7.rs` against `test/vectors/nu7-offline.json`,
 the real NU7 testnet transactions in `test/vectors/nu7-testnet.json` and an invented branch id),
 builds the WebAssembly, writes the JavaScript glue into `vendor/decoder/`, and prints
 `vendor/decoder/SHA256SUMS`.

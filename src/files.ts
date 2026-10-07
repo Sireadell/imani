@@ -23,6 +23,17 @@ export interface Disclosure {
   /** One-time read-only key for this lot (uview1... or uviewtest1...). Optional: without it only the basic level runs. */
   ufvk?: string;
   transactions: DisclosedTx[];
+  /**
+   * Optional. The address each bid's refund must go to, one entry per bid. When present, the
+   * checker requires every refund to arrive at the address listed for its bid.
+   */
+  refundAddresses?: RefundAddress[];
+}
+
+export interface RefundAddress {
+  bidTxid: string;
+  /** Unified (u1... / utest1...) or Sapling address the bidder wants the refund sent to. */
+  address: string;
 }
 
 export interface AuctionRules {

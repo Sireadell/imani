@@ -20,7 +20,9 @@ exports.decoderInfo = decoderInfo;
  * `{ txid, txVersion, branchId, upgrade, shape, orchard: [...], ironwood: [...], sapling: [...] }`.
  * `shape` counts the public parts (transparent inputs and outputs, Sapling spends and
  * outputs, Orchard and Ironwood actions).
- * Each output is `{ index, amountZat, memo, memoHex, transferType }`.
+ * Each output is `{ index, amountZat, memo, memoHex, transferType, recipientHex }`.
+ * `recipientHex` is the 43-byte raw address the note was paid to. For an outgoing output the
+ * key's outgoing viewing key recovers it; for an incoming one it is the key's own address.
  * Throws an Error with a readable message on a bad key or a bad transaction.
  * A transaction from a network upgrade this build does not know throws
  * "unsupported network upgrade 0x...".
@@ -40,6 +42,23 @@ function decryptTx(tx_hex, ufvk) {
     return takeFromExternrefTable0(ret[0]);
 }
 exports.decryptTx = decryptTx;
+
+/**
+ * JavaScript entry point: `parseAddress(address)` returns `{ network, orchard, sapling }`,
+ * where `orchard` (also used for Ironwood) and `sapling` are receiver hex strings or null.
+ * @param {string} addr
+ * @returns {any}
+ */
+function parseAddress(addr) {
+    const ptr0 = passStringToWasm0(addr, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.parseAddress(ptr0, len0);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+exports.parseAddress = parseAddress;
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,

@@ -37,7 +37,7 @@ export function fakeChain() {
   };
   const pay = (memo: string, amountZat = 10_000, transferType: ReadOutput["transferType"] = "incoming"): string => {
     const hex = (++n).toString(16).padStart(8, "0");
-    table.set(hex, [{ pool: "ironwood", amountZat, memo, transferType }]);
+    table.set(hex, [{ pool: "ironwood", amountZat, memo, transferType, recipientHex: "" }]);
     return hex;
   };
   /** The first memo of a fake transaction (what the user's page would pair a proof with). */

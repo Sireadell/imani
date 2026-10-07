@@ -6,6 +6,7 @@ const require = createRequire(import.meta.url);
 const decoder = require("../vendor/decoder/imani_decoder.js") as {
   decryptTx(txHex: string, ufvk: string): DecodedTx;
   decoderInfo(): DecoderInfo;
+  parseAddress(address: string): ParsedAddress;
 };
 
 /** What the bundled decoder can read. */
@@ -29,6 +30,23 @@ export function decoderInfo(): DecoderInfo {
   return decoder.decoderInfo();
 }
 
+/** The shielded receivers inside a payment address, in the form `recipientHex` uses. */
+export interface ParsedAddress {
+  network: "main" | "test";
+  /** Orchard receiver (also the receiver Ironwood outputs use), 43 bytes in hex, or null. */
+  orchard: string | null;
+  /** Sapling receiver, 43 bytes in hex, or null. */
+  sapling: string | null;
+}
+
+/**
+ * Split a unified (u1..., utest1...) or Sapling address into its receivers. Throws an Error
+ * with a readable message for anything else, including transparent addresses.
+ */
+export function parseAddress(address: string): ParsedAddress {
+  return decoder.parseAddress(address);
+}
+
 export type TransferType = "incoming" | "outgoing" | "internal";
 export type Pool = "orchard" | "ironwood" | "sapling";
 
@@ -37,6 +55,11 @@ export interface ReadOutput {
   amountZat: number;
   memo: string;
   transferType: TransferType;
+  /**
+   * Who the output was paid to: the 43-byte raw address in hex. For an outgoing output the lot
+   * key recovers it (this is where a refund went); for an incoming one it is the key's own address.
+   */
+  recipientHex: string;
 }
 
 interface DecodedOutput {
@@ -45,6 +68,7 @@ interface DecodedOutput {
   memo: string;
   memoHex: string;
   transferType: TransferType;
+  recipientHex: string;
 }
 
 interface DecodedTx {
@@ -73,7 +97,7 @@ export function readTransactionWithId(txHex: string, viewingKey: string): { txid
   const outputs: ReadOutput[] = [];
   for (const pool of ["orchard", "ironwood", "sapling"] as const) {
     for (const o of result[pool]) {
-      outputs.push({ pool, amountZat: o.amountZat, memo: o.memo, transferType: o.transferType });
+      outputs.push({ pool, amountZat: o.amountZat, memo: o.memo, transferType: o.transferType, recipientHex: o.recipientHex });
     }
   }
   return { txid: result.txid, outputs };

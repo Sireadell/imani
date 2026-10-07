@@ -32,6 +32,7 @@ Example (round-01): 2 items, reserve 1,000,000. Bids of 3,000,000, 2,000,000 and
 | `rules` | `{ "itemCount": 2, "reserveZat": 1000000 }` |
 | `ufvk` | The lot's read-only viewing key, starting `uview1` (main) or `uviewtest1` (test). Optional: without it only the basic level runs |
 | `transactions` | Every bid and refund transaction of the lot: `{ "txid", "height", "txHex" }` |
+| `refundAddresses` | Optional. The address each bid's refund must go to: `[{ "bidTxid", "address" }]`, one per bid. A unified (`u1...`, `utest1...`) or Sapling address. When present, the key level adds the check `refund-receivers`. Files without it check exactly as before |
 
 ## Result file
 
@@ -50,7 +51,7 @@ Example (round-01): 2 items, reserve 1,000,000. Bids of 3,000,000, 2,000,000 and
 
 Basic level, no key needed: close height valid, disclosed txids unique, result file consistent with itself (counts, winners in the bid list, every listed loser refunded in full, refund memos, rules match), winner count no more than items and bids, clearing price between the reserve and the highest listed bid.
 
-Key level, reads each disclosed transaction with the lot key:
+Key level, reads each disclosed transaction with the lot key (refund addresses, when listed, are compared here too):
 
 | Check id | Passes when |
 |---|---|
@@ -63,6 +64,7 @@ Key level, reads each disclosed transaction with the lot key:
 | `winners-and-price` | Winners and clearing price recomputed from the on-time bids match the seller |
 | `reserve` | Reserve outcome recomputed from the chain matches the seller |
 | `refunds-paid` | Every refund owed (worked out from the chain) was paid in the exact amount, with a memo naming its bid |
+| `refund-receivers` | Only when the disclosure has `refundAddresses`. Every refund payment of the lot went to the address listed for its bid (see "Who received each refund"). Fails when an address is missing for a refunded bid, listed twice, listed for a transaction that is not a bid, not a usable shielded address, for the wrong network, or different from where the refund went |
 | `refund-total` | Refunds the seller lists, plus clearing price times winners, equal the total bid money received. The fee allowance is 0: the seller pays network fees from their own money, never from bidders' money |
 
 Each check owns one kind of fault, so a single tampered fact fails a single check. `refunds-paid` judges what was really paid; `refund-total` judges whether the seller's own books add up.
@@ -95,13 +97,21 @@ When the scan passes, the late/on-time split of the key level no longer rests on
 
 ### Who received each refund: what is and is not proven
 
+For every output it can open, the reader returns the 43-byte raw address the output was paid to (`recipientHex`). For a refund, which the lot sends, the lot key recovers this from the lot's outgoing viewing key. It also splits an address into its receivers (`parseAddress`), so a listed address can be compared with where a refund really went. Ironwood and Orchard outputs share the Orchard receiver of an address. A refund paid into a pool the listed address has no receiver for fails.
+
 | Question | Proven? | How |
 |---|---|---|
 | A refund left the lot, with the right amount and a memo naming the bid | Yes, lot key alone | Key level, `refunds-paid` |
-| The refund went to the bidder who made that bid | Only for bidders who give their own viewing key | `scan-refund-receivers`: the bidder's key must see an incoming payment in the range with memo `refund:<lotId>:<bid txid>` and the same amount the lot sent |
-| The same, for bidders who give no key | No | The lot key can in principle recover the receiver of an outgoing payment, but today's reader does not return it, and a bid memo carries no return address. A seller could pay a refund to their own second wallet with the right memo and this version would not notice |
+| The refund went to the address the disclosure lists for that bid | Yes, when the disclosure has `refundAddresses` | Key level, `refund-receivers`: the receiver the lot key recovers from the refund must equal the receiver in the listed address |
+| The listed address is the bidder's own | No, not by the lot key. It is the seller's word | Each bidder looks up their bid in the list and confirms the address is theirs. Or the bidder gives their own viewing key |
+| The refund reached the bidder who made the bid | Only for bidders who give their own viewing key | `scan-refund-receivers`: the bidder's key must see an incoming payment in the range with memo `refund:<lotId>:<bid txid>` and the same amount the lot sent |
+| The same, for bidders who give no key and when no addresses are listed | No | A seller could pay a refund to their own second wallet with the right memo and this version would not notice |
 
-Rule for a later version: a bid memo may end with the bidder's refund address (`bid:<lotId>:<word>:<address>`), the reader returns the receiver of each outgoing output, and the scan requires each refund to go to the address its bid named. Bidder key file: `{ "format": "imani-bidder-keys/1", "keys": [{ "bidTxid", "ufvk" }] }`. Bidder keys are checked like the lot key, never printed and never written.
+What `refund-receivers` catches: a seller who publishes honest-looking addresses but pays a refund somewhere else. What it does not catch: a seller who lists their own address as the bidder's. A bid memo carries no return address today, so nothing on the chain ties a listed address to the bidder. A later version can put the refund address inside the bid memo (`bid:<lotId>:<word>:<address>`), which the lot key reads from the chain and the seller cannot choose. Bidder key file: `{ "format": "imani-bidder-keys/1", "keys": [{ "bidTxid", "ufvk" }] }`. Bidder keys are checked like the lot key, never printed and never written.
+
+### Block heights against the chain
+
+`scan-heights` compares the block each listed transaction was found in with the height the seller states. With `--chain` the blocks come from the saved file. With `--fetch` each transaction's block comes from what two independent light servers return, and a block is refused when they disagree. A wrong height is a named FAIL, and the message says when the true block is on the other side of the close. Without `--scan` no height is checked and the seller's word is used. A chain file is only as trustworthy as where you got it.
 
 ### Speed and cost
 
@@ -134,6 +144,7 @@ The checker accepts only `uview1` or `uviewtest1` keys and refuses seed phrases,
 | The scan only covers `openHeight` to the refund deadline | A bid paid before `openHeight` is not seen | The seller publishes `openHeight` before bidding starts |
 | `--fetch` is slow: about an hour for a day-long auction | Checking a long auction online takes patience | Compact-block scanning, one connection per server |
 | `--fetch` trusts that two independent light servers do not both leave the same transaction out of a block | Two colluding servers could hide a bid | Use your own light server with `--chain` saved from it, or more operators |
-| A refund's receiver is proven only for bidders who give their own key | A seller could pay a refund to themselves with the right memo | Expose the receiver in the reader and put a refund address in the bid memo (see Scan level) |
+| A listed refund address is the seller's word | A seller could list their own address as a bidder's, then pay it. `refund-receivers` would pass | Each bidder confirms the address next to their bid, or gives their own key. Later: put the refund address inside the bid memo |
+| A refund's receiver is proven only when addresses are listed or the bidder gives their own key | Without either, a seller could pay a refund to themselves with the right memo | List `refundAddresses` in the disclosure |
 | A shared viewing key cannot be revoked | Anyone with it sees the lot forever | One fresh key per lot, enforced by `key-hygiene` |
 | The seller can see bids as they arrive | The check proves counting, amounts and refunds, not that the seller never looked | None in this design |

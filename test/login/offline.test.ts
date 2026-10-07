@@ -37,7 +37,7 @@ test("the site's viewing key reads each login memo exactly as librustzcash does"
   for (const [label, t] of Object.entries<any>(v.transactions)) {
     const viewer = v.parties[t.to].ufvk;
     const want = t.siteKeySees.map((o: any) => ({ pool: o.pool, amountZat: o.amountZat, memo: o.memo, transferType: o.transferType.toLowerCase() }));
-    assert.deepEqual(readTransaction(t.txHex, viewer), want, label);
+    assert.deepEqual(readTransaction(t.txHex, viewer).map(({ recipientHex: _r, ...rest }) => rest), want, label);
   }
 });
 

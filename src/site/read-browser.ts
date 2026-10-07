@@ -3,8 +3,8 @@
 // whose bytes are embedded in the page, so nothing is downloaded after the page loads.
 import * as glue from "imani-decoder-glue";
 
-export type { DecoderInfo, TransferType, Pool, ReadOutput } from "../read.ts";
-import type { DecoderInfo, ReadOutput } from "../read.ts";
+export type { DecoderInfo, TransferType, Pool, ReadOutput, ParsedAddress } from "../read.ts";
+import type { DecoderInfo, ParsedAddress, ReadOutput } from "../read.ts";
 
 let ready = false;
 
@@ -24,6 +24,11 @@ export function decoderInfo(): DecoderInfo {
   return glue.decoderInfo();
 }
 
+export function parseAddress(address: string): ParsedAddress {
+  if (!ready) throw new Error("The reader is not started yet.");
+  return glue.parseAddress(address);
+}
+
 export function readTransaction(txHex: string, viewingKey: string): ReadOutput[] {
   return readTransactionWithId(txHex, viewingKey).outputs;
 }
@@ -34,7 +39,7 @@ export function readTransactionWithId(txHex: string, viewingKey: string): { txid
   const outputs: ReadOutput[] = [];
   for (const pool of ["orchard", "ironwood", "sapling"] as const) {
     for (const o of result[pool]) {
-      outputs.push({ pool, amountZat: o.amountZat, memo: o.memo, transferType: o.transferType });
+      outputs.push({ pool, amountZat: o.amountZat, memo: o.memo, transferType: o.transferType, recipientHex: o.recipientHex });
     }
   }
   return { txid: result.txid, outputs };

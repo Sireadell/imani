@@ -4,11 +4,12 @@ declare module "imani-decoder-glue" {
   export function wasmBytes(): Uint8Array;
   export function decryptTx(txHex: string, ufvk: string): any;
   export function decoderInfo(): any;
+  export function parseAddress(address: string): any;
 }
 declare module "imani-examples" {
   export interface ExampleEntry {
     id: string;
-    group: "honest" | "tampered" | "scan-honest" | "scan-tampered";
+    group: "honest" | "tampered" | "scan-honest" | "scan-tampered" | "receivers-honest" | "receivers-tampered";
     title: string;
     story: string;
     expectedFailingCheck: string | null;

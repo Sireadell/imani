@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readTransactionWithId, type ReadOutput } from "./read.ts";
+import { parseAddress, readTransactionWithId, type ParsedAddress, type ReadOutput } from "./read.ts";
 import { decide, type Bid } from "./rules.ts";
 import {
   bidMemoPrefix,
@@ -123,6 +123,12 @@ export function validateFiles(d: any, r: any): asserts d is Disclosure {
   if (!Array.isArray(d.transactions)) bad("the disclosure file needs a transactions list.");
   for (const t of d.transactions) {
     if (!t || typeof t.txHex !== "string" || !/^([0-9a-f]{2})+$/i.test(t.txHex)) bad("every disclosed transaction needs txHex (hex text).");
+  }
+  if (d.refundAddresses !== undefined) {
+    if (!Array.isArray(d.refundAddresses)) bad("refundAddresses must be a list of { bidTxid, address }.");
+    for (const a of d.refundAddresses) {
+      if (!a || !isTxid(a.bidTxid) || typeof a.address !== "string" || a.address.trim() === "") bad("every refundAddresses entry needs a 64 hex character bidTxid and an address.");
+    }
   }
   if (!r || typeof r !== "object") bad("the result file is not a JSON object.");
   if (r.format !== "imani-lot-result/1") bad('the result file must have "format": "imani-lot-result/1".');
@@ -352,7 +358,7 @@ function keyChecks(
   const refPrefix = refundMemoPrefix(d.lotId);
   const bids = new Map<string, ChainBid>();
   const outside: { txid: string; amountZat: number; memo: string }[] = [];
-  const refunds: { txid: string; bidTxid: string; amountZat: number }[] = [];
+  const refunds: { txid: string; bidTxid: string; amountZat: number; pool: ReadOutput["pool"]; recipientHex: string }[] = [];
   for (const x of read) {
     for (const o of x.outputs) {
       if (o.transferType === "incoming") {
@@ -368,7 +374,7 @@ function keyChecks(
           outside.push({ txid: x.txid, amountZat: o.amountZat, memo: o.memo });
         }
       } else if (o.transferType === "outgoing" && o.memo.startsWith(refPrefix)) {
-        refunds.push({ txid: x.txid, bidTxid: o.memo.slice(refPrefix.length), amountZat: o.amountZat });
+        refunds.push({ txid: x.txid, bidTxid: o.memo.slice(refPrefix.length), amountZat: o.amountZat, pool: o.pool, recipientHex: o.recipientHex });
       }
       // "internal" outputs are the lot's own change and are not counted.
     }
@@ -531,6 +537,58 @@ function keyChecks(
       ...refunds.map((f) => `refund for ${short(f.bidTxid)}: ${zat(f.amountZat)}`),
     ],
   });
+
+  // Refund receivers: only when the disclosure lists a refund address for each bid.
+  if (d.refundAddresses !== undefined) {
+    const problems: string[] = [];
+    const listedAddr = new Map<string, string>();
+    for (const a of d.refundAddresses) {
+      const k = a.bidTxid.toLowerCase();
+      if (listedAddr.has(k)) problems.push(`two refund addresses are listed for bid ${short(k)}`);
+      listedAddr.set(k, a.address.trim());
+    }
+    const parsed = new Map<string, ParsedAddress>();
+    for (const [txid, addr] of listedAddr) {
+      if (!bids.has(txid)) {
+        problems.push(`a refund address is listed for ${short(txid)}, which is not a bid the lot key sees`);
+        continue;
+      }
+      try {
+        const p = parseAddress(addr);
+        if (p.network !== d.network) problems.push(`the address listed for bid ${short(txid)} is for the ${p.network} network, the lot is on ${d.network}`);
+        else parsed.set(txid, p);
+      } catch (e) {
+        problems.push(`the address listed for bid ${short(txid)} is not a usable shielded address (${String((e as Error)?.message ?? e).slice(0, 80)})`);
+      }
+    }
+    let checked = 0;
+    for (const [txid, amount] of owed) {
+      if (amount === 0) continue;
+      if (!listedAddr.has(txid)) {
+        problems.push(`no refund address is listed for bid ${short(txid)}`);
+        continue;
+      }
+      const p = parsed.get(txid);
+      if (!p) continue; // already reported
+      for (const f of refunds.filter((f) => f.bidTxid === txid)) {
+        checked++;
+        const want = f.pool === "sapling" ? p.sapling : p.orchard;
+        if (want === null) problems.push(`the refund for bid ${short(txid)} was paid into the ${f.pool} pool but the listed address has no ${f.pool === "sapling" ? "Sapling" : "Orchard"} receiver`);
+        else if (want !== f.recipientHex) problems.push(`the refund for bid ${short(txid)} (${zat(f.amountZat)}, transaction ${short(f.txid)}) went to a different address than the one listed for that bid`);
+      }
+    }
+    add({
+      id: "refund-receivers",
+      level: 2,
+      title: "Each refund went to the address listed for its bid",
+      status: problems.length ? "FAIL" : "PASS",
+      reason: problems.length
+        ? `${problems.join("; ").replace(/^./, (c) => c.toUpperCase())}.`
+        : `All ${checked} refund payments went to the address listed for their bid. The lot key recovered the receiver of each one. The list itself is the seller's word: each bidder should confirm that the address next to their bid is theirs.`,
+      fromChain: [`${refunds.length} refund payments, receiver recovered with the lot key`],
+      fromDisclosure: [`${listedAddr.size} refund addresses listed`],
+    });
+  }
 
   // Refund total: the seller's books must balance against what the chain shows came in.
   // Rule: refunds the seller lists (for bids the key can see) + clearing price x winners

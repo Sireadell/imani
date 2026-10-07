@@ -97,6 +97,21 @@ test("scan examples: page logic equals the command line checks, with the named s
   }
 });
 
+test("refund address examples: page logic equals the command line, with the named failure", () => {
+  const honest = cliVerdict("receivers-01");
+  const page = engine.runPage({ disclosure: ex("receivers-01/disclosure.json"), result: ex("receivers-01/result.json") });
+  assert.deepEqual(page.verdict, honest.verdict);
+  assert.equal(page.verdict.result, "PASS");
+  assert.equal(page.verdict.checks.length, 16);
+  for (const c of ex("receivers-broken/manifest.json").copies) {
+    const dir = `receivers-broken/${c.name}`;
+    const cli = cliVerdict(dir);
+    const out = engine.runPage({ disclosure: ex(`${dir}/disclosure.json`), result: ex(`${dir}/result.json`) });
+    assert.deepEqual(out.verdict, cli.verdict, c.name);
+    assert.deepEqual(out.verdict.failed, [c.expectedFailingCheck], c.name);
+  }
+});
+
 test("spending keys and seed phrases are refused, and the key never appears in the outcome", () => {
   const d = ex("round-01/disclosure.json");
   const r = ex("round-01/result.json");

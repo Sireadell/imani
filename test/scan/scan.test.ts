@@ -266,3 +266,41 @@ test("fetchBlocks fails, naming the servers, when two servers disagree about a b
     (e: unknown) => e instanceof BlockFetchError && /disagree/.test(e.message) && e.serversContacted.length === 2,
   );
 });
+
+// ---------- heights against what the light servers return ----------
+
+test("--fetch mode: a height the seller states wrongly is caught against what two light servers return", async () => {
+  // Blocks 4200100 to 4200105. Every block a real server serves holds a transaction, so the first
+  // five carry unrelated payments (other people's, unreadable with the lot key) and Dave's late
+  // bid sits in 4200105, where the servers say it is.
+  const offline = JSON.parse(readFileSync(new URL("../vectors/offline-vectors.json", import.meta.url), "utf8"));
+  const filler = ["orchard_v5_payment", "orchard_v5_refund", "orchard_nu6_2_payment", "ironwood_v6_payment", "ironwood_v6_refund"].map((n) => ({
+    txid: offline.cases[n].txid as string,
+    txHex: offline.cases[n].txHex as string,
+  }));
+  const dave = honest.chain.blocks.find((b) => b.height === 4200105)!.txs;
+  const served = new Map<number, { txid: string; txHex: string }[]>();
+  filler.forEach((t, i) => served.set(4200100 + i, [t]));
+  served.set(4200105, dave);
+  const a = await fakeLightServer(served);
+  const b = await fakeLightServer(served);
+  const daveTx = honest.d.transactions.find((t: any) => t.txid === dave[0].txid);
+  const lot = (height: number) => ({
+    ...honest.d,
+    openHeight: 4200100,
+    refundByHeight: 4200100,
+    transactions: [{ ...daveTx, height }],
+  });
+  const fetched = await fetchBlocks({ network: "test", from: 4200100, to: 4200105, servers: [a.url, b.url], concurrency: 2, groupSize: 1 });
+  const input = (): ScanInput => ({ blocks: fetched.blocks, missing: [], source: fetched.source, graceBlocks: 5 });
+  const claims = (height: number) => {
+    const d = lot(height);
+    const v = checkLot(d, { ...honest.r, bids: [], bidCount: 0, winners: [], refunds: [], clearingPriceZat: 0, reserveMet: false }, { scan: input() });
+    return v.checks.find((c) => c.id === "scan-heights")!;
+  };
+  const wrong = claims(4200099);
+  assert.equal(wrong.status, "FAIL");
+  assert.match(wrong.reason, /wrong height: .*the seller says block 4200099, the chain shows block 4200105 \(on the other side of the close at 4200100\)/);
+  assert.equal(claims(4200105).status, "PASS");
+  assert.deepEqual(fetched.source.serversContacted, [a.url, b.url]);
+});

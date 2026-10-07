@@ -1,0 +1,17 @@
+{
+  "about": "Broken copies of examples/receivers-01. The refund transactions are the real ones; only the list of refund addresses in disclosure.json changes. Each copy passes every other check and fails refund-receivers.",
+  "copies": [
+    {
+      "name": "01-refund-to-other-address",
+      "changed": "disclosure.json",
+      "expectedFailingCheck": "refund-receivers",
+      "story": "Carol's bid names her own address, but the refund the seller paid for it went to a different address. The amount and the memo are right, so the older checks pass. Only the receiver check sees it."
+    },
+    {
+      "name": "02-refund-address-not-listed",
+      "changed": "disclosure.json",
+      "expectedFailingCheck": "refund-receivers",
+      "story": "The seller lists a refund address for three of the four bids and leaves Carol's out. Once a seller lists refund addresses, every refunded bid needs one."
+    }
+  ]
+}

@@ -281,9 +281,11 @@ export function scanChecks(
         : `For each of the ${keys.length} bidders who gave their own viewing key, the refund the lot sent for their bid arrived in their wallet in full.`,
       fromChain: lines,
     });
-    notes.push(`Refund receivers were proven for ${keys.length} bid(s) whose bidder gave their own key. For other refunds the lot key shows the amount and the memo naming the bid, not who received it.`);
+    notes.push(`Refund receivers were proven for ${keys.length} bid(s) whose bidder gave their own key. For other refunds the lot key shows the amount and the memo naming the bid${d.refundAddresses !== undefined ? ", and the check refund-receivers compares where each went with the address the disclosure lists" : ", not who received it"}.`);
+  } else if (d.refundAddresses !== undefined) {
+    notes.push("Refund receivers were compared with the refund addresses the disclosure lists (check refund-receivers). That list is the seller's word: it proves the refunds went where the seller says, and each bidder still has to confirm the address next to their bid is theirs, or add their viewing key with --bidder-keys.");
   } else {
-    notes.push("Refund receivers are not proven: the lot key shows each refund's amount and the memo naming its bid, not who received it. A bidder can prove their own refund by adding their viewing key with --bidder-keys.");
+    notes.push("Refund receivers are not proven: the lot key shows each refund's amount and the memo naming its bid, not who received it. The seller can list a refund address per bid (refundAddresses in the disclosure), and a bidder can prove their own refund by adding their viewing key with --bidder-keys.");
   }
   return notes;
 }

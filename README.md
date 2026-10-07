@@ -29,13 +29,15 @@ npx imani check --disclosure examples/scan-01/disclosure.json --result examples/
 
 This reads the blocks from a saved file. Use `--fetch` instead of `--chain` to download them from public Zcash servers (slower: about an hour for a day-long auction, see SPEC.md). `examples/scan-broken/` has three copies that only the scan catches: a hidden bid, a listed payment that is not on the chain in time, and a wrong block height.
 
+To also check where each refund went, the seller can list the address each bid's refund must go to (`refundAddresses` in the disclosure). `examples/receivers-01` passes, and `examples/receivers-broken/` has two copies that fail `refund-receivers`: a refund that went to a different address than the one listed, and a bid with no address listed. `npm run examples:receivers` rebuilds them.
+
 ## Where every number comes from
 
 | Source | What it gives |
 |---|---|
-| The chain, read with the lot key | Bid amounts, bid memos, refund amounts, refund memos, transaction ids |
+| The chain, read with the lot key | Bid amounts, bid memos, refund amounts, refund memos, where each refund was paid, transaction ids |
 | The seller's result file | The bid list, winners, clearing price, reserve outcome and refund list the seller claims |
-| The seller's disclosure file | Close height, block height of each transaction, item count and reserve |
+| The seller's disclosure file | Close height, block height of each transaction, item count, reserve and, if listed, the refund address of each bid |
 | Every block of the auction, with `--scan` | Any payment the seller left out, and the real block height of each listed one |
 
 The checker works the result out again from the chain numbers and compares it with the seller's file. The report shows each check with PASS or FAIL, a one-line reason, and which numbers came from where.
@@ -52,6 +54,12 @@ The file formats, price rule, every check and the known limits are in [SPEC.md](
 ## Safety
 
 The checker only accepts a read-only viewing key (starts with `uview1` or `uviewtest1`). It refuses seed phrases and spending keys, never prints the key and never saves it. If the key shows payments that are not bids for the lot, the check fails and tells the seller to use a fresh key for every lot. By default it contacts no server and prints `Servers contacted: none`. Only `--scan --fetch` goes online; it asks for blocks by number, never sends a key, and prints every server it used.
+
+## Honest limits: the auction check
+
+- A refund is proven to have left the lot with the right amount and memo. Where it went is compared with the refund address the seller lists for each bid. That list is the seller's word, so a seller could list their own address. Each bidder should check the address next to their bid is theirs, or give their own viewing key, which proves their refund arrived.
+- Block heights are checked against the chain only with `--scan`. A saved chain file is only as trustworthy as where you got it. With `--fetch`, two independent light servers must agree.
+- It reads only what the seller shares. A bid paid before the open height is not seen.
 
 ## Honest limits: sign in with a private wallet
 

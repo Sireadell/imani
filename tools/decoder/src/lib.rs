@@ -13,6 +13,7 @@ use std::collections::HashMap;
 use serde_json::{Value, json};
 use wasm_bindgen::prelude::*;
 use zcash_client_backend::{DecryptedOutput, TransferType, decrypt_transaction};
+use zcash_keys::address::Address;
 use zcash_keys::keys::UnifiedFullViewingKey;
 use zcash_primitives::transaction::Transaction;
 use zcash_protocol::{
@@ -134,6 +135,7 @@ fn decode<P: Parameters>(params: &P, raw: &[u8], ufvk: UnifiedFullViewingKey) ->
             "memo": memo,
             "memoHex": memo_hex,
             "transferType": transfer_type(o.transfer_type()),
+            "recipientHex": hex::encode(o.note().recipient().to_bytes()),
         }));
     }
     let orchard_family = |outs: &[DecryptedOutput<(orchard::Note, orchard::ValuePool), u32>]| {
@@ -146,6 +148,7 @@ fn decode<P: Parameters>(params: &P, raw: &[u8], ufvk: UnifiedFullViewingKey) ->
                     "memo": memo,
                     "memoHex": memo_hex,
                     "transferType": transfer_type(o.transfer_type()),
+                    "recipientHex": hex::encode(o.note().0.recipient().to_raw_address_bytes()),
                 })
             })
             .collect::<Vec<_>>()
@@ -195,6 +198,31 @@ pub fn decrypt_tx_json(tx_hex: &str, ufvk: &str) -> Result<String, String> {
     Ok(v.to_string())
 }
 
+/// Splits a payment address into the receivers the decoder reports for outputs, so a caller can
+/// compare "who was paid" with "who should have been paid". Accepts a unified address
+/// (`u1...`, `utest1...`) or a Sapling address (`zs1...`, `ztestsapling1...`). The network
+/// comes from the address prefix. Orchard and Ironwood outputs share the Orchard receiver.
+/// Each receiver is 43 bytes in hex, in the same form as `recipientHex` on an output.
+pub fn parse_address_json(addr: &str) -> Result<String, String> {
+    let addr = addr.trim();
+    let (network, parsed) = if let Some(a) = Address::decode(&MAIN_NETWORK, addr) {
+        ("main", a)
+    } else if let Some(a) = Address::decode(&TEST_NETWORK, addr) {
+        ("test", a)
+    } else {
+        return Err("address decode failed: not a unified or Sapling address".into());
+    };
+    let (orchard, sapling) = match &parsed {
+        Address::Unified(u) => (
+            u.orchard().map(|a| hex::encode(a.to_raw_address_bytes())),
+            u.sapling().map(|a| hex::encode(a.to_bytes())),
+        ),
+        Address::Sapling(a) => (None, Some(hex::encode(a.to_bytes()))),
+        _ => return Err("address has no shielded receiver (transparent addresses cannot carry a refund memo)".into()),
+    };
+    Ok(json!({ "network": network, "orchard": orchard, "sapling": sapling }).to_string())
+}
+
 /// What this build reads: librustzcash crate versions (taken from Cargo.lock at
 /// build time), the newest network upgrade it knows, and every branch id it accepts.
 pub fn decoder_info_json() -> String {
@@ -236,13 +264,23 @@ pub fn decoder_info_json() -> String {
 /// `{ txid, txVersion, branchId, upgrade, shape, orchard: [...], ironwood: [...], sapling: [...] }`.
 /// `shape` counts the public parts (transparent inputs and outputs, Sapling spends and
 /// outputs, Orchard and Ironwood actions).
-/// Each output is `{ index, amountZat, memo, memoHex, transferType }`.
+/// Each output is `{ index, amountZat, memo, memoHex, transferType, recipientHex }`.
+/// `recipientHex` is the 43-byte raw address the note was paid to. For an outgoing output the
+/// key's outgoing viewing key recovers it; for an incoming one it is the key's own address.
 /// Throws an Error with a readable message on a bad key or a bad transaction.
 /// A transaction from a network upgrade this build does not know throws
 /// "unsupported network upgrade 0x...".
 #[wasm_bindgen(js_name = decryptTx)]
 pub fn decrypt_tx(tx_hex: &str, ufvk: &str) -> Result<JsValue, JsError> {
     let s = decrypt_tx_json(tx_hex, ufvk).map_err(|e| JsError::new(&e))?;
+    js_sys::JSON::parse(&s).map_err(|_| JsError::new("internal JSON error"))
+}
+
+/// JavaScript entry point: `parseAddress(address)` returns `{ network, orchard, sapling }`,
+/// where `orchard` (also used for Ironwood) and `sapling` are receiver hex strings or null.
+#[wasm_bindgen(js_name = parseAddress)]
+pub fn parse_address(addr: &str) -> Result<JsValue, JsError> {
+    let s = parse_address_json(addr).map_err(|e| JsError::new(&e))?;
     js_sys::JSON::parse(&s).map_err(|_| JsError::new("internal JSON error"))
 }
 

@@ -1,7 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { readTransaction } from "../src/read.ts";
+import { readTransaction as readFull } from "../src/read.ts";
+
+// These tests compare amount, memo and direction. Who the output went to is tested in receivers.test.ts.
+const strip = (outs: ReturnType<typeof readFull>) => outs.map(({ recipientHex: _r, ...rest }) => rest);
+const readTransaction = (tx: string, key: string) => strip(readFull(tx, key));
 
 // Offline vectors made by tools/gen-vectors: throwaway keys, invented funding, never broadcast.
 const v = JSON.parse(readFileSync(new URL("./vectors/offline-vectors.json", import.meta.url), "utf8"));
@@ -75,7 +79,7 @@ test("auction round: the lot key reads every transaction like librustzcash, and 
       memo: o.memo,
       transferType: o.transferType.toLowerCase(),
     }));
-    assert.deepEqual(got.outputs, want, name);
+    assert.deepEqual(strip(got.outputs), want, name);
   }
 });
 
@@ -89,7 +93,7 @@ test("NU7 payment: seller reads it as incoming with its memo, stranger sees noth
   assert.equal(c.branchId, "0x77190ad9");
   const got = readTransactionWithId(c.txHex, n.parties.seller.ufvk);
   assert.equal(got.txid, c.txid);
-  assert.deepEqual(got.outputs, [{ pool: "ironwood", amountZat: 1_250_000, memo: "imani order 43: NU7 rules", transferType: "incoming" }]);
+  assert.deepEqual(strip(got.outputs), [{ pool: "ironwood", amountZat: 1_250_000, memo: "imani order 43: NU7 rules", transferType: "incoming" }]);
   assert.deepEqual(readTransaction(c.txHex, n.parties.stranger.ufvk), []);
 });
 

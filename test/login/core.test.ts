@@ -165,8 +165,8 @@ const refusals: [string, (s: Awaited<ReturnType<typeof setup>>) => Promise<strin
   ["several_login_memos", async ({ chain, challenge, verify }) => {
     const m = memoBy(fixedKey("a"), challenge);
     const r = await verify(chain.raw([
-      { pool: "ironwood", amountZat: 10_000, memo: m, transferType: "incoming" },
-      { pool: "ironwood", amountZat: 10_000, memo: m, transferType: "incoming" },
+      { pool: "ironwood", amountZat: 10_000, memo: m, transferType: "incoming", recipientHex: "" },
+      { pool: "ironwood", amountZat: 10_000, memo: m, transferType: "incoming", recipientHex: "" },
     ]));
     return r.ok ? "ok" : r.reason;
   }],

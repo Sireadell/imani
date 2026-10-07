@@ -33,6 +33,9 @@
     <h3>With a full scan of every block</h3>
     <p class="muted small">The scan also reads every block of the auction from a saved copy of the chain, so a payment the seller left out cannot hide.</p>
     <div class="chips" id="chips-scan" role="group" aria-label="Scan examples"></div>
+    <h3>With a refund address for every bid</h3>
+    <p class="muted small">The seller lists the address each bid's refund must go to. The check reads where each refund really went and compares.</p>
+    <div class="chips" id="chips-receivers" role="group" aria-label="Refund address examples"></div>
   </section>
 
   <section aria-labelledby="own-h">
@@ -69,7 +72,7 @@
       <li>This is not a zero-knowledge proof. You recompute the result yourself from data the seller chose to share.</li>
       <li>A shared viewing key cannot be taken back. Anyone who has it can see that lot's payments for good, so each lot needs its own fresh key.</li>
       <li>Without the scan level, block heights and the list of payments come from the seller's files. With it, a saved chain file covers every block, but you still trust where that file came from.</li>
-      <li>A refund is shown to have left the lot with the right amount. It is shown to have reached the bidder only when that bidder supplies their own viewing key.</li>
+      <li>A refund is shown to have left the lot with the right amount. Where it went is compared with the refund address the seller lists for each bid, when the seller lists them. That list is the seller's word: each bidder should check the address next to their bid is theirs. A refund is shown to have reached the bidder for certain only when that bidder supplies their own viewing key.</li>
     </ul>
   </section>
 

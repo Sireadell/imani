@@ -1,7 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { readTransaction, readTransactionWithId, decoderInfo } from "../src/read.ts";
+import { readTransaction as readFull, readTransactionWithId, decoderInfo } from "../src/read.ts";
+
+// These tests compare amount, memo and direction. Who the output went to is tested in receivers.test.ts.
+const readTransaction = (tx: string, key: string) => readFull(tx, key).map(({ recipientHex: _r, ...rest }) => rest);
 
 // A real testnet transaction from the LedgerHQ/zcash-decrypt tests: version 5, branch id
 // 0x4dec4df0 (NU6.1), two Orchard change outputs. The librustzcash decoder still reads it.
