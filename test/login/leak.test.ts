@@ -26,7 +26,7 @@ import {
 import { b64urlEncode } from "../../src/login/encoding.ts";
 import { T0, fixedKey } from "./helpers.ts";
 import { PAYMENTS, SITE_ADDRESS, SITE_ID, memoFor, siteCodes } from "./offline-plan.ts";
-import { SECRET, UFVK, fakeReq, makeKit, run, v } from "./fakes.ts";
+import { P, SECRET, UFVK, fakeReq, makeKit, run, v } from "./fakes.ts";
 
 const userKey = fixedKey("user");
 const exported = exportAccountKey(userKey);
@@ -87,7 +87,7 @@ test("no login key, memo or viewing key in any log, error, response, cookie, ses
     const log = (e: string) => seen.push(e);
     for (const label of Object.keys(v.transactions)) {
       for (const now of [T0 + 60, T0 + 9999]) {
-        const r = await verifyLoginPayment(v.transactions[label].txHex, UFVK, store, { siteId: SITE_ID, siteAddress: SITE_ADDRESS, now, log });
+        const r = await verifyLoginPayment(v.transactions[label].txHex, UFVK, store, { siteId: SITE_ID, siteAddress: SITE_ADDRESS, now, log, proof: P[label] });
         seen.push(JSON.stringify(r), inspect(r));
       }
     }
@@ -98,9 +98,9 @@ test("no login key, memo or viewing key in any log, error, response, cookie, ses
       const mw = zcashLogin({ kit: await makeKit(log), sessions });
       const reqs = [
         fakeReq("GET", "/zcash-login/challenge"),
-        fakeReq("POST", "/zcash-login/verify", { body: { txHex: v.transactions.login_wallet_a.txHex } }),
-        fakeReq("POST", "/zcash-login/verify", { body: { txHex: v.transactions.login_wallet_a.txHex } }),
-        fakeReq("POST", "/zcash-login/verify", { body: { txHex: v.transactions.memo_for_other_site.txHex } }),
+        fakeReq("POST", "/zcash-login/verify", { body: { txHex: v.transactions.login_wallet_a.txHex, proof: P.login_wallet_a } }),
+        fakeReq("POST", "/zcash-login/verify", { body: { txHex: v.transactions.login_wallet_a.txHex, proof: P.login_wallet_a } }),
+        fakeReq("POST", "/zcash-login/verify", { body: { txHex: v.transactions.memo_for_other_site.txHex, proof: P.memo_for_other_site } }),
         fakeReq("POST", "/zcash-login/verify", { raw: '{"txHex": "' + memo + '"}' }),
         fakeReq("POST", "/zcash-login/verify", { raw: "{broken " + UFVK }),
       ];
@@ -121,7 +121,7 @@ test("no login key, memo or viewing key in any log, error, response, cookie, ses
       }
     }
     const provider = zcashCredentials(await makeKit(log));
-    seen.push(JSON.stringify(await provider.authorize({ txHex: v.transactions.login_wallet_b.txHex })));
+    seen.push(JSON.stringify(await provider.authorize({ txHex: v.transactions.login_wallet_b.txHex, proof: P.login_wallet_b })));
     seen.push(JSON.stringify(provider));
   } finally {
     Object.assign(console, orig);

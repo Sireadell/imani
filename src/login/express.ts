@@ -22,7 +22,8 @@ type Next = (err?: unknown) => void;
 /**
  * Routes:
  *   GET  {base}/challenge  returns a fresh one-time code (public data only)
- *   POST {base}/verify     body {"txHex": "..."}; on success sets the session cookie
+ *   POST {base}/challenge  body {"accountId": "..."}; the same, with the code reserved for that account id
+ *   POST {base}/verify     body {"txHex": "...", "proof": "..."}; on success sets the session cookie
  *   POST {base}/logout     clears the cookie
  * Every other request passes through with req.zcashAccount set when the session cookie is valid.
  */
@@ -41,10 +42,18 @@ export function zcashLogin(opts: ExpressLoginOptions) {
       if (req.method === "GET" && path === `${base}/challenge`) {
         return send(res, 200, await opts.kit.newChallenge());
       }
+      if (req.method === "POST" && path === `${base}/challenge`) {
+        // Reserve the code for the page's account id, so only its key can use the code.
+        const body = await readBody(req, limit);
+        const id = body && typeof body === "object" ? (body as Record<string, unknown>).accountId : undefined;
+        if (typeof id !== "string") return send(res, 400, { reason: "bad_request", message: "The login request could not be handled." });
+        return send(res, 200, await opts.kit.newChallenge(id));
+      }
       if (req.method === "POST" && path === `${base}/verify`) {
         const body = await readBody(req, limit);
         const txHex = body && typeof body === "object" ? (body as Record<string, unknown>).txHex : undefined;
-        const result = await opts.kit.verify(typeof txHex === "string" ? txHex : "");
+        const proof = body && typeof body === "object" ? (body as Record<string, unknown>).proof : undefined;
+        const result = await opts.kit.verify(typeof txHex === "string" ? txHex : "", typeof proof === "string" ? proof : undefined);
         if (!result.ok) return send(res, 401, { reason: result.reason, message: result.message });
         const value = await opts.sessions.issue(result.accountId);
         res.setHeader("Set-Cookie", cookie(value, 7 * 86_400));

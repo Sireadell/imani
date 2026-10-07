@@ -19,7 +19,7 @@ To check a lot yourself:
 npx imani check --disclosure examples/round-01/disclosure.json --result examples/round-01/result.json --out report
 ```
 
-This prints every check and writes `report/verdict.json` and `report/report.html` (open it in any browser, it works offline). Add `--discreet` to hide amounts and memos, or `--basic` to run only the checks that need no key. Try the six broken copies in `examples/broken/`: each one fails on exactly one named check, listed in `examples/broken/manifest.json`.
+This prints every check and writes `report/verdict.json` and `report/report.html` (open it in any browser, it works offline). Add `--discreet` to hide amounts, memos and addresses, `--offline` to make sure no connection is ever opened, or `--basic` to run only the checks that need no key. Nothing shaped like a key or seed phrase can be printed or written. `npm run leak-scan` checks every tracked file for keys, seed phrases and `.env` files (public test keys are listed with a reason in `tools/leak-scan.allow.json`), and CI runs it. Try the six broken copies in `examples/broken/`: each one fails on exactly one named check, listed in `examples/broken/manifest.json`.
 
 To also read every block of the auction, so a bid the seller left out still shows up:
 
@@ -52,6 +52,14 @@ The file formats, price rule, every check and the known limits are in [SPEC.md](
 ## Safety
 
 The checker only accepts a read-only viewing key (starts with `uview1` or `uviewtest1`). It refuses seed phrases and spending keys, never prints the key and never saves it. If the key shows payments that are not bids for the lot, the check fails and tells the seller to use a fresh key for every lot. By default it contacts no server and prints `Servers contacted: none`. Only `--scan --fetch` goes online; it asks for blocks by number, never sends a key, and prints every server it used.
+
+## Honest limits: sign in with a private wallet
+
+- Seeing someone's sign-in payment link or QR does not let you log in as them. The site also needs a proof that only their login key can make, and it is never in the link.
+- If a sign-in code is not reserved for the user's key, anyone who sees the code can pay it first with their own key and use it up. They get their own account, not the victim's, but the real user must ask for a new code. Reserving the code for the user's key stops this.
+- Anyone who controls the user's device or page can make the proof. It protects against people who only see the screen.
+
+Full list: LOGIN_SPEC.md, section 9.
 
 ## Tests
 

@@ -3,9 +3,10 @@ import { readFileSync } from "node:fs";
 import { Readable } from "node:stream";
 import { LoginKit, zcashLogin } from "../../src/login/index.ts";
 import { T0, fixedKey } from "./helpers.ts";
-import { SITE_ADDRESS, SITE_ID, siteCodes } from "./offline-plan.ts";
+import { SITE_ADDRESS, SITE_ID, proofsByLabel, siteCodes } from "./offline-plan.ts";
 
 export const v = JSON.parse(readFileSync(new URL("./vectors/login-offline.json", import.meta.url), "utf8"));
+export const P = await proofsByLabel();
 export const UFVK = v.parties["site shop.example"].ufvk;
 export const SECRET = "test session secret, at least thirty-two bytes long";
 export const ACCOUNT = fixedKey("user").siteKey(SITE_ID).publicKey;

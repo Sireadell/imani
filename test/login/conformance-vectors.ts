@@ -3,7 +3,7 @@
 import { createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { AccountKey, buildLoginMemo, buildPaymentUri, signedText, checkLoginMemo, makeNonce } from "../../src/login/index.ts";
+import { AccountKey, buildLoginMemo, buildLoginProof, buildPaymentUri, proofText, signedText, checkLoginMemo, makeNonce, parseLoginMemo, verifySignature } from "../../src/login/index.ts";
 import { fixedRandom } from "./helpers.ts";
 
 const seed = (label: string) => createHash("sha256").update(`imani login conformance: ${label}`).digest();
@@ -96,17 +96,39 @@ export function makeVectors() {
     [`zcash:?address=${ADDRESS}&amount=0.0001`, false],
   ].map(([uri, ok]) => ({ uri, singlePayee: ok }));
 
+  // 5. Login proofs: sent to the site with the payment, never in the link. Checked against the account id in the memo.
+  const pc = challenge("shop.example", "test", "p1");
+  const pAccount = alice.siteKey("shop.example").publicKey;
+  const memoSig = (parseLoginMemo(buildLoginMemo(alice, pc)) as any).memo.signature as string;
+  const proofCases: [string, string][] = [
+    ["valid", buildLoginProof(alice, pc)],
+    ["made_by_other_key", buildLoginProof(AccountKey.fromSeed(seed("bob")), pc)],
+    ["made_for_other_code", buildLoginProof(alice, challenge("shop.example", "test", "p2"))],
+    ["made_for_other_site", buildLoginProof(alice, { ...pc, siteId: "other.example" })],
+    ["memo_signature_reused", memoSig],
+    ["empty", ""],
+  ];
+  const proof = {
+    accountSeedHex: seed("alice").toString("hex"),
+    siteId: "shop.example",
+    nonce: pc.nonce,
+    accountId: pAccount,
+    text: proofText("shop.example", pc.nonce),
+    cases: proofCases.map(([name, p]) => ({ name, proof: p, valid: verifySignature(pAccount, proofText("shop.example", pc.nonce), p) })),
+  };
+
   return {
     format: "imani-login:1",
     about:
       "Conformance vectors for imani login memos (LOGIN_SPEC.md). Throwaway seeds only. " +
-      "memoCheck cases use context siteId=shop.example, network=test, now=" + NOW + " (seconds). " +
+      "Section proof: login proofs, sent to the site with the payment and never in the link; text is signed by the site key and checked against the memo's account id. memoCheck cases use context siteId=shop.example, network=test, now=" + NOW + " (seconds). " +
       "Reasons are checked in this order: memo_too_long, not_a_login_memo, memo_malformed, wrong_site, wrong_network, code_expired, bad_signature.",
     context: ctx,
     derive,
     build,
     memoCheck: check,
     singlePayee: payee,
+    proof,
   };
 }
 

@@ -164,6 +164,15 @@ export function createApp(cfg: DemoConfig): DemoApp {
       const c = await kit.newChallenge();
       return json(res, c);
     }
+    if (method === "POST" && path === "/login/challenge") {
+      // The page reserves the code for its own account id, so only its key can use the code.
+      const b = await body(req);
+      try {
+        return json(res, await kit.newChallenge(String(b.accountId ?? "")));
+      } catch {
+        throw new HttpError(400, "The sign-in request could not be handled.");
+      }
+    }
     if (method === "POST" && path === "/login/verify") {
       const b = await body(req);
       let lookup;
@@ -178,7 +187,7 @@ export function createApp(cfg: DemoConfig): DemoApp {
         throw e;
       }
       for (const s of lookup.serversContacted) contacted.add(s);
-      const r = await kit.verify(lookup.hex);
+      const r = await kit.verify(lookup.hex, typeof b.proof === "string" ? b.proof : undefined);
       if (!r.ok) return json(res, { ok: false, reason: r.reason, message: `${r.message} You are not signed in.`, serversContacted: lookup.serversContacted });
       return json(
         res,

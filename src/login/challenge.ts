@@ -15,6 +15,11 @@ export interface Challenge {
   expiresAt: number;
   /** Smallest payment, in zatoshis, that counts as a login. */
   minZat: number;
+  /**
+   * Optional: the account id (the user's site key) this code is reserved for. When set, only a memo made by
+   * that key can use the code, so someone who merely sees the code cannot burn it.
+   */
+  accountId?: string;
 }
 
 /**
@@ -112,6 +117,8 @@ export interface ChallengeOptions {
   now?: number;
   /** Random source override, for tests and conformance vectors. */
   random?: (n: number) => Uint8Array;
+  /** Reserve the code for this account id (43 characters, base64url). See Challenge.accountId. */
+  accountId?: string;
 }
 
 /** Make a one-time code and save it in the store. */
@@ -124,6 +131,7 @@ export async function createChallenge(store: ChallengeStore, opts: ChallengeOpti
   const minZat = opts.minZat ?? 10_000;
   if (!Number.isInteger(ttl) || ttl <= 0 || ttl > 86_400) throw new Error("Code lifetime must be 1 to 86,400 seconds.");
   if (!Number.isInteger(minZat) || minZat < 1) throw new Error("Minimum payment must be at least 1 zatoshi.");
+  if (opts.accountId !== undefined && !/^[A-Za-z0-9_-]{43}$/.test(opts.accountId)) throw new Error("Account id must be 43 base64url characters.");
   const now = opts.now ?? Math.floor(Date.now() / 1000);
   const challenge: Challenge = {
     nonce: makeNonce(opts.random),
@@ -132,6 +140,7 @@ export async function createChallenge(store: ChallengeStore, opts: ChallengeOpti
     network: opts.network,
     expiresAt: now + ttl,
     minZat,
+    ...(opts.accountId !== undefined ? { accountId: opts.accountId } : {}),
   };
   await store.put(challenge);
   return challenge;

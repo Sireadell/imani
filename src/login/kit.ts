@@ -25,6 +25,8 @@ export interface PublicChallenge {
   network: Network;
   expiresAt: number;
   minZat: number;
+  /** Echoed back when the code was reserved for one account id. */
+  accountId?: string;
 }
 
 /**
@@ -50,7 +52,11 @@ export class LoginKit {
     return this.#opts.clock ? this.#opts.clock() : Math.floor(Date.now() / 1000);
   }
 
-  async newChallenge(): Promise<PublicChallenge> {
+  /**
+   * Make a one-time code. Pass the page's account id (its site key's public half) to reserve the code for it:
+   * then only that key can use the code, and someone who merely sees it cannot burn it.
+   */
+  async newChallenge(accountId?: string): Promise<PublicChallenge> {
     const c = await createChallenge(this.#store, {
       siteId: this.#opts.siteId,
       siteAddress: this.#opts.siteAddress,
@@ -58,14 +64,25 @@ export class LoginKit {
       ttlSeconds: this.#opts.ttlSeconds,
       minZat: this.#opts.minZat,
       now: this.#now(),
+      accountId,
     });
-    return { nonce: c.nonce, siteId: c.siteId, siteAddress: c.siteAddress, network: c.network, expiresAt: c.expiresAt, minZat: c.minZat };
+    return {
+      nonce: c.nonce,
+      siteId: c.siteId,
+      siteAddress: c.siteAddress,
+      network: c.network,
+      expiresAt: c.expiresAt,
+      minZat: c.minZat,
+      ...(c.accountId !== undefined ? { accountId: c.accountId } : {}),
+    };
   }
 
-  verify(txHex: string): Promise<LoginSuccess | Failure> {
+  /** Check a login payment. `proof` comes from the user's page (buildLoginProof); without it nobody logs in. */
+  verify(txHex: string, proof?: string): Promise<LoginSuccess | Failure> {
     return verifyLoginPayment(txHex, this.#opts.viewingKey, this.#store, {
       siteId: this.#opts.siteId,
       siteAddress: this.#opts.siteAddress,
+      proof,
       now: this.#now(),
       readTx: this.#opts.readTx,
       log: this.#opts.log,

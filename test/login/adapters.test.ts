@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { LoginKit, MemorySessions, SignedSessions, zcashLogin, requireZcashLogin, zcashCredentials, zcashChallengeRoute } from "../../src/login/index.ts";
 import { T0 } from "./helpers.ts";
 import { SITE_ADDRESS, SITE_ID } from "./offline-plan.ts";
-import { ACCOUNT, SECRET, UFVK, fakeReq, fakeRes, makeKit, run, v } from "./fakes.ts";
+import { ACCOUNT, P, SECRET, UFVK, fakeReq, fakeRes, makeKit, run, v } from "./fakes.ts";
 
 test("Express: challenge, verify with a real transaction, cookie, protected route, logout", async () => {
   const sessions = new SignedSessions(SECRET);
@@ -15,7 +15,7 @@ test("Express: challenge, verify with a real transaction, cookie, protected rout
   assert.equal(c.res.headers["cache-control"], "no-store");
 
   // Body already parsed by express.json()
-  const ok = await run(mw, fakeReq("POST", "/zcash-login/verify", { body: { txHex: v.transactions.login_wallet_a.txHex } }));
+  const ok = await run(mw, fakeReq("POST", "/zcash-login/verify", { body: { txHex: v.transactions.login_wallet_a.txHex, proof: P.login_wallet_a } }));
   assert.equal(ok.res.statusCode, 200);
   assert.equal(ok.json.accountId, ACCOUNT);
   const setCookie = ok.res.headers["set-cookie"];
@@ -23,10 +23,10 @@ test("Express: challenge, verify with a real transaction, cookie, protected rout
   const cookie = setCookie.split(";")[0];
 
   // Raw JSON body, no body parser
-  const b = await run(mw, fakeReq("POST", "/zcash-login/verify", { raw: JSON.stringify({ txHex: v.transactions.login_wallet_b.txHex }) }));
+  const b = await run(mw, fakeReq("POST", "/zcash-login/verify", { raw: JSON.stringify({ txHex: v.transactions.login_wallet_b.txHex, proof: P.login_wallet_b }) }));
   assert.equal(b.json.accountId, ACCOUNT);
 
-  const replay = await run(mw, fakeReq("POST", "/zcash-login/verify", { body: { txHex: v.transactions.login_wallet_a.txHex } }));
+  const replay = await run(mw, fakeReq("POST", "/zcash-login/verify", { body: { txHex: v.transactions.login_wallet_a.txHex, proof: P.login_wallet_a } }));
   assert.equal(replay.res.statusCode, 401);
   assert.equal(replay.json.reason, "transaction_already_used");
 
@@ -64,7 +64,7 @@ test("Express: bad bodies get a plain 400 or 401, never a stack trace", async ()
 test("Express: plain session ids work and logout ends them", async () => {
   const sessions = new MemorySessions();
   const mw = zcashLogin({ kit: await makeKit(), sessions, basePath: "/auth/zec/", secureCookie: false, cookieName: "sid" });
-  const ok = await run(mw, fakeReq("POST", "/auth/zec/verify", { body: { txHex: v.transactions.login_wallet_a.txHex } }));
+  const ok = await run(mw, fakeReq("POST", "/auth/zec/verify", { body: { txHex: v.transactions.login_wallet_a.txHex, proof: P.login_wallet_a } }));
   const cookie = ok.res.headers["set-cookie"].split(";")[0];
   assert.ok(!ok.res.headers["set-cookie"].includes("Secure"));
   const id = cookie.split("=")[1];
@@ -85,10 +85,10 @@ test("signed sessions expire and refuse tampering", () => {
 test("Auth.js: credentials provider config logs in with a real transaction and refuses a replay", async () => {
   const provider = zcashCredentials(await makeKit());
   assert.equal(provider.id, "zcash");
-  assert.deepEqual(Object.keys(provider.credentials), ["txHex"]);
-  assert.deepEqual(await provider.authorize({ txHex: v.transactions.login_wallet_a.txHex }), { id: ACCOUNT });
-  assert.equal(await provider.authorize({ txHex: v.transactions.login_wallet_a.txHex }), null);
-  assert.deepEqual(await provider.authorize({ txHex: v.transactions.login_wallet_b.txHex }), { id: ACCOUNT });
+  assert.deepEqual(Object.keys(provider.credentials), ["txHex", "proof"]);
+  assert.deepEqual(await provider.authorize({ txHex: v.transactions.login_wallet_a.txHex, proof: P.login_wallet_a }), { id: ACCOUNT });
+  assert.equal(await provider.authorize({ txHex: v.transactions.login_wallet_a.txHex, proof: P.login_wallet_a }), null);
+  assert.deepEqual(await provider.authorize({ txHex: v.transactions.login_wallet_b.txHex, proof: P.login_wallet_b }), { id: ACCOUNT });
   assert.equal(await provider.authorize(undefined), null);
   assert.equal(await provider.authorize({ txHex: 42 }), null);
 });

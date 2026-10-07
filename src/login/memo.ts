@@ -52,6 +52,25 @@ export function buildLoginMemo(accountKey: AccountKey, challenge: Pick<Challenge
   return memo;
 }
 
+/** First line of the text a login proof signs. A different tag from the memo, so one signature can never pass for the other. */
+export const PROOF_TAG = "imani-login-proof:1";
+
+/** The exact text the account key signs for a login proof: tag, site id and one-time code. */
+export function proofText(siteId: string, nonce: string): string {
+  return [PROOF_TAG, `site:${siteId}`, `code:${nonce}`].join("\n");
+}
+
+/**
+ * Build the login proof for one challenge. Runs on the user's side, like the memo.
+ * Unlike the memo, the proof never goes into the payment link, the QR code or the payment. The page sends it
+ * to the site together with the transaction, so someone who only saw the link cannot make it.
+ */
+export function buildLoginProof(accountKey: AccountKey, challenge: Pick<Challenge, "siteId" | "nonce">): string {
+  if (!SITE_ID_PATTERN.test(challenge.siteId)) throw new Error("Site id in the login code is not valid.");
+  if (!NONCE_PATTERN.test(challenge.nonce)) throw new Error("Login code is not valid.");
+  return accountKey.siteKey(challenge.siteId).sign(proofText(challenge.siteId, challenge.nonce));
+}
+
 export type ParseResult = { ok: true; memo: LoginMemo } | { ok: false; reason: "not_a_login_memo" | "memo_malformed" | "memo_too_long" };
 
 const LINE_RULES: [string, RegExp][] = [

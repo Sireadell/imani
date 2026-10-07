@@ -40,10 +40,12 @@ export function fakeChain() {
     table.set(hex, [{ pool: "ironwood", amountZat, memo, transferType }]);
     return hex;
   };
+  /** The first memo of a fake transaction (what the user's page would pair a proof with). */
+  const memoOf = (hex: string): string | undefined => table.get(hex)?.[0]?.memo;
   const raw = (outputs: ReadOutput[]): string => {
     const hex = (++n).toString(16).padStart(8, "0");
     table.set(hex, outputs);
     return hex;
   };
-  return { readTx, pay, raw };
+  return { readTx, pay, raw, memoOf };
 }

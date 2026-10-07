@@ -1,7 +1,7 @@
 // The fixed plan behind test/login/vectors/login-offline.json. Both the input maker
 // (make-offline-inputs.ts) and the offline test use it, so the codes the test puts in its
 // store are exactly the ones the memos inside the transactions were signed for.
-import { buildLoginMemo, createChallenge, MemoryChallengeStore, type Challenge } from "../../src/login/index.ts";
+import { buildLoginMemo, buildLoginProof, createChallenge, MemoryChallengeStore, type Challenge } from "../../src/login/index.ts";
 import { T0, fixedKey, fixedRandom } from "./helpers.ts";
 
 export const SITE_ID = "shop.example";
@@ -56,4 +56,12 @@ export async function siteCodes(store = new MemoryChallengeStore()) {
 
 export function memoFor(p: PlannedPayment, codes: Record<string, Challenge>): string {
   return buildLoginMemo(fixedKey(p.account), codes[p.code]);
+}
+
+/** The login proof each planned payment's page would send along with it (label to proof). */
+export async function proofsByLabel(): Promise<Record<string, string>> {
+  const { codes } = await siteCodes();
+  const out: Record<string, string> = {};
+  for (const p of PAYMENTS) out[p.label] = buildLoginProof(fixedKey(p.account), codes[p.code]);
+  return out;
 }

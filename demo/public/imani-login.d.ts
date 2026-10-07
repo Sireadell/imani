@@ -14,6 +14,8 @@ export function buildLoginMemo(
   loginKey: Uint8Array,
   challenge: { siteId: string; network: string; nonce: string; expiresAt: number },
 ): Promise<{ memo: string; accountId: string }>;
+export function proofText(siteId: string, nonce: string): string;
+export function buildLoginProof(loginKey: Uint8Array, challenge: { siteId: string; nonce: string }): Promise<string>;
 export function formatZec(zat: number): string;
 export function parseZec(text: string): number | null;
 export function paymentLink(address: string, zat: number, memo: string): string;

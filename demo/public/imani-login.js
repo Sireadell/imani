@@ -96,6 +96,20 @@ export async function buildLoginMemo(loginKey, challenge) {
   return { memo, accountId };
 }
 
+/**
+ * The login proof for one sign-in code: a signature by the site key over the proof text. It goes to the
+ * shop together with the payment and is never put in the payment link, so someone who only saw the link
+ * cannot make it.
+ */
+export function proofText(siteId, nonce) {
+  return ["imani-login-proof:1", `site:${siteId}`, `code:${nonce}`].join("\n");
+}
+
+export async function buildLoginProof(loginKey, challenge) {
+  const { privateKey } = await siteKey(loginKey, challenge.siteId);
+  return b64url(new Uint8Array(await subtle().sign({ name: "Ed25519" }, privateKey, enc.encode(proofText(challenge.siteId, challenge.nonce)))));
+}
+
 /** ZIP 321 amount: decimal ZEC, at most 8 fraction digits, no trailing zeros. */
 export function formatZec(zat) {
   if (!Number.isSafeInteger(zat) || zat < 0) throw new Error("Amount out of range.");

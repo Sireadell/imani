@@ -8,7 +8,7 @@ import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import * as browser from "../../demo/public/imani-login.js";
-import { AccountKey, buildLoginMemo, buildPaymentUri, exportAccountKey, importAccountKey } from "../../src/login/index.ts";
+import { AccountKey, buildLoginMemo, buildLoginProof, buildPaymentUri, exportAccountKey, importAccountKey } from "../../src/login/index.ts";
 import { ConfigError, ROOT, loadConfig, simLoginParty, simLot } from "../../demo/config.ts";
 import { parsePaymentLink } from "../../demo/chain.ts";
 import { numberChanges } from "../../demo/lot.ts";
@@ -23,13 +23,15 @@ const seedOf = (label: string) => new Uint8Array(createHash("sha256").update(`im
 
 /** Sign in through the simulated wallet exactly as the browser page does. Returns the response JSON. */
 async function signIn(h: Harness, seed: Uint8Array) {
-  const challenge = JSON.parse((await h.get("/login/challenge")).text_);
+  const accountId = (await browser.siteKey(seed, "imani-shop.example")).accountId;
+  const challenge = JSON.parse((await h.post("/login/challenge", { accountId })).text_);
   const { memo } = await browser.buildLoginMemo(seed, challenge);
   const link = browser.paymentLink(challenge.siteAddress, challenge.minZat, memo);
   const sent = JSON.parse((await h.post("/sim/chain/send", { uri: link })).text_);
   assert.equal(sent.ok, true, sent.message);
-  const r = await h.post("/login/verify", { txid: sent.txid });
-  return { ...JSON.parse(r.text_), txid: sent.txid, memo, challenge };
+  const proof = await browser.buildLoginProof(seed, challenge);
+  const r = await h.post("/login/verify", { txid: sent.txid, proof });
+  return { ...JSON.parse(r.text_), txid: sent.txid, memo, challenge, proof };
 }
 
 test("the browser login code matches the kit byte for byte", async () => {
@@ -39,6 +41,7 @@ test("the browser login code matches the kit byte for byte", async () => {
   const fromKit = buildLoginMemo(AccountKey.fromSeed(seed), challenge);
   const fromBrowser = await browser.buildLoginMemo(seed, challenge);
   assert.equal(fromBrowser.memo, fromKit);
+  assert.equal(await browser.buildLoginProof(seed, challenge), buildLoginProof(AccountKey.fromSeed(seed), challenge));
   assert.equal(browser.paymentLink(challenge.siteAddress, challenge.minZat, fromBrowser.memo), buildPaymentUri(challenge, fromKit));
   const backup = browser.exportLoginKey(seed);
   assert.equal(backup, exportAccountKey(AccountKey.fromSeed(seed)));
@@ -101,14 +104,25 @@ test("sign-in in simulated mode, end to end: same account from a new address, no
     assert.notEqual(other.accountId, first.accountId);
 
     // The same payment cannot sign in twice.
-    const replay = JSON.parse((await h.post("/login/verify", { txid: first.txid })).text_);
+    const replay = JSON.parse((await h.post("/login/verify", { txid: first.txid, proof: first.proof })).text_);
     assert.equal(replay.ok, false);
     assert.equal(replay.reason, "transaction_already_used");
 
     // The same code cannot be paid twice, even from a new payment.
     const again = JSON.parse((await h.post("/sim/chain/send", { uri: browser.paymentLink(SITE.address, 10_000, first.memo) })).text_);
-    const reused = JSON.parse((await h.post("/login/verify", { txid: again.txid })).text_);
+    const reused = JSON.parse((await h.post("/login/verify", { txid: again.txid, proof: first.proof })).text_);
     assert.equal(reused.reason, "code_already_used");
+
+    // Front-running: someone who saw the link pays the same memo and posts it without the user's proof.
+    const accountId = (await browser.siteKey(seedOf("victim"), "imani-shop.example")).accountId;
+    const vc = JSON.parse((await h.post("/login/challenge", { accountId })).text_);
+    const vmemo = (await browser.buildLoginMemo(seedOf("victim"), vc)).memo;
+    const stolen = JSON.parse((await h.post("/sim/chain/send", { uri: browser.paymentLink(vc.siteAddress, vc.minZat, vmemo) })).text_);
+    const attack = await h.post("/login/verify", { txid: stolen.txid, proof: await browser.buildLoginProof(seedOf("attacker"), vc) });
+    assert.equal(JSON.parse(attack.text_).reason, "bad_proof");
+    assert.equal(attack.headers.get("set-cookie"), null, "no session for the attacker");
+    const mine = JSON.parse((await h.post("/login/verify", { txid: stolen.txid, proof: await browser.buildLoginProof(seedOf("victim"), vc) })).text_);
+    assert.equal(mine.ok, true, "the same payment still signs the real user in");
 
     // Junk is refused with a plain message and no sign-in.
     const junk = JSON.parse((await h.post("/login/verify", { txid: "nope" })).text_);
@@ -211,7 +225,7 @@ test("no key ever appears in a page, URL, cookie or log; the lot key leaves only
   try {
     const s1 = await signIn(h, seed);
     await signIn(h, seed);
-    await h.post("/login/verify", { txid: s1.txid });
+    await h.post("/login/verify", { txid: s1.txid, proof: s1.proof });
     await h.post("/sim/chain/send", { uri: browser.paymentLink(LOT.address, LOT.simulated.yourBid.amountZat, LOT.simulated.yourBid.memo) });
     for (const p of PAGES) await h.get(p);
     await h.post("/sim/clock", { back: "/lot" }, false);

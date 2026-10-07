@@ -1,5 +1,5 @@
 // Sign-in page. The login key is kept in this module's memory only.
-import { ed25519Supported, newLoginKey, exportLoginKey, importLoginKey, buildLoginMemo, paymentLink, formatZec, EXPORT_WARNING } from "./imani-login.js";
+import { ed25519Supported, newLoginKey, exportLoginKey, importLoginKey, buildLoginMemo, buildLoginProof, siteKey, paymentLink, formatZec, EXPORT_WARNING } from "./imani-login.js";
 
 const $ = (id) => document.getElementById(id);
 const root = $("signin");
@@ -81,8 +81,10 @@ if (!(await ed25519Supported())) {
 
 async function getCode() {
   showError("");
-  const r = await fetch("/login/challenge", { headers: { Accept: "application/json" }, credentials: "same-origin" });
-  challenge = await r.json();
+  // Reserve the code for this page's own account id, so someone who only sees the code cannot use it up.
+  const { accountId } = await siteKey(loginKey, root.dataset.site);
+  challenge = await postJson("/login/challenge", { accountId });
+  if (!challenge.nonce) return showError(challenge.message ?? "Could not get a sign-in code.");
   const { memo } = await buildLoginMemo(loginKey, challenge);
   link = paymentLink(challenge.siteAddress, challenge.minZat, memo);
   $("code").textContent = challenge.nonce;
@@ -110,7 +112,9 @@ async function simPay() {
 }
 
 async function verify(txid) {
-  const r = await postJson("/login/verify", { txid });
+  // The proof stays on this page and goes only to the shop. It is not in the payment link.
+  const proof = await buildLoginProof(loginKey, challenge);
+  const r = await postJson("/login/verify", { txid, proof });
   if (!r.ok) return showError(r.message);
   $("acct-short").textContent = r.accountId.slice(0, 6);
   $("acct-full").textContent = r.accountId;

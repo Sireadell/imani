@@ -7,9 +7,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { readTransaction } from "../../src/read.ts";
-import { buildPaymentUri, checkSinglePayee, verifyLoginPayment, MemoryChallengeStore, type Challenge } from "../../src/login/index.ts";
+import { buildLoginProof, buildPaymentUri, checkSinglePayee, verifyLoginPayment, MemoryChallengeStore, type Challenge } from "../../src/login/index.ts";
 import { T0, fixedKey } from "./helpers.ts";
-import { PAYMENTS, SITE_ADDRESS, SITE_ID, memoFor, siteCodes } from "./offline-plan.ts";
+import { PAYMENTS, SITE_ADDRESS, SITE_ID, memoFor, proofsByLabel, siteCodes } from "./offline-plan.ts";
+
+const P = await proofsByLabel();
 
 const v = JSON.parse(readFileSync(new URL("./vectors/login-offline.json", import.meta.url), "utf8"));
 const site = v.parties["site shop.example"];
@@ -19,7 +21,7 @@ const NOW = T0 + 60;
 async function freshSite() {
   const store = new MemoryChallengeStore();
   const { codes } = await siteCodes(store);
-  const verify = (label: string, now = NOW) => verifyLoginPayment(tx(label), site.ufvk, store, { siteId: SITE_ID, siteAddress: SITE_ADDRESS, now });
+  const verify = (label: string, now = NOW) => verifyLoginPayment(tx(label), site.ufvk, store, { siteId: SITE_ID, siteAddress: SITE_ADDRESS, now, proof: P[label] });
   return { store, codes, verify };
 }
 
@@ -96,12 +98,16 @@ test("replay and wrong-site cases fail with named reasons", async () => {
   }
 });
 
-test("honest limit: a copied memo works once, for whoever pays with it first", async () => {
-  // Whoever pays first with a code wins it; the second payment with the same code is refused.
-  const { verify } = await freshSite();
-  assert.equal((await verify("copied_memo_other_wallet")).ok, true);
-  const r = await verify("login_wallet_a");
-  assert.equal(!r.ok && r.reason, "code_already_used");
+test("a copied memo paid from someone else's wallet gets nobody in without the user's proof", async () => {
+  // The attacker saw the link and paid the same memo from their own wallet. They cannot make the proof.
+  const { verify, store } = await freshSite();
+  const attackerProof = buildLoginProof(fixedKey("attacker"), (await siteCodes()).codes.c1);
+  const stolen = await verifyLoginPayment(tx("copied_memo_other_wallet"), site.ufvk, store, { siteId: SITE_ID, siteAddress: SITE_ADDRESS, now: NOW, proof: attackerProof });
+  assert.equal(!stolen.ok && stolen.reason, "bad_proof");
+  const none = await verifyLoginPayment(tx("copied_memo_other_wallet"), site.ufvk, store, { siteId: SITE_ID, siteAddress: SITE_ADDRESS, now: NOW });
+  assert.equal(!none.ok && none.reason, "bad_proof");
+  // The refusals burned nothing: the real user's own payment of the same code still logs in.
+  assert.equal((await verify("login_wallet_a")).ok, true);
 });
 
 test("the other site's own viewing key refuses a memo made for shop.example", async () => {

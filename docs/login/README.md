@@ -18,7 +18,7 @@ app.use(zcashLogin({ kit, sessions: new SignedSessions(process.env.SESSION_SECRE
 app.get("/account", requireZcashLogin, (req, res) => res.json({ account: req.zcashAccount }));
 ```
 
-This adds `GET /zcash-login/challenge`, `POST /zcash-login/verify` (body `{"txHex": "..."}`, sets an `HttpOnly`, `Secure`, `SameSite=Lax` cookie) and `POST /zcash-login/logout`. On every other request `req.zcashAccount` holds the signed-in account id.
+This adds `GET /zcash-login/challenge` (an unreserved code), `POST /zcash-login/challenge` (body `{"accountId": "..."}`, a code reserved for that account id), `POST /zcash-login/verify` (body `{"txHex": "...", "proof": "..."}`; a login without a valid proof is refused; sets an `HttpOnly`, `Secure`, `SameSite=Lax` cookie) and `POST /zcash-login/logout`. On every other request `req.zcashAccount` holds the signed-in account id.
 
 ## Auth.js / NextAuth (5 lines plus imports)
 
@@ -33,22 +33,34 @@ export const { handlers, auth, signIn } = NextAuth({ providers: [Credentials(zca
 // app/api/zcash-login/challenge/route.ts:  export const GET = zcashChallengeRoute(kit);
 ```
 
-Sign in with `signIn("zcash", { txHex })`. The session's user id is the account id. The kit object must be shared between the challenge route and the provider (one module), so both use the same code store.
+Sign in with `signIn("zcash", { txHex, proof })`. For a reserved code, also export `POST = zcashReservedChallengeRoute(kit)`. The session's user id is the account id. The kit object must be shared between the challenge route and the provider (one module), so both use the same code store.
 
 ## On the user's side
 
 ```ts
-import { AccountKey, buildLoginMemo, buildPaymentUri, exportAccountKey, importAccountKey, EXPORT_WARNING } from "imani/login";
+import { AccountKey, buildLoginMemo, buildLoginProof, buildPaymentUri, exportAccountKey, importAccountKey, EXPORT_WARNING } from "imani/login";
 const key = AccountKey.generate();                    // once; keep exportAccountKey(key) as the backup, show EXPORT_WARNING
-const challenge = await (await fetch("/zcash-login/challenge")).json();
+// Ask for a code reserved for this key, so nobody else can use it up (siteId is your site's id):
+const accountId = key.siteKey(siteId).publicKey;
+const challenge = await (await fetch("/zcash-login/challenge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId }) })).json();
 const uri = buildPaymentUri(challenge, buildLoginMemo(key, challenge)); // show as a QR code or link for the wallet
+const proof = buildLoginProof(key, challenge); // keep this on the page; never put it in the link
+// After paying, send the transaction and the proof: POST /zcash-login/verify with { txHex, proof }
 ```
 
-The login key never leaves the device and never goes into a web address. The payment link carries the signed memo, because that is how the wallet receives it.
+The login key never leaves the device and never goes into a web address. The payment link carries the signed memo, because that is how the wallet receives it. It does not carry the login proof, which is what stops someone who only saw the link from logging in as you.
 
 ## Using your own store
 
 Put a database behind the `ChallengeStore` interface (`put`, `get`, `consume`, `markTransactionUsed`) and pass it as `store` to `LoginKit`. `consume` and `markTransactionUsed` must succeed for exactly one caller, for example an `UPDATE ... WHERE used = false` that reports one changed row.
+
+## Honest limits
+
+- Seeing the payment link or QR is not enough to log in as someone: the site also needs a login proof that only the login key can make and that is never in the link.
+- If a code is not reserved for an account id, anyone who sees the code can pay it first with their own key and use it up. They get their own account, not yours, but your payment is then refused and you must ask for a new code. Reserve the code (`POST /zcash-login/challenge` with your account id) and they cannot.
+- Anyone running code on your device or inside your page can make the proof. It stops people who only see the screen.
+
+Details: [LOGIN_SPEC.md](../../LOGIN_SPEC.md) section 9.
 
 ## Tests
 
@@ -58,6 +70,7 @@ npm run test:login
 
 | File | What it shows |
 |---|---|
+| `test/login/frontrun.test.ts` | A copied link or code does not log the attacker in or burn the user's code; the proof stays out of the link |
 | `test/login/core.test.ts` | Codes, memo format, payment link, every refusal by name, racing logins, separate stores, backup export |
 | `test/login/offline.test.ts` | Real transaction bytes: wallet A logs in, wallet B (different address) lands in the same account, Orchard and Ironwood both work, replays and wrong-site payments fail |
 | `test/login/adapters.test.ts` | Express middleware and Auth.js provider settings, driven with real transactions |

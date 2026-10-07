@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import * as reader from "../read.ts";
 import type { ReadOutput } from "../read.ts";
 import { networkOfViewingKey, type ChallengeStore, type Network } from "./challenge.ts";
-import { MEMO_TAG, parseLoginMemo, signedText, type LoginMemo } from "./memo.ts";
+import { MEMO_TAG, parseLoginMemo, proofText, signedText, type LoginMemo } from "./memo.ts";
 import { verifySignature } from "./key.ts";
 
 /** Every way a login can be refused. Each has one plain message that never repeats private data. */
@@ -19,6 +19,8 @@ export const FAILURES = {
   wrong_network: "The login memo was made for the other Zcash network.",
   code_expired: "The login code has expired. Ask the site for a new one.",
   bad_signature: "The login memo's signature does not match its account key.",
+  bad_proof: "The login proof is missing or does not match the memo's account key.",
+  wrong_account: "This login code was reserved for a different account key.",
   unknown_code: "This site never issued that login code.",
   code_already_used: "That login code was already used.",
   code_mismatch: "The login memo does not match the code the site issued.",
@@ -75,6 +77,11 @@ export interface VerifyOptions {
   now?: number;
   /** Swap the transaction reader (tests, or a different decoder). */
   readTx?: TxReader;
+  /**
+   * The login proof from the user's page (buildLoginProof). Without a valid proof for the memo's
+   * account key the login is refused, so a copied memo is worthless.
+   */
+  proof?: string;
   /** Optional event hook. It receives only event names such as "login_ok" or "login_failed:code_expired". */
   log?: (event: string) => void;
 }
@@ -117,16 +124,23 @@ async function verifyInner(txHex: string, siteUfvk: string, store: ChallengeStor
   if (logins.length > 1) return fail("several_login_memos");
   const output = logins[0];
 
-  // One transaction, one look. A copied transaction is refused even if its code is somehow still open.
-  if (!(await store.markTransactionUsed(tx.txid))) return fail("transaction_already_used");
-
   const checked = checkLoginMemo(output.memo, { siteId: opts.siteId, network, now });
   if (!checked.ok) return checked;
   const m = checked.memo;
 
+  // The submitter must hold the account key. This runs before anything is recorded or used up, so a
+  // stranger who submits someone else's payment (the transaction bytes are public) burns nothing.
+  if (typeof opts.proof !== "string" || !verifySignature(m.accountId, proofText(m.siteId, m.nonce), opts.proof)) {
+    return fail("bad_proof");
+  }
+
+  // One transaction, one look. A copied transaction is refused even if its code is somehow still open.
+  if (!(await store.markTransactionUsed(tx.txid))) return fail("transaction_already_used");
+
   const challenge = await store.get(m.nonce);
   if (!challenge) return fail("unknown_code");
   if (challenge.used) return fail("code_already_used");
+  if (challenge.accountId !== undefined && challenge.accountId !== m.accountId) return fail("wrong_account");
   if (challenge.siteId !== m.siteId) return fail("wrong_site");
   if (challenge.network !== m.network) return fail("wrong_network");
   if (challenge.expiresAt !== m.expiresAt) return fail("code_mismatch");
