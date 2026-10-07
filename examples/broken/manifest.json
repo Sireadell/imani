@@ -1,0 +1,41 @@
+{
+  "about": "Broken copies of examples/round-01. Each one changes one thing and must FAIL on exactly one check.",
+  "copies": [
+    {
+      "name": "01-extra-fake-bid",
+      "changed": "result.json",
+      "expectedFailingCheck": "bid-count",
+      "story": "The seller adds a bid of 1,200,000 that was never paid, and lists a refund for it."
+    },
+    {
+      "name": "02-wrong-bid-amount",
+      "changed": "result.json",
+      "expectedFailingCheck": "bid-amounts",
+      "story": "The seller reports Alice's bid as 2,900,000. The chain shows 3,000,000."
+    },
+    {
+      "name": "03-missing-refund",
+      "changed": "disclosure.json",
+      "expectedFailingCheck": "refunds-paid",
+      "story": "Carol lost but her refund was never sent. The seller's file still lists it."
+    },
+    {
+      "name": "04-short-refund",
+      "changed": "disclosure.json",
+      "expectedFailingCheck": "refunds-paid",
+      "story": "Carol lost and was refunded 1,400,000 instead of her full 1,500,000. The seller's file says 1,500,000."
+    },
+    {
+      "name": "05-wrong-clearing-price",
+      "changed": "result.json",
+      "expectedFailingCheck": "winners-and-price",
+      "story": "The seller says winners pay 1,600,000 each instead of 1,500,000, and shrinks the winners' change to match."
+    },
+    {
+      "name": "06-late-bid-counted",
+      "changed": "result.json",
+      "expectedFailingCheck": "no-late-bids",
+      "story": "Dave's bid arrived 5 blocks after the close. The seller counts it as a losing bid anyway."
+    }
+  ]
+}
