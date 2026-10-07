@@ -60,3 +60,21 @@ test("every case agrees with the librustzcash record stored in the vector file",
     }
   }
 });
+
+test("auction round: the lot key reads every transaction like librustzcash, and txids match", async () => {
+  const { readTransactionWithId } = await import("../src/read.ts");
+  const a = JSON.parse(readFileSync(new URL("./vectors/auction-round.json", import.meta.url), "utf8"));
+  const lotKey = a.parties["lot LOT-01"].ufvk;
+  assert.equal(Object.keys(a.transactions).length, 12);
+  for (const [name, t] of Object.entries<any>(a.transactions)) {
+    const got = readTransactionWithId(t.txHex, lotKey);
+    assert.equal(got.txid, t.txid, name);
+    const want = t.lotKeySees.map((o: any) => ({
+      pool: o.pool,
+      amountZat: o.amountZat,
+      memo: o.memo,
+      transferType: o.transferType.toLowerCase(),
+    }));
+    assert.deepEqual(got.outputs, want, name);
+  }
+});
