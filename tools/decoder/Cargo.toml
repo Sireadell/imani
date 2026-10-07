@@ -1,0 +1,30 @@
+[package]
+name = "imani-decoder"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "Reads Zcash shielded outputs with a unified full viewing key. A thin WebAssembly wrapper around librustzcash."
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# librustzcash, same versions as zcash-devtool commit 5a26ee8 (see README.md).
+zcash_client_backend = { version = "0.24.0", default-features = false, features = ["orchard"] }
+zcash_primitives = { version = "0.30.0", default-features = false }
+zcash_keys = { version = "0.16.1", default-features = false, features = ["orchard", "sapling"] }
+zcash_protocol = { version = "0.10.3", default-features = false }
+orchard = { version = "0.15.0", default-features = false }
+hex = "0.4"
+serde_json = "1"
+
+# WebAssembly glue
+wasm-bindgen = "=0.2.126"
+js-sys = "=0.3.103"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"

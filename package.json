@@ -9,9 +9,6 @@
     "test": "tsx --test test/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "@ledgerhq/zcash-decrypt": "^0.2.0"
-  },
   "devDependencies": {
     "@types/node": "^26.6.4",
     "tsx": "^4.23.15",

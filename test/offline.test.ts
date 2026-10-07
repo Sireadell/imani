@@ -6,57 +6,57 @@ import { readTransaction } from "../src/read.ts";
 // Offline vectors made by tools/gen-vectors: throwaway keys, invented funding, never broadcast.
 const v = JSON.parse(readFileSync(new URL("./vectors/offline-vectors.json", import.meta.url), "utf8"));
 const { buyer, seller, stranger } = v.parties;
-const payment = v.cases.orchard_v5_payment;
-const refund = v.cases.orchard_v5_refund;
+const PAY_MEMO = "imani order 42: 2 bags of rice";
+const REFUND_MEMO = "imani refund for order 42";
 
-test("seller's viewing key reads an incoming payment with its memo", () => {
-  const out = readTransaction(payment.txHex, seller.ufvk);
-  assert.equal(out.length, 1);
-  assert.deepEqual(out[0], {
-    pool: "orchard",
-    amountZat: 1_250_000,
-    memo: "imani order 42: 2 bags of rice",
-    transferType: "incoming",
-  });
-});
+// One row per case in the spike table. Orchard under NU6.1 (v5), Orchard under NU6.2 (v5),
+// and Ironwood under NU6.3 (v6).
+const payments = [
+  { name: "orchard_v5_payment", pool: "orchard" },
+  { name: "orchard_nu6_2_payment", pool: "orchard" },
+  { name: "ironwood_v6_payment", pool: "ironwood" },
+] as const;
+const refunds = [
+  { name: "orchard_v5_refund", pool: "orchard" },
+  { name: "ironwood_v6_refund", pool: "ironwood" },
+] as const;
 
-test("seller's viewing key reads its own refund as outgoing", () => {
-  const out = readTransaction(refund.txHex, seller.ufvk);
-  assert.equal(out.length, 1);
-  assert.deepEqual(out[0], {
-    pool: "orchard",
-    amountZat: 400_000,
-    memo: "imani refund for order 42",
-    transferType: "outgoing",
-  });
-});
-
-test("buyer's viewing key reads the same refund as incoming", () => {
-  const out = readTransaction(refund.txHex, buyer.ufvk);
-  assert.equal(out.length, 1);
-  assert.equal(out[0].transferType, "incoming");
-  assert.equal(out[0].amountZat, 400_000);
-});
-
-test("a stranger's viewing key sees nothing", () => {
-  assert.deepEqual(readTransaction(payment.txHex, stranger.ufvk), []);
-  assert.deepEqual(readTransaction(refund.txHex, stranger.ufvk), []);
-});
-
-// Known gaps in @ledgerhq/zcash-decrypt 0.2.0, recorded as they really behave.
-// librustzcash reads all of these correctly (see librustzcashDecrypt in the vector file).
-// If a later reader passes them, these tests fail on purpose so the gap can be closed.
-
-test("known gap: NU6.2 transactions are rejected (unknown branch id)", () => {
-  const c = v.cases.orchard_nu6_2_payment;
-  assert.equal(c.librustzcashDecrypt.seller[0].transferType, "Incoming");
-  assert.throws(() => readTransaction(c.txHex, seller.ufvk), /invalid consensus branch id 0x5437f330/);
-});
-
-for (const name of ["ironwood_v6_payment", "ironwood_v6_refund"]) {
-  test(`known gap: Ironwood (${name}) cannot be parsed`, () => {
-    const c = v.cases[name];
-    assert.equal(c.librustzcashDecrypt.seller.length, 1);
-    assert.throws(() => readTransaction(c.txHex, seller.ufvk), /Unknown transaction format/);
+for (const { name, pool } of payments) {
+  test(`${name}: seller's viewing key reads the incoming payment with its memo`, () => {
+    const out = readTransaction(v.cases[name].txHex, seller.ufvk);
+    assert.deepEqual(out, [{ pool, amountZat: 1_250_000, memo: PAY_MEMO, transferType: "incoming" }]);
   });
 }
+
+for (const { name, pool } of refunds) {
+  test(`${name}: seller's viewing key reads its own refund as outgoing`, () => {
+    const out = readTransaction(v.cases[name].txHex, seller.ufvk);
+    assert.deepEqual(out, [{ pool, amountZat: 400_000, memo: REFUND_MEMO, transferType: "outgoing" }]);
+  });
+
+  test(`${name}: buyer's viewing key reads the same refund as incoming`, () => {
+    const out = readTransaction(v.cases[name].txHex, buyer.ufvk);
+    assert.deepEqual(out, [{ pool, amountZat: 400_000, memo: REFUND_MEMO, transferType: "incoming" }]);
+  });
+}
+
+test("a stranger's viewing key sees nothing in any case", () => {
+  for (const name of Object.keys(v.cases)) {
+    assert.deepEqual(readTransaction(v.cases[name].txHex, stranger.ufvk), [], name);
+  }
+});
+
+test("every case agrees with the librustzcash record stored in the vector file", () => {
+  for (const [name, c] of Object.entries<any>(v.cases)) {
+    for (const party of ["buyer", "seller", "stranger"]) {
+      const got = readTransaction(c.txHex, v.parties[party].ufvk);
+      const want = c.librustzcashDecrypt[party].map((o: any) => ({
+        pool: o.pool,
+        amountZat: o.amountZat,
+        memo: o.memo,
+        transferType: o.transferType.toLowerCase(),
+      }));
+      assert.deepEqual(got, want, `${name} / ${party}`);
+    }
+  }
+});
