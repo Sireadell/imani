@@ -215,7 +215,126 @@ fn rust_check(tx: &Transaction, height: u32, viewer: &Party) -> Vec<Value> {
 }
 
 fn main() {
-    let out_path = std::env::args().nth(1).unwrap_or_else(|| "offline-vectors.json".into());
+    let args: Vec<String> = std::env::args().collect();
+    if args.get(1).map(String::as_str) == Some("auction") {
+        auction(args.get(2).cloned().unwrap_or_else(|| "auction-round.json".into()));
+    } else {
+        reader_cases(args.get(1).cloned().unwrap_or_else(|| "offline-vectors.json".into()));
+    }
+}
+
+/// Lot used by the auction checker examples.
+const LOT_ID: &str = "LOT-01";
+/// Last block height at which a bid still counts.
+const CLOSE_HEIGHT: u32 = 4_200_100;
+/// Number of identical items sold in the lot, and the lowest price the seller accepts.
+const ITEM_COUNT: u64 = 2;
+const RESERVE_ZAT: u64 = 1_000_000;
+
+fn write_tx(tx: &Transaction, height: u32) -> Vec<u8> {
+    let mut raw = vec![];
+    tx.write(&mut raw).unwrap();
+    let branch = BranchId::for_height(&TEST_NETWORK, BlockHeight::from_u32(height));
+    Transaction::read(&raw[..], branch).expect("round trip");
+    raw
+}
+
+/// A fake 3-bid sealed-bid round for one lot, plus one late bid and a few extra
+/// transactions used to build broken copies and guard tests. Every transaction is
+/// Ironwood, version 6, testnet NU6.3 rules. Bids are paid into the lot address with
+/// a "bid:<lotId>:<nonce>" memo. Refunds are paid from the lot (recorded under the
+/// lot's outgoing viewing key) with a "refund:<lotId>:<bid txid>" memo.
+fn auction(out_path: String) {
+    let lot = party("lot LOT-01");
+    let alice = party("bidder alice");
+    let bob = party("bidder bob");
+    let carol = party("bidder carol");
+    let dave = party("bidder dave");
+    let stranger = party("stranger");
+
+    let mut txs = serde_json::Map::new();
+    let mut txids: HashMap<&str, String> = HashMap::new();
+
+    let add = |label: &'static str, height: u32, outs: Vec<Out>, txs: &mut serde_json::Map<String, Value>| {
+        eprintln!("building {label} ...");
+        let tx = build_tx(height, Pool::Ironwood, &outs, &format!("auction {label}"));
+        let raw = write_tx(&tx, height);
+        let txid = tx.txid().to_string();
+        txs.insert(
+            label.into(),
+            json!({
+                "height": height,
+                "txid": txid,
+                "txHex": hex::encode(&raw),
+                "outputs": outs.iter().map(|o| json!({
+                    "to": o.to.name,
+                    "senderOvk": o.from_ovk.map(|p| p.name),
+                    "amountZat": o.value,
+                    "memo": o.memo,
+                })).collect::<Vec<_>>(),
+                "lotKeySees": rust_check(&tx, height, &lot),
+            }),
+        );
+        txid
+    };
+
+    // Bids: (label, bidder, amount, memo, height). Dave's bid lands after the close.
+    let bids: [(&'static str, &Party, u64, &str, u32); 4] = [
+        ("bid_alice", &alice, 3_000_000, "bid:LOT-01:q7k2", 4_200_010),
+        ("bid_bob", &bob, 2_000_000, "bid:LOT-01:m3x8", 4_200_020),
+        ("bid_carol", &carol, 1_500_000, "bid:LOT-01:t5w1", 4_200_030),
+        ("bid_dave_late", &dave, 1_200_000, "bid:LOT-01:z9p4", 4_200_105),
+    ];
+    for (label, _who, value, memo, height) in bids.iter() {
+        let id = add(*label, *height, vec![Out { from_ovk: None, to: &lot, value: *value, memo: *memo }], &mut txs);
+        txids.insert(*label, id);
+    }
+
+    // Extra payments into the lot address, used only by broken copies and tests.
+    let extras: [(&'static str, &Party, u64, &str, u32); 3] = [
+        ("stray_payment", &stranger, 50_000, "coffee order 7", 4_200_040),
+        ("bid_other_lot", &stranger, 800_000, "bid:LOT-02:r2d6", 4_200_050),
+        ("bid_alice_replay", &alice, 3_000_000, "bid:LOT-01:q7k2", 4_200_060),
+    ];
+    for (label, _who, value, memo, height) in extras.iter() {
+        add(*label, *height, vec![Out { from_ovk: None, to: &lot, value: *value, memo: *memo }], &mut txs);
+    }
+
+    // Refunds: (label, recipient, amount, bid label, height). With 2 items, a reserve of
+    // 1,000,000 and the uniform price rule (clearing price = highest losing bid, never below
+    // the reserve), Alice and Bob win at 1,500,000 each and get the rest of their bid back,
+    // Carol loses and gets all of it back, and Dave's late bid is returned in full.
+    // refund_carol_short pays Carol 100,000 too little, for one broken copy.
+    let refunds: [(&'static str, &Party, u64, &str, u32); 5] = [
+        ("refund_alice_change", &alice, 1_500_000, "bid_alice", 4_200_120),
+        ("refund_bob_change", &bob, 500_000, "bid_bob", 4_200_121),
+        ("refund_carol", &carol, 1_500_000, "bid_carol", 4_200_122),
+        ("refund_dave_late", &dave, 1_200_000, "bid_dave_late", 4_200_123),
+        ("refund_carol_short", &carol, 1_400_000, "bid_carol", 4_200_122),
+    ];
+    for (label, who, value, bid_label, height) in refunds.iter() {
+        let memo = format!("refund:{LOT_ID}:{}", txids[*bid_label]);
+        add(*label, *height, vec![Out { from_ovk: Some(&lot), to: who, value: *value, memo: &memo }], &mut txs);
+    }
+
+    let mut parties = serde_json::Map::new();
+    for p in [&lot, &alice, &bob, &carol, &dave, &stranger] {
+        parties.insert(p.name.into(), json!({ "ufvk": p.ufvk.encode(&TEST_NETWORK), "address": p.ua }));
+    }
+    let doc = json!({
+        "source": "Generated offline by imani tools/gen-vectors (librustzcash transaction builder). Throwaway test seeds, invented funding coins, never broadcast.",
+        "network": "test",
+        "lotId": LOT_ID,
+        "closeHeight": CLOSE_HEIGHT,
+        "rules": { "itemCount": ITEM_COUNT, "reserveZat": RESERVE_ZAT },
+        "parties": parties,
+        "transactions": txs,
+    });
+    fs::write(&out_path, serde_json::to_string_pretty(&doc).unwrap()).unwrap();
+    eprintln!("wrote {out_path}");
+}
+
+fn reader_cases(out_path: String) {
     let buyer = party("buyer");
     let seller = party("seller");
     let stranger = party("stranger");
