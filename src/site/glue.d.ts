@@ -1,0 +1,22 @@
+// Made up by tools/site-build.ts from vendor/decoder/imani_decoder.js. See that file.
+declare module "imani-decoder-glue" {
+  export function initGlue(): Promise<void>;
+  export function wasmBytes(): Uint8Array;
+  export function decryptTx(txHex: string, ufvk: string): any;
+  export function decoderInfo(): any;
+}
+declare module "imani-examples" {
+  export interface ExampleEntry {
+    id: string;
+    group: "honest" | "tampered" | "scan-honest" | "scan-tampered";
+    title: string;
+    story: string;
+    expectedFailingCheck: string | null;
+    disclosure: string;
+    result: string;
+    chain: string | null;
+  }
+  export const examples: ExampleEntry[];
+  /** Content of each file, by short hash. Identical files are stored once. */
+  export const blobs: Record<string, string>;
+}

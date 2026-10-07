@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="description" content="Check that a sealed-bid auction on Zcash was fair. Runs in your browser and uploads nothing.">
+<title>Imani auction check</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1>Imani auction check</h1>
+    <p class="lead">Was this sealed-bid auction on Zcash run fairly? This page works it out again from the seller's own files. It runs in your browser and uploads nothing.</p>
+    <p class="servers" id="servers-top"><strong>Servers contacted: none.</strong> This page makes no network calls after it loads. Your files stay on your device.</p>
+  </div>
+</header>
+
+<noscript><div class="wrap"><p class="notice bad">This page needs JavaScript to run the checks. It still sends nothing anywhere.</p></div></noscript>
+
+<main class="wrap">
+  <section aria-labelledby="pick-h">
+    <h2 id="pick-h">1. Pick something to check</h2>
+    <p class="muted">The page opens on a small made-up test auction. Every example uses fake test-network payments built with throwaway keys.</p>
+    <div class="row">
+      <button type="button" class="btn primary" id="btn-honest">Honest round (round 01)</button>
+      <button type="button" class="btn warn" id="btn-tamper">Try a tampered copy</button>
+    </div>
+    <p class="muted small" id="tamper-count">Each press loads the next of 6 tampered copies.</p>
+    <div class="chips" id="chips-tampered" role="group" aria-label="Tampered copies"></div>
+    <h3>With a full scan of every block</h3>
+    <p class="muted small">The scan also reads every block of the auction from a saved copy of the chain, so a payment the seller left out cannot hide.</p>
+    <div class="chips" id="chips-scan" role="group" aria-label="Scan examples"></div>
+  </section>
+
+  <section aria-labelledby="own-h">
+    <h2 id="own-h">Or check your own files</h2>
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Drop your disclosure file and result file here, or press to choose files">
+      <p><strong>Drop your files here</strong>, or press to choose them.</p>
+      <p class="muted small">You need the seller's disclosure file and result file. A saved chain file (optional) adds the full scan. The page works out which file is which. The files are read on this device only.</p>
+      <input type="file" id="files" accept=".json,application/json" multiple hidden>
+    </div>
+    <p class="muted small" id="own-status" aria-live="polite"></p>
+  </section>
+
+  <section aria-labelledby="out-h" id="results">
+    <h2 id="out-h">2. Result</h2>
+    <p class="story" id="story"></p>
+    <div id="outcome" aria-live="polite"><p class="muted">Loading the reader...</p></div>
+    <label class="toggle"><input type="checkbox" id="discreet"> Discreet mode: hide amounts and memos</label>
+  </section>
+
+  <section aria-labelledby="src-h">
+    <h2 id="src-h">Where each number comes from</h2>
+    <div class="legend">
+      <div class="src chain"><h3>From the chain</h3><p>Bid amounts, bid memos, refund amounts and refund memos. Read from the lot's transactions with the lot's one-time viewing key. Transaction ids are recomputed from the bytes.</p></div>
+      <div class="src seller"><h3>From the seller's file</h3><p>The bid list, winners, clearing price, reserve outcome and refund list the seller claims. The checker works these out again and compares.</p></div>
+      <div class="src disc"><h3>From the disclosure file</h3><p>Close height, the block height of each transaction, item count and reserve. Without the scan level these heights are taken on the seller's word.</p></div>
+    </div>
+  </section>
+
+  <section class="limits" aria-labelledby="lim-h">
+    <h2 id="lim-h">What this check cannot do</h2>
+    <ul>
+      <li>It only works when the seller shares the lot's one-time viewing key. A viewing key shows payments and can never spend them. Without it only the basic checks run.</li>
+      <li>The seller can see bids as they arrive. The check proves that the counting, amounts, price and refunds are right. It does not prove the seller never looked.</li>
+      <li>This is not a zero-knowledge proof. You recompute the result yourself from data the seller chose to share.</li>
+      <li>A shared viewing key cannot be taken back. Anyone who has it can see that lot's payments for good, so each lot needs its own fresh key.</li>
+      <li>Without the scan level, block heights and the list of payments come from the seller's files. With it, a saved chain file covers every block, but you still trust where that file came from.</li>
+      <li>A refund is shown to have left the lot with the right amount. It is shown to have reached the bidder only when that bidder supplies their own viewing key.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="priv-h">
+    <h2 id="priv-h">About your files and keys</h2>
+    <ul>
+      <li>Nothing is uploaded. The page has no code that talks to a server, and its security policy forbids it (<code>connect-src 'none'</code>).</li>
+      <li>Keys are checked on this device. Seed phrases and spending keys are refused. The lot key is never shown on this page.</li>
+      <li>Nothing is saved in cookies or browser storage. Close the tab and it is gone.</li>
+    </ul>
+    <p class="muted small" id="reader-line"></p>
+  </section>
+</main>
+
+<footer class="wrap muted small">
+  <p>Imani is open source (MIT). The command line tool runs the same checks and also works offline.</p>
+</footer>
+<script src="app.js" defer></script>
+</body>
+</html>
