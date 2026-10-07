@@ -45,7 +45,7 @@ The checker works the result out again from the chain numbers and compares it wi
 Two small tools for private Zcash apps.
 
 1. **Check a sealed-bid auction.** After an auction closes, the seller shares a one-time read-only key for that lot. imani reads the lot's private payments with that key, works out the bid count, amounts, winners, price and refunds again, and compares them to the seller's published result: PASS or FAIL.
-2. **Sign in with a private Zcash wallet.** A login button any website can add. Your account is tied to a login key, so it survives a change of wallet address. (Not built yet.)
+2. **Sign in with a private Zcash wallet.** A login button any website can add. Your account is tied to a login key, so it survives a change of wallet address.
 
 The file formats, price rule, every check and the known limits are in [SPEC.md](SPEC.md).
 
