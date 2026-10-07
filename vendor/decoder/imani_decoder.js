@@ -1,10 +1,29 @@
 /* @ts-self-types="./imani_decoder.d.ts" */
 
 /**
+ * JavaScript entry point: `decoderInfo()` returns
+ * `{ decoder, librustzcash: {crate: version}, highestUpgrade, highestBranchId,
+ *    transactionVersions, upgrades: [{ name, branchId, activationHeight: { main, test } }] }`.
+ * @returns {any}
+ */
+function decoderInfo() {
+    const ret = wasm.decoderInfo();
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+exports.decoderInfo = decoderInfo;
+
+/**
  * JavaScript entry point: `decryptTx(txHex, ufvk)` returns
- * `{ txid, txVersion, branchId, orchard: [...], ironwood: [...], sapling: [...] }`.
+ * `{ txid, txVersion, branchId, upgrade, shape, orchard: [...], ironwood: [...], sapling: [...] }`.
+ * `shape` counts the public parts (transparent inputs and outputs, Sapling spends and
+ * outputs, Orchard and Ironwood actions).
  * Each output is `{ index, amountZat, memo, memoHex, transferType }`.
  * Throws an Error with a readable message on a bad key or a bad transaction.
+ * A transaction from a network upgrade this build does not know throws
+ * "unsupported network upgrade 0x...".
  * @param {string} tx_hex
  * @param {string} ufvk
  * @returns {any}

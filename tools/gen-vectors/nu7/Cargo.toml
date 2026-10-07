@@ -1,0 +1,30 @@
+[package]
+name = "imani-gen-nu7"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "Builds offline NU7 testnet transactions for the imani reader tests."
+
+[[bin]]
+name = "gen_nu7"
+path = "../gen_nu7.rs"
+
+# Same librustzcash pre-releases as tools/decoder (the first ones that know NU7).
+[dependencies]
+zcash_client_backend = { version = "=0.25.0-pre.1", default-features = false, features = ["orchard"] }
+zcash_primitives = { version = "=0.31.0-pre.1", features = ["transparent-inputs"] }
+zcash_proofs = { version = "=0.31.0-pre.1", features = ["bundled-prover"] }
+zcash_keys = { version = "=0.17.0-pre.1", features = ["orchard", "sapling"] }
+zcash_protocol = { version = "=0.11.0-pre.0" }
+transparent = { package = "zcash_transparent", version = "=0.11.0-pre.1", features = ["transparent-inputs"] }
+orchard = { version = "=0.16.0" }
+zip32 = "0.3"
+secp256k1 = "0.33"
+rand_core = "0.10"
+blake2b_simd = "1"
+hex = "0.4"
+serde_json = "1"
+
+[profile.release]
+opt-level = 3

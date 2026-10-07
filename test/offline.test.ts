@@ -78,3 +78,37 @@ test("auction round: the lot key reads every transaction like librustzcash, and 
     assert.deepEqual(got.outputs, want, name);
   }
 });
+
+// NU7 vectors made by tools/gen-vectors/gen_nu7.rs: Ironwood, version 6, testnet NU7 rules
+// (branch id 0x77190ad9), same throwaway buyer, seller and stranger keys as above.
+const n = JSON.parse(readFileSync(new URL("./vectors/nu7-offline.json", import.meta.url), "utf8"));
+
+test("NU7 payment: seller reads it as incoming with its memo, stranger sees nothing", async () => {
+  const { readTransactionWithId } = await import("../src/read.ts");
+  const c = n.cases.ironwood_nu7_payment;
+  assert.equal(c.branchId, "0x77190ad9");
+  const got = readTransactionWithId(c.txHex, n.parties.seller.ufvk);
+  assert.equal(got.txid, c.txid);
+  assert.deepEqual(got.outputs, [{ pool: "ironwood", amountZat: 1_250_000, memo: "imani order 43: NU7 rules", transferType: "incoming" }]);
+  assert.deepEqual(readTransaction(c.txHex, n.parties.stranger.ufvk), []);
+});
+
+test("NU7 refund: seller reads it as outgoing, buyer as incoming, both with the memo", () => {
+  const c = n.cases.ironwood_nu7_refund;
+  const want = { pool: "ironwood", amountZat: 400_000, memo: "imani refund for order 43" };
+  assert.deepEqual(readTransaction(c.txHex, n.parties.seller.ufvk), [{ ...want, transferType: "outgoing" }]);
+  assert.deepEqual(readTransaction(c.txHex, n.parties.buyer.ufvk), [{ ...want, transferType: "incoming" }]);
+  assert.deepEqual(readTransaction(c.txHex, n.parties.stranger.ufvk), []);
+});
+
+// The NU7 generator encodes the keys without the transparent part, so the key text is
+// shorter, but it is the same seed and account: same addresses, same reads.
+test("NU7 vectors use the same wallets as the older vectors", () => {
+  for (const p of ["buyer", "seller", "stranger"]) assert.equal(n.parties[p].address, v.parties[p].address, p);
+  assert.deepEqual(readTransaction(v.cases.ironwood_v6_payment.txHex, n.parties.seller.ufvk), [
+    { pool: "ironwood", amountZat: 1_250_000, memo: PAY_MEMO, transferType: "incoming" },
+  ]);
+  assert.deepEqual(readTransaction(n.cases.ironwood_nu7_payment.txHex, v.parties.seller.ufvk), [
+    { pool: "ironwood", amountZat: 1_250_000, memo: "imani order 43: NU7 rules", transferType: "incoming" },
+  ]);
+});

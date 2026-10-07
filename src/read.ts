@@ -5,7 +5,29 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const decoder = require("../vendor/decoder/imani_decoder.js") as {
   decryptTx(txHex: string, ufvk: string): DecodedTx;
+  decoderInfo(): DecoderInfo;
 };
+
+/** What the bundled decoder can read. */
+export interface DecoderInfo {
+  decoder: string;
+  /** librustzcash crate versions compiled into the decoder, for example { zcash_primitives: "0.31.0-pre.1" }. */
+  librustzcash: Record<string, string>;
+  /** Newest network upgrade the decoder reads, for example "NU7". */
+  highestUpgrade: string;
+  /** Its consensus branch id, for example "0x77190ad9". */
+  highestBranchId: string;
+  transactionVersions: number[];
+  upgrades: { name: string; branchId: string; activationHeight: { main: number | null; test: number | null } }[];
+}
+
+/**
+ * Versions and the newest network upgrade this build of the decoder understands. A transaction
+ * from a newer upgrade is refused with "unsupported network upgrade 0x...".
+ */
+export function decoderInfo(): DecoderInfo {
+  return decoder.decoderInfo();
+}
 
 export type TransferType = "incoming" | "outgoing" | "internal";
 export type Pool = "orchard" | "ironwood" | "sapling";
@@ -29,6 +51,7 @@ interface DecodedTx {
   txid: string;
   txVersion: number;
   branchId: string;
+  upgrade: string;
   orchard: DecodedOutput[];
   ironwood: DecodedOutput[];
   sapling: DecodedOutput[];

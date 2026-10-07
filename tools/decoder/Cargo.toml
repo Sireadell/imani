@@ -10,18 +10,24 @@ description = "Reads Zcash shielded outputs with a unified full viewing key. A t
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-# librustzcash, same versions as zcash-devtool commit 5a26ee8 (see README.md).
-zcash_client_backend = { version = "0.24.0", default-features = false, features = ["orchard"] }
-zcash_primitives = { version = "0.30.0", default-features = false }
-zcash_keys = { version = "0.16.1", default-features = false, features = ["orchard", "sapling"] }
-zcash_protocol = { version = "0.10.3", default-features = false }
-orchard = { version = "0.15.0", default-features = false }
+# librustzcash. NU7 (branch id 0x77190ad9) is only known by the 2026-10 pre-releases on
+# crates.io, so they are pinned exactly. They match librustzcash commit eb3e586765.
+zcash_client_backend = { version = "=0.25.0-pre.1", default-features = false, features = ["orchard"] }
+zcash_primitives = { version = "=0.31.0-pre.1", default-features = false }
+zcash_keys = { version = "=0.17.0-pre.1", default-features = false, features = ["orchard", "sapling"] }
+zcash_protocol = { version = "=0.11.0-pre.0", default-features = false }
+orchard = { version = "=0.16.0", default-features = false }
 hex = "0.4"
 serde_json = "1"
 
 # WebAssembly glue
 wasm-bindgen = "=0.2.126"
 js-sys = "=0.3.103"
+
+# rand 0.10 (pulled in by orchard 0.16) uses getrandom 0.4, which needs its JavaScript
+# backend switched on to compile for WebAssembly. The decoder itself never draws randomness.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.4", features = ["wasm_js"] }
 
 [profile.release]
 opt-level = "z"

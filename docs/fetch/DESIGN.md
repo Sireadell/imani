@@ -111,14 +111,13 @@ a saved file (the default).
 
 ## Known limits (2026-10-07)
 
-- **Current testnet transactions cannot be verified.** Testnet activated NU7 (branch id
-  0x77190ad9, ZIP 259) at height 4,465,026. The vendored librustzcash (zcash_primitives
-  0.30.1) does not know that branch id, so it cannot parse any testnet transaction mined
-  after that height. The helper fails closed with "unknown consensus branch id". Older
-  testnet transactions (for example the one at height 3,811,711 in the test vectors) fetch
-  and verify fine through both testnet sources. ZIP 259 says the mainnet NU7 height is to be
-  set on October 20, so mainnet will hit the same wall once NU7 activates there. Fix: rebuild
-  `vendor/decoder` against a librustzcash release that knows NU7.
+- **NU7 (fixed 2026-10-07).** Testnet activated NU7 (branch id 0x77190ad9, ZIP 259) at
+  height 4,465,026. The first decoder build (zcash_primitives 0.30.1) did not know that
+  branch id and failed closed on every newer testnet transaction. `vendor/decoder` is now
+  built on the librustzcash pre-releases that know NU7 (zcash_primitives 0.31.0-pre.1), and
+  real NU7 testnet transactions fetch and verify through both testnet sources. A branch id
+  the decoder does not know still fails closed, now with "unsupported network upgrade
+  0x...". See `docs/UPGRADES.md` for the weekly check.
 - Testnet has only one working public light server, so the cross-check there relies on
   CipherScan as the second source.
 - gRPC replies must be uncompressed and under 8 MB. Each call opens a fresh connection.
