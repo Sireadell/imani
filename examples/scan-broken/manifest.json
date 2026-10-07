@@ -1,0 +1,23 @@
+{
+  "about": "Broken copies of examples/scan-01. Each one passes the basic and key levels and fails exactly one scan-level check. Run with --scan --chain <folder>/chain.json.",
+  "copies": [
+    {
+      "name": "01-hidden-bid",
+      "changed": "chain.json",
+      "expectedFailingCheck": "scan-hidden-bids",
+      "story": "A bid of 3,000,000 was paid into the lot at block 4200060, before the close, which beats both winners. The seller left it out of the disclosure and the result and kept the money. The key level passes because it only reads what the seller lists; the scan finds the payment. (The offline test round has no spare bid with a new memo, so this payment reuses Alice's memo. The scan flags any unlisted bid payment, whatever its memo.)"
+    },
+    {
+      "name": "02-listed-not-in-range",
+      "changed": "chain.json",
+      "expectedFailingCheck": "scan-listed-in-range",
+      "story": "Carol's refund was paid at block 4200140, after the refund deadline at 4200125. The seller lists it at block 4200122. The scan does not find it in the lot's range."
+    },
+    {
+      "name": "03-wrong-height",
+      "changed": "disclosure.json and result.json",
+      "expectedFailingCheck": "scan-heights",
+      "story": "Dave's bid arrived at block 4200105, five blocks after the close. The seller writes block 4200099 in the disclosure and counts Dave as an on-time losing bid. The key level is fooled, because it takes heights from the disclosure; the scan sees the bid in block 4200105."
+    }
+  ]
+}

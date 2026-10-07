@@ -8,13 +8,18 @@ import {
   type Disclosure,
   type SellerResult,
 } from "./files.ts";
+import { scanChecks, scanRange, type ScanInput, type ScanRange } from "./scan/scan.ts";
+import type { BlockSource } from "./scan/chain.ts";
 
 export type Status = "PASS" | "FAIL";
 
 export interface Check {
   id: string;
-  /** 1 = basic level, needs no key. 2 = key level, reads the lot's payments with the lot key. */
-  level: 1 | 2;
+  /**
+   * 1 = basic level, needs no key. 2 = key level, reads the disclosed payments with the lot key.
+   * 3 = scan level, reads every block in the lot's range with the lot key.
+   */
+  level: 1 | 2 | 3;
   title: string;
   status: Status;
   /** One plain sentence. */
@@ -35,6 +40,11 @@ export interface Verdict {
   basicLevel: Status;
   keyLevel: Status | "not run";
   keyLevelNote: string;
+  scanLevel: Status | "not run";
+  /** Plain sentences about the scan: range, source, time, bytes, what is not proven. */
+  scanNotes: string[];
+  scanRange: ScanRange | null;
+  scanSource: Omit<BlockSource, "serversContacted"> | null;
   /** Short hash of the key so two people can tell they used the same key. Not the key itself. */
   keyFingerprint: string | null;
   serversContacted: string[];
@@ -51,6 +61,8 @@ export interface CheckOptions {
   basicOnly?: boolean;
   /** Hide amounts and memos in every message. */
   discreet?: boolean;
+  /** Run the scan level over these blocks. The caller gets the blocks (chain file or --fetch). */
+  scan?: ScanInput;
 }
 
 const UFVK_SHAPE = /^uview(test)?1[02-9ac-hj-np-z]+$/;
@@ -256,6 +268,24 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
     keyLevelNote = "Amounts, memos and refunds were read from the disclosed transactions with the lot key.";
   }
 
+  // ---------------- Scan level: read every block in the lot's range ----------------
+  let scanLevel: Status | "not run" = "not run";
+  let scanNotes: string[] = [];
+  let range: ScanRange | null = null;
+  let scanSource: Verdict["scanSource"] = null;
+  if (opts.scan) {
+    const { serversContacted: _s, ...src } = opts.scan.source;
+    scanSource = src;
+    if (keyLevel === "not run") {
+      scanNotes = ["The scan level needs the lot key and the key level, so it was not run."];
+    } else {
+      range = scanRange(d, opts.scan.graceBlocks);
+      const key = assertViewingKey(d.ufvk, d.network);
+      scanNotes = scanChecks(d, key, opts.scan, add, zat, memo, short);
+      scanLevel = checks.filter((c) => c.level === 3).every((c) => c.status === "PASS") ? "PASS" : "FAIL";
+    }
+  }
+
   const failed = checks.filter((c) => c.status === "FAIL").map((c) => c.id);
   return {
     tool: "imani check",
@@ -265,8 +295,12 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
     basicLevel,
     keyLevel,
     keyLevelNote,
+    scanLevel,
+    scanNotes,
+    scanRange: range,
+    scanSource,
     keyFingerprint: fingerprint,
-    serversContacted: [],
+    serversContacted: opts.scan ? [...opts.scan.source.serversContacted] : [],
     discreet,
     failed,
     checks,

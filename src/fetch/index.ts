@@ -77,14 +77,15 @@ export interface FetchResult {
   problems: { server: string; error: string }[];
 }
 
+// Plain fields (not constructor parameter properties) so Node can run this file directly.
 export class FetchError extends Error {
-  constructor(
-    message: string,
-    public readonly serversContacted: string[],
-    public readonly problems: { server: string; error: string }[],
-  ) {
+  readonly serversContacted: string[];
+  readonly problems: { server: string; error: string }[];
+  constructor(message: string, serversContacted: string[], problems: { server: string; error: string }[]) {
     super(message);
     this.name = "FetchError";
+    this.serversContacted = serversContacted;
+    this.problems = problems;
   }
 }
 

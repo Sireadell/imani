@@ -64,7 +64,8 @@ const write = (dir: string, d: Disclosure, r: SellerResult) => {
   writeFileSync(new URL("result.json", u), JSON.stringify(r, null, 2) + "\n");
 };
 
-rmSync(new URL("examples/", root), { recursive: true, force: true });
+// Remove only the folders this script writes; scan examples come from tools/make-scan-examples.ts.
+for (const dir of ["round-01", "broken", "guards"]) rmSync(new URL(`examples/${dir}/`, root), { recursive: true, force: true });
 write("round-01", disclosure, result);
 
 const FAKE_TXID = "f".repeat(8) + "0".repeat(56);

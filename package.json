@@ -16,6 +16,7 @@
     "test:login": "tsx --test test/login/*.test.ts",
     "test:fetch": "tsx --test test/fetch/*.test.ts",
     "test:demo": "tsx --test test/demo/*.test.ts",
+    "test:scan": "tsx --test test/scan/*.test.ts",
     "demo:app": "tsx demo/server.ts",
     "typecheck": "tsc --noEmit",
     "demo": "node --disable-warning=ExperimentalWarning tools/demo.ts",

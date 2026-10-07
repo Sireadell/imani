@@ -11,7 +11,7 @@ npm install
 npm run demo
 ```
 
-You will see two checks of the same small auction. The first is the honest round and ends with `RESULT: PASS`. The second is a copy where the seller paid a losing bidder 100,000 zatoshis too little, and it ends with `RESULT: FAIL (1 of 15 checks failed: refunds-paid)`. It takes about a second and needs no internet.
+You will see three checks of the same small auction. The first is the honest round and ends with `RESULT: PASS`. The second is a copy where the seller paid a losing bidder 100,000 zatoshis too little, and it ends with `RESULT: FAIL (1 of 15 checks failed: refunds-paid)`. In the third, the seller left a 3,000,000 bid out of their files entirely. The normal check cannot see it, because it only reads what the seller lists. The scan reads every block of the auction and ends with `RESULT: FAIL (1 of 20 checks failed: scan-hidden-bids)`. It takes about two seconds and needs no internet.
 
 To check a lot yourself:
 
@@ -21,6 +21,14 @@ npx imani check --disclosure examples/round-01/disclosure.json --result examples
 
 This prints every check and writes `report/verdict.json` and `report/report.html` (open it in any browser, it works offline). Add `--discreet` to hide amounts and memos, or `--basic` to run only the checks that need no key. Try the six broken copies in `examples/broken/`: each one fails on exactly one named check, listed in `examples/broken/manifest.json`.
 
+To also read every block of the auction, so a bid the seller left out still shows up:
+
+```sh
+npx imani check --disclosure examples/scan-01/disclosure.json --result examples/scan-01/result.json --scan --chain examples/scan-01/chain.json
+```
+
+This reads the blocks from a saved file. Use `--fetch` instead of `--chain` to download them from public Zcash servers (slower: about an hour for a day-long auction, see SPEC.md). `examples/scan-broken/` has three copies that only the scan catches: a hidden bid, a listed payment that is not on the chain in time, and a wrong block height.
+
 ## Where every number comes from
 
 | Source | What it gives |
@@ -28,6 +36,7 @@ This prints every check and writes `report/verdict.json` and `report/report.html
 | The chain, read with the lot key | Bid amounts, bid memos, refund amounts, refund memos, transaction ids |
 | The seller's result file | The bid list, winners, clearing price, reserve outcome and refund list the seller claims |
 | The seller's disclosure file | Close height, block height of each transaction, item count and reserve |
+| Every block of the auction, with `--scan` | Any payment the seller left out, and the real block height of each listed one |
 
 The checker works the result out again from the chain numbers and compares it with the seller's file. The report shows each check with PASS or FAIL, a one-line reason, and which numbers came from where.
 
@@ -42,7 +51,7 @@ The file formats, price rule, every check and the known limits are in [SPEC.md](
 
 ## Safety
 
-The checker only accepts a read-only viewing key (starts with `uview1` or `uviewtest1`). It refuses seed phrases and spending keys, never prints the key and never saves it. If the key shows payments that are not bids for the lot, the check fails and tells the seller to use a fresh key for every lot. This version contacts no server at all and prints `Servers contacted: none`.
+The checker only accepts a read-only viewing key (starts with `uview1` or `uviewtest1`). It refuses seed phrases and spending keys, never prints the key and never saves it. If the key shows payments that are not bids for the lot, the check fails and tells the seller to use a fresh key for every lot. By default it contacts no server and prints `Servers contacted: none`. Only `--scan --fetch` goes online; it asks for blocks by number, never sends a key, and prints every server it used.
 
 ## Tests
 

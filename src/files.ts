@@ -15,6 +15,10 @@ export interface Disclosure {
   network: "main" | "test";
   /** Last block height at which a bid still counts. */
   closeHeight: number;
+  /** First block height at which a bid counts. Needed only for the scan level. */
+  openHeight?: number;
+  /** Last block height by which every refund is paid. Needed only for the scan level. */
+  refundByHeight?: number;
   rules: AuctionRules;
   /** One-time read-only key for this lot (uview1... or uviewtest1...). Optional: without it only the basic level runs. */
   ufvk?: string;
