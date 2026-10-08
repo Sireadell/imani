@@ -1,14 +1,50 @@
 {
-  "about": "Broken copies of examples/memo-01, where each bidder wrote their refund address in their own bid memo. Each copy passes every other check and fails refund-receivers.",
+  "about": "Broken copies of examples/memo-01, where each bidder wrote their refund address in their own bid memo. Copies 01 to 06 are the same six as examples/broken, each failing one named check. Copies 07 and 08 change where the refund went or add a contradicting seller list, and fail refund-receivers.",
   "copies": [
     {
-      "name": "01-refund-to-other-address",
+      "name": "01-extra-fake-bid",
+      "changed": "result.json",
+      "expectedFailingCheck": "bid-count",
+      "story": "The seller adds a bid of 1,200,000 that was never paid, and lists a refund for it."
+    },
+    {
+      "name": "02-wrong-bid-amount",
+      "changed": "result.json",
+      "expectedFailingCheck": "bid-amounts",
+      "story": "The seller reports Alice's bid as 2,900,000. The chain shows 3,000,000."
+    },
+    {
+      "name": "03-missing-refund",
+      "changed": "disclosure.json",
+      "expectedFailingCheck": "refunds-paid",
+      "story": "Carol lost but her refund was never sent. The seller's file still lists it."
+    },
+    {
+      "name": "04-short-refund",
+      "changed": "disclosure.json",
+      "expectedFailingCheck": "refunds-paid",
+      "story": "Carol lost and was refunded 1,400,000 instead of her full 1,500,000. The seller's file says 1,500,000."
+    },
+    {
+      "name": "05-wrong-clearing-price",
+      "changed": "result.json",
+      "expectedFailingCheck": "winners-and-price",
+      "story": "The seller says winners pay 1,600,000 each instead of 1,500,000, and shrinks the winners' change to match."
+    },
+    {
+      "name": "06-late-bid-counted",
+      "changed": "result.json",
+      "expectedFailingCheck": "no-late-bids",
+      "story": "Dave's bid arrived 5 blocks after the close. The seller counts it as a losing bid anyway."
+    },
+    {
+      "name": "07-refund-to-other-address",
       "changed": "disclosure.json (the refund transaction for Carol)",
       "expectedFailingCheck": "refund-receivers",
       "story": "Carol wrote her own address in her bid memo, but the refund the seller paid for her bid went to Dave's address. The amount and the memo naming the bid are right, so the older checks pass. Only the receiver check sees it."
     },
     {
-      "name": "02-list-contradicts-bid-memo",
+      "name": "08-list-contradicts-bid-memo",
       "changed": "disclosure.json (an added refundAddresses list)",
       "expectedFailingCheck": "refund-receivers",
       "story": "The refunds are honest, but the seller adds a refund address list that names Dave's address for Carol's bid. Carol's own bid memo says otherwise, and the memo wins, so the checker fails the seller's list."

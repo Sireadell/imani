@@ -262,13 +262,14 @@ export function lotPage(ctx: PageContext): string {
   } else if (!ctx.account) {
     bidBox = `<p>Sign in first, so the shop can show you your own bid later.</p><a class="btn" href="/signin">Sign in to bid</a>`;
   } else {
-    bidBox = `<div id="bid" data-mode="${ctx.mode}" data-lot="${esc(i.lotId)}" data-address="${esc(i.address)}"${sim ? ` data-amount="${formatZec(sim.yourBid.amountZat)}" data-word="${esc(sim.yourBid.memo.split(":")[2])}"` : ""}>
+    bidBox = `<div id="bid" data-mode="${ctx.mode}" data-lot="${esc(i.lotId)}" data-address="${esc(i.address)}"${sim ? ` data-amount="${formatZec(sim.yourBid.amountZat)}" data-word="${esc(sim.yourBid.memo.split(":")[2])}" data-refund="${esc(sim.yourBid.memo.split(":")[3] ?? "")}"` : ""}>
   ${sim ? `<p class="muted">Simulated mode replays bid 2 of a recorded test round, so the amount and memo word are fixed. That way the published files and the check match your bid exactly.</p>` : ""}
   <div class="grid2">
     <div><label for="bid-amount">Your bid in ZEC</label><input id="bid-amount" name="amount" inputmode="decimal" value="${sim ? formatZec(sim.yourBid.amountZat) : ""}"${sim ? " readonly" : ""} placeholder="for example 0.02"></div>
     <div><label for="bid-word">Memo word</label><input id="bid-word" name="word" value="${sim ? esc(sim.yourBid.memo.split(":")[2]) : ""}"${sim ? " readonly" : ""} autocomplete="off" spellcheck="false"></div>
   </div>
-  <noscript><p class="notice">Without JavaScript: send your bid from your wallet to the lot address above with the memo <code>bid:${esc(i.lotId)}:</code> followed by a word you choose.</p></noscript>
+  <div><label for="bid-refund">Your refund address</label><input id="bid-refund" name="refund" value="${sim ? esc(sim.yourBid.memo.split(":")[3] ?? "") : ""}"${sim ? " readonly" : ""} autocomplete="off" spellcheck="false" placeholder="a fresh address from your wallet"><p class="muted small">It goes at the end of your bid memo. Your refund must go to it, and the seller cannot change it. Use a fresh address, because after the close anyone can see where each refund went.</p></div>
+  <noscript><p class="notice">Without JavaScript: send your bid from your wallet to the lot address above with the memo <code>bid:${esc(i.lotId)}:</code> then a word you choose, a colon and your refund address.</p></noscript>
   <button class="btn" type="button" id="make-bid" hidden>Make my bid link</button>
   <div id="bid-link-box" hidden>
     <p><a class="btn" id="bid-open" href="#">Open in my wallet</a></p>
@@ -293,7 +294,7 @@ export function lotPage(ctx: PageContext): string {
 <section class="card">
   <h2>How bidding works</h2>
   <ol>
-    <li>Send your bid as a private payment to the lot address, with the memo <code>bid:${esc(i.lotId)}:</code> and a short word you choose.</li>
+    <li>Send your bid as a private payment to the lot address, with the memo <code>bid:${esc(i.lotId)}:</code>, a short word you choose, a colon and your own refund address.</li>
     <li>Nobody else can see the bids before the close.</li>
     <li>The ${i.itemCount} highest bids win. Every winner pays the same price: the highest losing bid, but never less than ${zec(i.reserveZat)}.</li>
     <li>Losers get their whole bid back. Winners get back the difference.</li>

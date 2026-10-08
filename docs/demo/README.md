@@ -85,7 +85,7 @@ Record in simulated mode first. Keep the SIMULATED banner in frame. Use a clean 
 
 ## Honest limits of this demo
 
-- Simulated mode replays one recorded round, so the bid amount is fixed. A new amount needs a new round built with the tools in `tools/gen-vectors`.
+- Simulated mode replays one recorded round (`examples/memo-01`), so the bid amount, memo word and refund address are fixed. The lot page shows the refund address field; in live mode the bidder pastes a fresh address of their own. A new amount needs a new round built with the tools in `tools/gen-vectors`.
 - The simulated sign-in uses the real login kit check on pretend payment bytes. The real decoder is used for the lot (seller's view and the check), not for the simulated sign-in.
 - There is no QR code. The page shows the payment link and an "Open in my wallet" button.
 - The seller's page is open to everyone so one person can play both sides.

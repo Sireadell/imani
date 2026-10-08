@@ -149,6 +149,12 @@ test("bid, close, publish, check PASS, and my bid is in the published result", a
     assert.match((await h.get("/lot")).text_, /Sign in to bid/);
     await signIn(h, seedOf("bidder"));
     const want = LOT.simulated.yourBid;
+    // The bid memo carries the bidder's own refund address, and the lot page asks for it.
+    const refundAddr = want.memo.split(":")[3];
+    assert.ok(refundAddr && refundAddr.startsWith("utest1"));
+    const lotPage = (await h.get("/lot")).text_;
+    assert.match(lotPage, /Your refund address/);
+    assert.ok(lotPage.includes(refundAddr));
     const wrong = await h.post("/sim/chain/send", { uri: browser.paymentLink(LOT.address, 5_000_000, want.memo) });
     assert.equal(wrong.status, 400);
     const bid = JSON.parse((await h.post("/sim/chain/send", { uri: browser.paymentLink(LOT.address, want.amountZat, want.memo) })).text_);

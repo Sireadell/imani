@@ -1,0 +1,65 @@
+{
+  "format": "imani-lot-result/1",
+  "lotId": "LOT-01",
+  "rules": {
+    "itemCount": 2,
+    "reserveZat": 1000000
+  },
+  "bidCount": 4,
+  "bids": [
+    {
+      "txid": "9b847dad30a56191d9c38a1aeeac1cfa44172a6046b8be8cf108f798357e95c8",
+      "amountZat": 3000000
+    },
+    {
+      "txid": "e73777db6e9774b9b73232fdfb2fed19e6a15f745fadd6e1dccae3757cc40bb5",
+      "amountZat": 2000000
+    },
+    {
+      "txid": "1ad8c40394999db7b2f913e3a59cf2c8c86d2fecad833a55dd505b0b1cb8f1ec",
+      "amountZat": 1500000
+    },
+    {
+      "txid": "ffffffff00000000000000000000000000000000000000000000000000000000",
+      "amountZat": 1200000
+    }
+  ],
+  "winners": [
+    "9b847dad30a56191d9c38a1aeeac1cfa44172a6046b8be8cf108f798357e95c8",
+    "e73777db6e9774b9b73232fdfb2fed19e6a15f745fadd6e1dccae3757cc40bb5"
+  ],
+  "clearingPriceZat": 1500000,
+  "reserveMet": true,
+  "refunds": [
+    {
+      "bidTxid": "9b847dad30a56191d9c38a1aeeac1cfa44172a6046b8be8cf108f798357e95c8",
+      "amountZat": 1500000,
+      "reason": "change",
+      "memo": "refund:LOT-01:9b847dad30a56191d9c38a1aeeac1cfa44172a6046b8be8cf108f798357e95c8"
+    },
+    {
+      "bidTxid": "e73777db6e9774b9b73232fdfb2fed19e6a15f745fadd6e1dccae3757cc40bb5",
+      "amountZat": 500000,
+      "reason": "change",
+      "memo": "refund:LOT-01:e73777db6e9774b9b73232fdfb2fed19e6a15f745fadd6e1dccae3757cc40bb5"
+    },
+    {
+      "bidTxid": "1ad8c40394999db7b2f913e3a59cf2c8c86d2fecad833a55dd505b0b1cb8f1ec",
+      "amountZat": 1500000,
+      "reason": "loser",
+      "memo": "refund:LOT-01:1ad8c40394999db7b2f913e3a59cf2c8c86d2fecad833a55dd505b0b1cb8f1ec"
+    },
+    {
+      "bidTxid": "46fcda8a811ae3fb2a3f19af1098192a8b385059f08194248dd46e66e12500e7",
+      "amountZat": 1200000,
+      "reason": "late",
+      "memo": "refund:LOT-01:46fcda8a811ae3fb2a3f19af1098192a8b385059f08194248dd46e66e12500e7"
+    },
+    {
+      "bidTxid": "ffffffff00000000000000000000000000000000000000000000000000000000",
+      "amountZat": 1200000,
+      "reason": "loser",
+      "memo": "refund:LOT-01:ffffffff00000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}

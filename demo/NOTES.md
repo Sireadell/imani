@@ -8,5 +8,5 @@
 ## Choices
 
 - No QR code. A correct QR encoder needs its own decoder to test against, and no library was added. The page shows the payment link and an "Open in my wallet" button.
-- Simulated bids replay bid 2 of `examples/round-01`, because only real transaction bytes can be read with the lot key.
+- Simulated bids replay bid 2 of `examples/memo-01` (the round where each bid memo carries the bidder's refund address, so the lot page has a refund address field and the memo is `bid:LOT-01:m3x8:<address>`), because only real transaction bytes can be read with the lot key.
 - Simulated sign-in payments are kept by `demo/chain.ts` and read through `LoginKit.verify` with a swapped reader. Live mode uses the same call with the real decoder and bytes from `src/fetch`.

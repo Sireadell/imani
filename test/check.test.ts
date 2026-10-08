@@ -249,13 +249,13 @@ test("memo-01: refund addresses written by the bidders in their bid memos pass, 
 });
 
 test("memo-broken: a refund paid to a different address than the bid memo names fails refund-receivers only", () => {
-  const dir = "memo-broken/01-refund-to-other-address";
+  const dir = "memo-broken/07-refund-to-other-address";
   const v = checkLot(load(dir).d, load(dir).r);
   assert.deepEqual(v.failed, ["refund-receivers"]);
 });
 
 test("memo-broken: a seller list that contradicts a bid memo fails, the memo wins", () => {
-  const dir = "memo-broken/02-list-contradicts-bid-memo";
+  const dir = "memo-broken/08-list-contradicts-bid-memo";
   const v = checkLot(load(dir).d, load(dir).r);
   assert.deepEqual(v.failed, ["refund-receivers"]);
   assert.match(v.checks.find((x) => x.id === "refund-receivers")!.reason, /different refund address .* bid memo/);

@@ -1,5 +1,5 @@
 {
-  "about": "Public facts for the demo lot. The lot's files (with the one-time lot key) come from examples/round-01 and are only served after the seller publishes them.",
+  "about": "Public facts for the demo lot. The lot's files (with the one-time lot key) come from examples/memo-01 and are only served after the seller publishes them.",
   "lotId": "LOT-01",
   "title": "Two hand-thrown clay mugs",
   "description": "A matching pair from a small pottery. Two mugs, one per winning bid. Everyone who wins pays the same price.",
@@ -12,9 +12,9 @@
     "startHeight": 4200015,
     "afterRefundsHeight": 4200125,
     "yourBid": {
-      "txid": "43e9e39e43aea9b01be1ca994eab7fbc17705853f62b131e2aede9fba4cae002",
+      "txid": "e73777db6e9774b9b73232fdfb2fed19e6a15f745fadd6e1dccae3757cc40bb5",
       "amountZat": 2000000,
-      "memo": "bid:LOT-01:m3x8",
+      "memo": "bid:LOT-01:m3x8:utest1ckfkgn5j570yuy4mu96swvccj9ax7f70809rah3uwzav7cw62tp8qydhg5xeg0s5swqjjun3gne2dwyl5ry5x6qh9v4duxpr4v5t3vs4",
       "height": 4200020
     }
   }

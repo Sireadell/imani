@@ -25,7 +25,10 @@ $("make-bid").onclick = () => {
   const word = $("bid-word").value.trim();
   if (!amountZat || amountZat <= 0) return showError("Type your bid in ZEC, for example 0.02.");
   if (!/^[a-z0-9]{1,16}$/.test(word)) return showError("The memo word can use only small letters and digits, up to 16.");
-  memo = `bid:${lotId}:${word}`;
+  const refund = $("bid-refund").value.trim();
+  if (!/^[a-z0-9]{20,400}$/.test(refund)) return showError("Paste the refund address from your wallet. It is one long string of small letters and digits, with no spaces.");
+  memo = `bid:${lotId}:${word}:${refund}`;
+  if (new TextEncoder().encode(memo).length > 512) return showError("That memo is longer than the 512 bytes a payment can carry. Use a shorter word or a shorter address.");
   link = paymentLink(address, amountZat, memo);
   $("bid-open").href = link;
   $("bid-link").value = link;

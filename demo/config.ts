@@ -96,8 +96,8 @@ export function loadConfig(opts: LoadOptions = {}): DemoConfig {
   const log = opts.log ?? ((line: string) => console.log(line));
   const base = {
     port,
-    roundDir: join(ROOT, "examples", "round-01"),
-    brokenDir: join(ROOT, "examples", "broken"),
+    roundDir: join(ROOT, "examples", "memo-01"),
+    brokenDir: join(ROOT, "examples", "memo-broken"),
     log,
   };
 
