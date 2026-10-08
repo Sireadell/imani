@@ -97,5 +97,6 @@ export function fileKind(parsed: any): "disclosure" | "result" | "chain" | "bidd
 }
 
 export { initReader, decoderBytes, decoderInfo } from "./reader.ts";
+export { lookupBid } from "../mine.ts";
 export { serversLine, scanSourceLine } from "../report.ts";
 export type { Verdict };

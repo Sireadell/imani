@@ -4,6 +4,7 @@ import { examples, blobs, type ExampleEntry } from "imani-examples";
 import { decoderBytes, decoderInfo, fileKind, initReader, parseJsonText, runPage, scanSourceLine, serversLine, type PageOutcome, type Verdict } from "./engine.ts";
 import { sha256Hex } from "./crypto-shim.ts";
 import type { Check } from "../check.ts";
+import { lookupBid } from "../mine.ts";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -23,20 +24,24 @@ const own: { disclosure?: unknown; result?: unknown; chain?: unknown; chainName?
 const byGroup = (g: ExampleEntry["group"]) => examples.filter((e) => e.group === g);
 const find = (id: string) => examples.find((e) => e.id === id)!;
 
-function outcomeFor(sel: Selection, discreet: boolean): { outcome: PageOutcome; entry?: ExampleEntry } {
+let last: { verdict: Verdict; result: unknown } | null = null;
+
+function outcomeFor(sel: Selection, discreet: boolean): { outcome: PageOutcome; entry?: ExampleEntry; result: unknown } {
   if (sel.kind === "example") {
     const entry = find(sel.id);
+    const result = parseJsonText(blobs[entry.result], "result");
     const outcome = runPage({
       disclosure: parseJsonText(blobs[entry.disclosure], "disclosure"),
-      result: parseJsonText(blobs[entry.result], "result"),
+      result,
       chain: entry.chain ? parseJsonText(blobs[entry.chain], "chain") : undefined,
       chainLabel: "chain.json",
       discreet,
     });
-    return { outcome, entry };
+    return { outcome, entry, result };
   }
   return {
     outcome: runPage({ disclosure: own.disclosure, result: own.result, chain: own.chain, chainLabel: own.chainName, bidderKeys: own.bidderKeys, discreet }),
+    result: own.result,
   };
 }
 
@@ -148,6 +153,8 @@ function render(): void {
   const discreet = $<HTMLInputElement>("discreet").checked;
   const out = $("outcome");
   out.replaceChildren();
+  last = null;
+  $("mine-out").replaceChildren();
   if (selection.kind === "own" && (own.disclosure === undefined || own.result === undefined)) {
     $("story").textContent = "";
     out.appendChild(el("p", "muted", "Add both the disclosure file and the result file to see a result."));
@@ -162,6 +169,7 @@ function render(): void {
   }
   const story = $("story");
   story.textContent = res.entry ? `${res.entry.title}. ${res.entry.story}` : "Your own files.";
+  if (res.outcome.ok) last = { verdict: res.outcome.verdict, result: res.result };
   out.appendChild(res.outcome.ok ? renderVerdict(res.outcome.verdict, res.entry) : renderProblem(res.outcome));
   syncChips();
 }
@@ -194,6 +202,21 @@ function choose(id: string, scroll = true): void {
   if (scroll) $("results").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function findMine(): void {
+  const out = $("mine-out");
+  out.replaceChildren();
+  if (!last) {
+    out.appendChild(el("p", "notice bad", "Pick an example or add your files above to run a check, then look up your bid."));
+    return;
+  }
+  try {
+    const text = lookupBid(last.result, last.verdict, $<HTMLInputElement>("mine-id").value);
+    for (const line of text.split("\n")) out.appendChild(el("p", undefined, line));
+  } catch (e) {
+    out.appendChild(el("p", "notice bad", e instanceof Error ? e.message : "Could not look that up."));
+  }
+}
+
 async function takeFiles(files: FileList | File[]): Promise<void> {
   const status = $("own-status");
   const problems: string[] = [];
@@ -222,6 +245,9 @@ async function start(): Promise<void> {
   for (const e of byGroup("tampered")) $("chips-tampered").appendChild(chip(e));
   for (const e of [...byGroup("scan-honest"), ...byGroup("scan-tampered")]) $("chips-scan").appendChild(chip(e));
   for (const e of [...byGroup("receivers-honest"), ...byGroup("receivers-tampered")]) $("chips-receivers").appendChild(chip(e));
+  for (const e of [...byGroup("memo-honest"), ...byGroup("memo-tampered")]) $("chips-memo").appendChild(chip(e));
+  $("mine-go").addEventListener("click", findMine);
+  $("mine-id").addEventListener("keydown", (ev) => { if ((ev as KeyboardEvent).key === "Enter") findMine(); });
   $("btn-honest").addEventListener("click", () => choose("round-01"));
   $("btn-tamper").addEventListener("click", () => {
     const t = byGroup("tampered");

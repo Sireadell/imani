@@ -69,3 +69,18 @@ export interface SellerResult {
 export const bidMemoPrefix = (lotId: string) => `bid:${lotId}:`;
 export const refundMemo = (lotId: string, bidTxid: string) => `refund:${lotId}:${bidTxid}`;
 export const refundMemoPrefix = (lotId: string) => `refund:${lotId}:`;
+
+/**
+ * A bid memo is `bid:<lotId>:<word>`, or `bid:<lotId>:<word>:<refund address>`. The address is
+ * written by the bidder inside their own payment, so the lot key reads it from the chain and the
+ * seller cannot choose it. Returns null when the memo has no address part.
+ */
+export function bidMemoAddress(lotId: string, memo: string): string | null {
+  const prefix = bidMemoPrefix(lotId);
+  if (!memo.startsWith(prefix)) return null;
+  const rest = memo.slice(prefix.length);
+  const cut = rest.lastIndexOf(":");
+  if (cut < 0) return null;
+  const address = rest.slice(cut + 1).trim();
+  return address === "" ? null : address;
+}

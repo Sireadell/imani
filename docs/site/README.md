@@ -12,6 +12,8 @@ A static web page that runs the Imani auction checker inside the visitor's brows
 | Opens on | Round 01, honest, PASS with 15 of 15 checks |
 | "Try a tampered copy" | Loads each of the 6 broken copies in turn (`examples/broken`), FAIL with the failed check named and the reason |
 | Scan examples | `examples/scan-01` (PASS, 20 of 20) and the 3 copies in `examples/scan-broken` (each fails one named scan check) |
+| Refund address examples | `examples/memo-01` (PASS, 16 of 16: each bidder wrote their refund address in their bid memo) and the 2 copies in `examples/memo-broken` (each fails `refund-receivers`) |
+| Was my bid counted? | Paste a bid transaction id. The page answers on the device from the result on screen: counted or not, won or not, what should come back, what the checks found about it, and a note that a left-out bid needs the scan level |
 | Your own files | Drop a disclosure file, a result file and optionally a chain file (adds the scan) and a bidder keys file. The page tells them apart by their `format` field |
 | Discreet mode | A checkbox that hides amounts and memos, the same as `--discreet` on the command line |
 | Refusals | Spending keys, seed phrases, incoming-only keys and keys for the wrong network are refused with the same messages as the command line. The lot key is never shown |

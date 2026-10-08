@@ -63,7 +63,7 @@ for (const copy of manifest.copies) {
 test("the mismatch names the bid and the refund, and says nothing about addresses", () => {
   const { d, r } = load("receivers-broken/01-refund-to-other-address");
   const c = checkLot(d, r).checks.find((c) => c.id === "refund-receivers")!;
-  assert.match(c.reason, /went to a different address than the one listed for that bid/);
+  assert.match(c.reason, /went to a different address than the one given for that bid/);
   assert.ok(!c.reason.includes("utest1"));
   const hidden = checkLot(d, r, { discreet: true }).checks.find((c) => c.id === "refund-receivers")!;
   assert.doesNotMatch(hidden.reason, /1,500,000/);

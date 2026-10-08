@@ -87,7 +87,7 @@ export function examplesModule(): string {
     return t[0].toUpperCase() + t.slice(1);
   };
   const entries: unknown[] = [];
-  const honest = (id: string, dir: string, title: string, story: string, scan: boolean, groupName?: "receivers-honest") =>
+  const honest = (id: string, dir: string, title: string, story: string, scan: boolean, groupName?: "receivers-honest" | "memo-honest") =>
     entries.push({
       id,
       group: groupName ?? (scan ? "scan-honest" : "honest"),
@@ -105,7 +105,7 @@ export function examplesModule(): string {
     "A small test auction: 2 items, reserve 1,000,000 zatoshis, four bids (one arrives after the close). The seller's files are exactly right.",
     false,
   );
-  const group = (base: string, baseDir: string, groupName: "tampered" | "scan-tampered" | "receivers-tampered") => {
+  const group = (base: string, baseDir: string, groupName: "tampered" | "scan-tampered" | "receivers-tampered" | "memo-tampered") => {
     const manifest = JSON.parse(readText(p("examples", base, "manifest.json")));
     for (const c of manifest.copies) {
       const dir = join(base, c.name);
@@ -140,6 +140,15 @@ export function examplesModule(): string {
     "receivers-honest",
   );
   group("receivers-broken", "receivers-01", "receivers-tampered");
+  honest(
+    "memo-01",
+    "memo-01",
+    "Honest round with addresses in the bid memos (memo 01)",
+    "The same auction, but each bidder wrote their own refund address at the end of their bid memo. The seller lists no addresses and could not choose them. Every refund went where its bidder said.",
+    false,
+    "memo-honest",
+  );
+  group("memo-broken", "memo-01", "memo-tampered");
   return `export const examples = ${JSON.stringify(entries)};\nexport const blobs = ${JSON.stringify(blobs)};\n`;
 }
 

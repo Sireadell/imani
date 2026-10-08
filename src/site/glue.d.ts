@@ -9,7 +9,7 @@ declare module "imani-decoder-glue" {
 declare module "imani-examples" {
   export interface ExampleEntry {
     id: string;
-    group: "honest" | "tampered" | "scan-honest" | "scan-tampered" | "receivers-honest" | "receivers-tampered";
+    group: "honest" | "tampered" | "scan-honest" | "scan-tampered" | "receivers-honest" | "receivers-tampered" | "memo-honest" | "memo-tampered";
     title: string;
     story: string;
     expectedFailingCheck: string | null;

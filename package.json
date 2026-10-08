@@ -25,6 +25,7 @@
     "test:site": "tsx --test test/site/*.test.ts",
     "site:build": "node --disable-warning=ExperimentalWarning tools/site-build.ts",
     "site:serve": "node --disable-warning=ExperimentalWarning tools/site-serve.ts",
+    "examples:memo": "node --disable-warning=ExperimentalWarning tools/make-memo-examples.ts",
     "examples:receivers": "node --disable-warning=ExperimentalWarning tools/make-receiver-examples.ts"
   },
   "devDependencies": {

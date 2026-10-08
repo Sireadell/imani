@@ -4,7 +4,7 @@
 // the seller's word. See SPEC.md, "Scan level".
 
 import { readTransactionWithId, type ReadOutput } from "../read.ts";
-import { bidMemoPrefix, refundMemoPrefix, type Disclosure } from "../files.ts";
+import { bidMemoAddress, bidMemoPrefix, refundMemoPrefix, type Disclosure } from "../files.ts";
 import type { Check } from "../check.ts";
 import { ScanInputError, type BlockSource, type ChainBlock } from "./chain.ts";
 
@@ -167,6 +167,7 @@ export function scanChecks(
 
   // Hidden bids: bid payments on the chain the seller did not list.
   const chainBids = visible.filter(isBid);
+  const bidMemoHasAddress = chainBids.some((x) => bidMemoAddress(d.lotId, bidMemo(x)) !== null);
   const hidden = chainBids.filter((x) => !listed.has(x.txid));
   add({
     id: "scan-hidden-bids",
@@ -281,9 +282,9 @@ export function scanChecks(
         : `For each of the ${keys.length} bidders who gave their own viewing key, the refund the lot sent for their bid arrived in their wallet in full.`,
       fromChain: lines,
     });
-    notes.push(`Refund receivers were proven for ${keys.length} bid(s) whose bidder gave their own key. For other refunds the lot key shows the amount and the memo naming the bid${d.refundAddresses !== undefined ? ", and the check refund-receivers compares where each went with the address the disclosure lists" : ", not who received it"}.`);
-  } else if (d.refundAddresses !== undefined) {
-    notes.push("Refund receivers were compared with the refund addresses the disclosure lists (check refund-receivers). That list is the seller's word: it proves the refunds went where the seller says, and each bidder still has to confirm the address next to their bid is theirs, or add their viewing key with --bidder-keys.");
+    notes.push(`Refund receivers were proven for ${keys.length} bid(s) whose bidder gave their own key. For other refunds the lot key shows the amount and the memo naming the bid${d.refundAddresses !== undefined ? ", and the check refund-receivers compares where each went with the address in the bid memo or the one the disclosure lists" : ", not who received it"}.`);
+  } else if (d.refundAddresses !== undefined || bidMemoHasAddress) {
+    notes.push(bidMemoHasAddress ? "Refund receivers were compared with the refund addresses the bidders wrote in their own bid memos (check refund-receivers). The seller could not choose them." : "Refund receivers were compared with the refund addresses the disclosure lists (check refund-receivers). That list is the seller's word: it proves the refunds went where the seller says, and each bidder still has to confirm the address next to their bid is theirs, or add their viewing key with --bidder-keys.");
   } else {
     notes.push("Refund receivers are not proven: the lot key shows each refund's amount and the memo naming its bid, not who received it. The seller can list a refund address per bid (refundAddresses in the disclosure), and a bidder can prove their own refund by adding their viewing key with --bidder-keys.");
   }

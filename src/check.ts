@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { parseAddress, readTransactionWithId, type ParsedAddress, type ReadOutput } from "./read.ts";
 import { decide, type Bid } from "./rules.ts";
 import {
+  bidMemoAddress,
   bidMemoPrefix,
   refundMemo,
   refundMemoPrefix,
@@ -538,14 +539,26 @@ function keyChecks(
     ],
   });
 
-  // Refund receivers: only when the disclosure lists a refund address for each bid.
-  if (d.refundAddresses !== undefined) {
+  // Refund receivers: runs when bidders put a refund address in their bid memo (read from the
+  // chain, the seller cannot choose it) or when the disclosure lists one for each bid.
+  const memoAddr = new Map<string, string>();
+  for (const b of bids.values()) {
+    const a = bidMemoAddress(d.lotId, b.memo);
+    if (a) memoAddr.set(b.txid, a);
+  }
+  if (d.refundAddresses !== undefined || memoAddr.size > 0) {
     const problems: string[] = [];
     const listedAddr = new Map<string, string>();
-    for (const a of d.refundAddresses) {
+    for (const a of d.refundAddresses ?? []) {
       const k = a.bidTxid.toLowerCase();
       if (listedAddr.has(k)) problems.push(`two refund addresses are listed for bid ${short(k)}`);
       listedAddr.set(k, a.address.trim());
+    }
+    // The bid memo is the bidder's own word and wins. A seller list that disagrees with it is a fail.
+    for (const [txid, addr] of memoAddr) {
+      const listed = listedAddr.get(txid);
+      if (listed !== undefined && listed !== addr) problems.push(`the seller's list gives a different refund address for bid ${short(txid)} than the one in the bid memo`);
+      listedAddr.set(txid, addr);
     }
     const parsed = new Map<string, ParsedAddress>();
     for (const [txid, addr] of listedAddr) {
@@ -555,17 +568,17 @@ function keyChecks(
       }
       try {
         const p = parseAddress(addr);
-        if (p.network !== d.network) problems.push(`the address listed for bid ${short(txid)} is for the ${p.network} network, the lot is on ${d.network}`);
+        if (p.network !== d.network) problems.push(`the address given for bid ${short(txid)} is for the ${p.network} network, the lot is on ${d.network}`);
         else parsed.set(txid, p);
       } catch (e) {
-        problems.push(`the address listed for bid ${short(txid)} is not a usable shielded address (${String((e as Error)?.message ?? e).slice(0, 80)})`);
+        problems.push(`the address given for bid ${short(txid)} is not a usable shielded address (${String((e as Error)?.message ?? e).slice(0, 80)})`);
       }
     }
     let checked = 0;
     for (const [txid, amount] of owed) {
       if (amount === 0) continue;
       if (!listedAddr.has(txid)) {
-        problems.push(`no refund address is listed for bid ${short(txid)}`);
+        problems.push(`no refund address is given for bid ${short(txid)} (not in its bid memo and not in the seller's list)`);
         continue;
       }
       const p = parsed.get(txid);
@@ -573,20 +586,20 @@ function keyChecks(
       for (const f of refunds.filter((f) => f.bidTxid === txid)) {
         checked++;
         const want = f.pool === "sapling" ? p.sapling : p.orchard;
-        if (want === null) problems.push(`the refund for bid ${short(txid)} was paid into the ${f.pool} pool but the listed address has no ${f.pool === "sapling" ? "Sapling" : "Orchard"} receiver`);
-        else if (want !== f.recipientHex) problems.push(`the refund for bid ${short(txid)} (${zat(f.amountZat)}, transaction ${short(f.txid)}) went to a different address than the one listed for that bid`);
+        if (want === null) problems.push(`the refund for bid ${short(txid)} was paid into the ${f.pool} pool but the address given has no ${f.pool === "sapling" ? "Sapling" : "Orchard"} receiver`);
+        else if (want !== f.recipientHex) problems.push(`the refund for bid ${short(txid)} (${zat(f.amountZat)}, transaction ${short(f.txid)}) went to a different address than the one given for that bid`);
       }
     }
     add({
       id: "refund-receivers",
       level: 2,
-      title: "Each refund went to the address listed for its bid",
+      title: "Each refund went to the address given for its bid",
       status: problems.length ? "FAIL" : "PASS",
       reason: problems.length
         ? `${problems.join("; ").replace(/^./, (c) => c.toUpperCase())}.`
-        : `All ${checked} refund payments went to the address listed for their bid. The lot key recovered the receiver of each one. The list itself is the seller's word: each bidder should confirm that the address next to their bid is theirs.`,
-      fromChain: [`${refunds.length} refund payments, receiver recovered with the lot key`],
-      fromDisclosure: [`${listedAddr.size} refund addresses listed`],
+        : `All ${checked} refund payments went to the address given for their bid. The lot key recovered the receiver of each one. ${memoAddr.size > 0 ? `${memoAddr.size} of the addresses were written by the bidders in their own bid memos, so the seller could not choose them.` : "The list itself is the seller's word: each bidder should confirm that the address next to their bid is theirs."}`,
+      fromChain: [`${refunds.length} refund payments, receiver recovered with the lot key`, `${memoAddr.size} refund addresses read from bid memos`],
+      fromDisclosure: [`${d.refundAddresses?.length ?? 0} refund addresses listed`],
     });
   }
 

@@ -35,6 +35,9 @@ code { font-size: 13px; background: var(--panel); padding: 1px 4px; border-radiu
 .btn.primary { background: var(--accent); color: #fff; }
 .btn.warn { border-color: var(--fail); color: var(--fail); }
 .btn:focus-visible, .chip:focus-visible, .drop:focus-visible, .toggle input:focus-visible { outline: 3px solid #f2a900; outline-offset: 2px; }
+.field { flex: 1 1 280px; min-height: 44px; padding: 8px 10px; font: inherit; border: 2px solid currentColor; border-radius: 8px; background: transparent; color: inherit; }
+.field:focus-visible { outline: 3px solid #f2a900; outline-offset: 2px; }
+#mine-out p { margin: 8px 0; white-space: pre-wrap; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 10px; }
 .chip { font: inherit; font-size: 14px; padding: 8px 12px; min-height: 40px; border-radius: 20px; border: 1px solid var(--line); background: #fff; color: var(--fg); cursor: pointer; text-align: left; }
 .chip[aria-pressed="true"] { border: 2px solid var(--accent); background: #eaf0fb; font-weight: 600; }

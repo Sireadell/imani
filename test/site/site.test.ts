@@ -112,6 +112,27 @@ test("refund address examples: page logic equals the command line, with the name
   }
 });
 
+test("bid memo address examples: page logic equals the command line, with the named failure", () => {
+  const honest = cliVerdict("memo-01");
+  const page = engine.runPage({ disclosure: ex("memo-01/disclosure.json"), result: ex("memo-01/result.json") });
+  assert.deepEqual(page.verdict, honest.verdict);
+  assert.equal(page.verdict.result, "PASS");
+  for (const c of ex("memo-broken/manifest.json").copies) {
+    const dir = `memo-broken/${c.name}`;
+    const out = engine.runPage({ disclosure: ex(`${dir}/disclosure.json`), result: ex(`${dir}/result.json`) });
+    assert.deepEqual(out.verdict.failed, [c.expectedFailingCheck], c.name);
+  }
+});
+
+test("the page answers Was my bid counted? the same way the command line does", () => {
+  const r = ex("memo-01/result.json");
+  const page = engine.runPage({ disclosure: ex("memo-01/disclosure.json"), result: r });
+  const text = engine.lookupBid(r, page.verdict, r.winners[0].slice(0, 12));
+  assert.match(text, /Your bid: counted, 3,000,000 zat./);
+  assert.match(text, /refund went to your address: PASS/);
+  assert.match(text, /Whole auction: PASS/);
+});
+
 test("spending keys and seed phrases are refused, and the key never appears in the outcome", () => {
   const d = ex("round-01/disclosure.json");
   const r = ex("round-01/result.json");

@@ -36,6 +36,9 @@
     <h3>With a refund address for every bid</h3>
     <p class="muted small">The seller lists the address each bid's refund must go to. The check reads where each refund really went and compares.</p>
     <div class="chips" id="chips-receivers" role="group" aria-label="Refund address examples"></div>
+    <h3>With the refund address written by the bidder</h3>
+    <p class="muted small">Each bidder writes their own refund address at the end of their bid memo, so the seller cannot choose it. The check reads it from the chain and compares it with where each refund went.</p>
+    <div class="chips" id="chips-memo" role="group" aria-label="Bid memo address examples"></div>
   </section>
 
   <section aria-labelledby="own-h">
@@ -55,6 +58,16 @@
     <label class="toggle"><input type="checkbox" id="discreet"> Discreet mode: hide amounts and memos</label>
   </section>
 
+  <section aria-labelledby="mine-h" id="mine-box">
+    <h2 id="mine-h">Was my bid counted?</h2>
+    <p class="muted">Paste the transaction id of your bid (the receipt your wallet showed). The lookup runs here on your device, against the result above, and nothing is sent anywhere.</p>
+    <div class="row">
+      <input id="mine-id" class="field" aria-label="Your bid's transaction id" autocomplete="off" spellcheck="false" placeholder="transaction id (10 characters or more)">
+      <button type="button" class="btn primary" id="mine-go">Find my bid</button>
+    </div>
+    <div id="mine-out" aria-live="polite"></div>
+  </section>
+
   <section aria-labelledby="src-h">
     <h2 id="src-h">Where each number comes from</h2>
     <div class="legend">
@@ -72,7 +85,7 @@
       <li>This is not a zero-knowledge proof. You recompute the result yourself from data the seller chose to share.</li>
       <li>A shared viewing key cannot be taken back. Anyone who has it can see that lot's payments for good, so each lot needs its own fresh key.</li>
       <li>Without the scan level, block heights and the list of payments come from the seller's files. With it, a saved chain file covers every block, but you still trust where that file came from.</li>
-      <li>A refund is shown to have left the lot with the right amount. Where it went is compared with the refund address the seller lists for each bid, when the seller lists them. That list is the seller's word: each bidder should check the address next to their bid is theirs. A refund is shown to have reached the bidder for certain only when that bidder supplies their own viewing key.</li>
+      <li>A refund is shown to have left the lot with the right amount. Where it went is compared with the refund address the bidder wrote in their bid memo, which the seller cannot choose, or else with the list the seller gives. A seller's list is the seller's word: each bidder should check the address next to their bid is theirs. A refund is shown to have reached the bidder for certain only when that bidder supplies their own viewing key.</li>
     </ul>
   </section>
 

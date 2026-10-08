@@ -32,7 +32,7 @@ Example (round-01): 2 items, reserve 1,000,000. Bids of 3,000,000, 2,000,000 and
 | `rules` | `{ "itemCount": 2, "reserveZat": 1000000 }` |
 | `ufvk` | The lot's read-only viewing key, starting `uview1` (main) or `uviewtest1` (test). Optional: without it only the basic level runs |
 | `transactions` | Every bid and refund transaction of the lot: `{ "txid", "height", "txHex" }` |
-| `refundAddresses` | Optional. The address each bid's refund must go to: `[{ "bidTxid", "address" }]`, one per bid. A unified (`u1...`, `utest1...`) or Sapling address. When present, the key level adds the check `refund-receivers`. Files without it check exactly as before |
+| `refundAddresses` | Optional. The address each bid's refund must go to: `[{ "bidTxid", "address" }]`, one per bid. A unified (`u1...`, `utest1...`) or Sapling address. When present, the key level adds the check `refund-receivers`. Not needed when the bidders wrote their address in their bid memo (see "Refund address in the bid memo"). Files without either check exactly as before |
 
 ## Result file
 
@@ -64,7 +64,7 @@ Key level, reads each disclosed transaction with the lot key (refund addresses, 
 | `winners-and-price` | Winners and clearing price recomputed from the on-time bids match the seller |
 | `reserve` | Reserve outcome recomputed from the chain matches the seller |
 | `refunds-paid` | Every refund owed (worked out from the chain) was paid in the exact amount, with a memo naming its bid |
-| `refund-receivers` | Only when the disclosure has `refundAddresses`. Every refund payment of the lot went to the address listed for its bid (see "Who received each refund"). Fails when an address is missing for a refunded bid, listed twice, listed for a transaction that is not a bid, not a usable shielded address, for the wrong network, or different from where the refund went |
+| `refund-receivers` | Only when the disclosure has `refundAddresses` or any bid memo carries an address. Every refund payment of the lot went to the address given for its bid (the bid memo wins over the seller's list, and a list that disagrees with a memo fails) (see "Who received each refund"). Fails when an address is missing for a refunded bid, listed twice, listed for a transaction that is not a bid, not a usable shielded address, for the wrong network, or different from where the refund went |
 | `refund-total` | Refunds the seller lists, plus clearing price times winners, equal the total bid money received. The fee allowance is 0: the seller pays network fees from their own money, never from bidders' money |
 
 Each check owns one kind of fault, so a single tampered fact fails a single check. `refunds-paid` judges what was really paid; `refund-total` judges whether the seller's own books add up.
@@ -107,7 +107,7 @@ For every output it can open, the reader returns the 43-byte raw address the out
 | The refund reached the bidder who made the bid | Only for bidders who give their own viewing key | `scan-refund-receivers`: the bidder's key must see an incoming payment in the range with memo `refund:<lotId>:<bid txid>` and the same amount the lot sent |
 | The same, for bidders who give no key and when no addresses are listed | No | A seller could pay a refund to their own second wallet with the right memo and this version would not notice |
 
-What `refund-receivers` catches: a seller who publishes honest-looking addresses but pays a refund somewhere else. What it does not catch: a seller who lists their own address as the bidder's. A bid memo carries no return address today, so nothing on the chain ties a listed address to the bidder. A later version can put the refund address inside the bid memo (`bid:<lotId>:<word>:<address>`), which the lot key reads from the chain and the seller cannot choose. Bidder key file: `{ "format": "imani-bidder-keys/1", "keys": [{ "bidTxid", "ufvk" }] }`. Bidder keys are checked like the lot key, never printed and never written.
+What `refund-receivers` catches: a seller who publishes honest-looking addresses but pays a refund somewhere else. What it does not catch: a seller who lists their own address as the bidder's. A bid memo carries no return address today, so nothing on the chain ties a listed address to the bidder. This is now closed for bids that carry the address in the bid memo (`bid:<lotId>:<word>:<address>`, see "Refund address in the bid memo"): the lot key reads it from the chain and the seller cannot choose it. Bidder key file: `{ "format": "imani-bidder-keys/1", "keys": [{ "bidTxid", "ufvk" }] }`. Bidder keys are checked like the lot key, never printed and never written.
 
 ### Block heights against the chain
 
@@ -148,3 +148,7 @@ The checker accepts only `uview1` or `uviewtest1` keys and refuses seed phrases,
 | A refund's receiver is proven only when addresses are listed or the bidder gives their own key | Without either, a seller could pay a refund to themselves with the right memo | List `refundAddresses` in the disclosure |
 | A shared viewing key cannot be revoked | Anyone with it sees the lot forever | One fresh key per lot, enforced by `key-hygiene` |
 | The seller can see bids as they arrive | The check proves counting, amounts and refunds, not that the seller never looked | None in this design |
+
+## Refund address in the bid memo
+
+A bid memo is `bid:<lotId>:<word>` or `bid:<lotId>:<word>:<refund address>`. The address is the last part after the final `:` and is a unified (`u1...`, `utest1...`) or Sapling address, which never contains a `:`. The bidder writes it inside their own payment, so the lot key reads it from the chain and the seller cannot change it. `refund-receivers` then compares it with the receiver the lot key recovers from each refund. If a bid memo has an address, that address is used even when the seller lists a different one (and the list then fails). If some bids carry an address and others do not, the ones without need an entry in `refundAddresses`. A repeated memo is still a replay, so the address cannot be used to place the same bid twice. Use a fresh address per auction, because after the close the lot key shows every address. Examples: `examples/memo-01` passes, `examples/memo-broken/` has two copies that fail `refund-receivers`; `npm run examples:memo` rebuilds them.

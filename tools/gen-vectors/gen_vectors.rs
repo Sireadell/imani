@@ -217,7 +217,9 @@ fn rust_check(tx: &Transaction, height: u32, viewer: &Party) -> Vec<Value> {
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.get(1).map(String::as_str) == Some("auction") {
-        auction(args.get(2).cloned().unwrap_or_else(|| "auction-round.json".into()));
+        auction(args.get(2).cloned().unwrap_or_else(|| "auction-round.json".into()), false);
+    } else if args.get(1).map(String::as_str) == Some("auction-memo") {
+        auction(args.get(2).cloned().unwrap_or_else(|| "auction-round-memo.json".into()), true);
     } else {
         reader_cases(args.get(1).cloned().unwrap_or_else(|| "offline-vectors.json".into()));
     }
@@ -244,7 +246,7 @@ fn write_tx(tx: &Transaction, height: u32) -> Vec<u8> {
 /// Ironwood, version 6, testnet NU6.3 rules. Bids are paid into the lot address with
 /// a "bid:<lotId>:<nonce>" memo. Refunds are paid from the lot (recorded under the
 /// lot's outgoing viewing key) with a "refund:<lotId>:<bid txid>" memo.
-fn auction(out_path: String) {
+fn auction(out_path: String, memo_addresses: bool) {
     let lot = party("lot LOT-01");
     let alice = party("bidder alice");
     let bob = party("bidder bob");
@@ -279,25 +281,30 @@ fn auction(out_path: String) {
     };
 
     // Bids: (label, bidder, amount, memo, height). Dave's bid lands after the close.
-    let bids: [(&'static str, &Party, u64, &str, u32); 4] = [
-        ("bid_alice", &alice, 3_000_000, "bid:LOT-01:q7k2", 4_200_010),
-        ("bid_bob", &bob, 2_000_000, "bid:LOT-01:m3x8", 4_200_020),
-        ("bid_carol", &carol, 1_500_000, "bid:LOT-01:t5w1", 4_200_030),
-        ("bid_dave_late", &dave, 1_200_000, "bid:LOT-01:z9p4", 4_200_105),
+    // With memo_addresses each bidder writes their own refund address after the word:
+    // "bid:<lotId>:<word>:<refund address>". The seller cannot choose it.
+    let bid_memo = |word: &str, who: &Party| -> String {
+        if memo_addresses { format!("bid:LOT-01:{word}:{}", who.ua) } else { format!("bid:LOT-01:{word}") }
+    };
+    let bids: [(&'static str, &Party, u64, String, u32); 4] = [
+        ("bid_alice", &alice, 3_000_000, bid_memo("q7k2", &alice), 4_200_010),
+        ("bid_bob", &bob, 2_000_000, bid_memo("m3x8", &bob), 4_200_020),
+        ("bid_carol", &carol, 1_500_000, bid_memo("t5w1", &carol), 4_200_030),
+        ("bid_dave_late", &dave, 1_200_000, bid_memo("z9p4", &dave), 4_200_105),
     ];
     for (label, _who, value, memo, height) in bids.iter() {
-        let id = add(*label, *height, vec![Out { from_ovk: None, to: &lot, value: *value, memo: *memo }], &mut txs);
+        let id = add(*label, *height, vec![Out { from_ovk: None, to: &lot, value: *value, memo: memo.as_str() }], &mut txs);
         txids.insert(*label, id);
     }
 
     // Extra payments into the lot address, used only by broken copies and tests.
-    let extras: [(&'static str, &Party, u64, &str, u32); 3] = [
-        ("stray_payment", &stranger, 50_000, "coffee order 7", 4_200_040),
-        ("bid_other_lot", &stranger, 800_000, "bid:LOT-02:r2d6", 4_200_050),
-        ("bid_alice_replay", &alice, 3_000_000, "bid:LOT-01:q7k2", 4_200_060),
+    let extras: [(&'static str, &Party, u64, String, u32); 3] = [
+        ("stray_payment", &stranger, 50_000, "coffee order 7".to_string(), 4_200_040),
+        ("bid_other_lot", &stranger, 800_000, "bid:LOT-02:r2d6".to_string(), 4_200_050),
+        ("bid_alice_replay", &alice, 3_000_000, bid_memo("q7k2", &alice), 4_200_060),
     ];
     for (label, _who, value, memo, height) in extras.iter() {
-        add(*label, *height, vec![Out { from_ovk: None, to: &lot, value: *value, memo: *memo }], &mut txs);
+        add(*label, *height, vec![Out { from_ovk: None, to: &lot, value: *value, memo: memo.as_str() }], &mut txs);
     }
 
     // Refunds: (label, recipient, amount, bid label, height). With 2 items, a reserve of
@@ -305,13 +312,17 @@ fn auction(out_path: String) {
     // the reserve), Alice and Bob win at 1,500,000 each and get the rest of their bid back,
     // Carol loses and gets all of it back, and Dave's late bid is returned in full.
     // refund_carol_short pays Carol 100,000 too little, for one broken copy.
-    let refunds: [(&'static str, &Party, u64, &str, u32); 5] = [
+    let mut refunds: Vec<(&'static str, &Party, u64, &str, u32)> = vec![
         ("refund_alice_change", &alice, 1_500_000, "bid_alice", 4_200_120),
         ("refund_bob_change", &bob, 500_000, "bid_bob", 4_200_121),
         ("refund_carol", &carol, 1_500_000, "bid_carol", 4_200_122),
         ("refund_dave_late", &dave, 1_200_000, "bid_dave_late", 4_200_123),
         ("refund_carol_short", &carol, 1_400_000, "bid_carol", 4_200_122),
     ];
+    // Memo round only: Carol's refund paid to Dave's address instead of the one in her bid memo.
+    if memo_addresses {
+        refunds.push(("refund_carol_elsewhere", &dave, 1_500_000, "bid_carol", 4_200_122));
+    }
     for (label, who, value, bid_label, height) in refunds.iter() {
         let memo = format!("refund:{LOT_ID}:{}", txids[*bid_label]);
         add(*label, *height, vec![Out { from_ovk: Some(&lot), to: who, value: *value, memo: &memo }], &mut txs);

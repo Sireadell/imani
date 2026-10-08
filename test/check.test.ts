@@ -205,3 +205,66 @@ test("price rule: uniform price, reserve, ties", () => {
   // Equal amounts: the earlier block wins.
   assert.deepEqual(decide([b("x", 200, 9), b("y", 200, 3), b("z", 300)], rules).winners, ["z", "y"]);
 });
+
+test("--mine says a winner's bid was counted, with price and money back", () => {
+  const w = round.r.winners[0] as string;
+  const out = cli("round-01", "--mine", w.slice(0, 12));
+  assert.equal(out.code, 0);
+  assert.match(out.stdout, /Your bid: counted, 3,000,000 zat\./);
+  assert.match(out.stdout, /you won one item at 1,500,000 zat/);
+  assert.match(out.stdout, /Whole auction: PASS/);
+});
+
+test("--mine says an unknown bid is not listed and that only --scan can tell if it was left out", () => {
+  const out = cli("round-01", "--mine", "abcdef1234");
+  assert.match(out.stdout, /NOT in the seller's list/);
+  assert.match(out.stdout, /--scan/);
+});
+
+test("--mine refuses a malformed id and hides amounts in discreet mode", () => {
+  assert.equal(cli("round-01", "--mine", "zz").code, 2);
+  const w = round.r.winners[0] as string;
+  const out = cli("round-01", "--mine", w.slice(0, 12), "--discreet");
+  assert.doesNotMatch(out.stdout, /3,000,000/);
+});
+
+test("--mine names a bid the seller hid when the scan finds it", () => {
+  const dir = "scan-broken/01-hidden-bid";
+  const out = run([
+    "check", "--disclosure", path(dir, "disclosure.json"), "--result", path(dir, "result.json"),
+    "--scan", "--chain", path(dir, "chain.json"), "--mine", "4585c1c8f3",
+  ]);
+  assert.equal(out.code, 1);
+  assert.match(out.stdout, /That is your bid: it is on the chain but the seller left it out/);
+});
+
+test("memo-01: refund addresses written by the bidders in their bid memos pass, with no seller list", () => {
+  const { d } = load("memo-01");
+  assert.equal(d.refundAddresses, undefined);
+  const v = checkLot(d, load("memo-01").r);
+  assert.equal(v.result, "PASS");
+  const c = v.checks.find((x) => x.id === "refund-receivers")!;
+  assert.equal(c.status, "PASS");
+  assert.match(c.reason, /written by the bidders in their own bid memos/);
+});
+
+test("memo-broken: a refund paid to a different address than the bid memo names fails refund-receivers only", () => {
+  const dir = "memo-broken/01-refund-to-other-address";
+  const v = checkLot(load(dir).d, load(dir).r);
+  assert.deepEqual(v.failed, ["refund-receivers"]);
+});
+
+test("memo-broken: a seller list that contradicts a bid memo fails, the memo wins", () => {
+  const dir = "memo-broken/02-list-contradicts-bid-memo";
+  const v = checkLot(load(dir).d, load(dir).r);
+  assert.deepEqual(v.failed, ["refund-receivers"]);
+  assert.match(v.checks.find((x) => x.id === "refund-receivers")!.reason, /different refund address .* bid memo/);
+});
+
+test("--mine reads a memo-01 winner and the receiver check shows in the report", () => {
+  const { r } = load("memo-01");
+  const out = cli("memo-01", "--mine", (r.winners[0] as string).slice(0, 12));
+  assert.equal(out.code, 0);
+  assert.match(out.stdout, /Your bid: counted/);
+  assert.match(out.stdout, /refund went to your address: PASS/);
+});

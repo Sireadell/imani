@@ -5,6 +5,7 @@ import { toHtml, toText } from "./report.ts";
 import { assertNoSecret, LeakGuardError, maskDiscreet } from "./guard.ts";
 import { blocksInRange, ScanInputError, validateChainFile, type BlockSource } from "./scan/chain.ts";
 import { DEFAULT_GRACE_BLOCKS, scanRange, type BidderKey, type ScanInput } from "./scan/scan.ts";
+import { lookupBid } from "./mine.ts";
 import { BlockFetchError, fetchBlocks } from "./scan/fetch-blocks.ts";
 
 const USAGE = `Usage: imani check --disclosure <lot disclosure.json> --result <seller result.json> [options]
@@ -13,6 +14,7 @@ const USAGE = `Usage: imani check --disclosure <lot disclosure.json> --result <s
   --discreet     hide amounts, memos and addresses in everything printed or written
   --offline      never open a network connection (refuses --fetch)
   --out          also write verdict.json and report.html into this folder
+  --mine <txid>  also answer "was my bid counted?" for the bid with this transaction id
 
 Scan level (reads every block from the lot's open height to its refund deadline):
   --scan                 run the scan level
@@ -33,7 +35,7 @@ export interface CliResult {
 
 type Opts = Record<string, string | boolean>;
 const FLAGS = new Set(["--basic", "--discreet", "--offline", "--scan", "--fetch"]);
-const VALUES = new Set(["--disclosure", "--result", "--out", "--chain", "--grace", "--bidder-keys", "--proxy", "--concurrency"]);
+const VALUES = new Set(["--disclosure", "--result", "--out", "--chain", "--grace", "--bidder-keys", "--proxy", "--concurrency", "--mine"]);
 
 function readJson(path: string, what: string): unknown {
   let text: string;
@@ -100,6 +102,7 @@ function bidderKeys(opts: Opts, network: string): BidderKey[] | undefined {
 function finish(opts: Opts, d: any, r: any, scan?: ScanInput): CliResult {
   const v: Verdict = checkLot(d, r, { basicOnly: !!opts.basic, discreet: !!opts.discreet, scan });
   let stdout = toText(v);
+  if (typeof opts.mine === "string") stdout += "\n\n" + lookupBid(r, v, opts.mine);
   let json = JSON.stringify(v, null, 2) + "\n";
   let html = toHtml(v);
   if (v.discreet) {

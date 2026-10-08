@@ -21,6 +21,8 @@ npx imani check --disclosure examples/round-01/disclosure.json --result examples
 
 This prints every check and writes `report/verdict.json` and `report/report.html` (open it in any browser, it works offline). Add `--discreet` to hide amounts, memos and addresses, `--offline` to make sure no connection is ever opened, or `--basic` to run only the checks that need no key. Nothing shaped like a key or seed phrase can be printed or written. `npm run leak-scan` checks every tracked file for keys, seed phrases and `.env` files (public test keys are listed with a reason in `tools/leak-scan.allow.json`), and CI runs it. Try the six broken copies in `examples/broken/`: each one fails on exactly one named check, listed in `examples/broken/manifest.json`.
 
+Bidders can add `--mine <your bid's transaction id>` (the first 10 characters are enough) to any check. It prints whether your bid was counted, whether it won, what should come back to you, and what the checks found about it. With `--scan` it also tells you if the seller left your bid out.
+
 To also read every block of the auction, so a bid the seller left out still shows up:
 
 ```sh
@@ -29,7 +31,7 @@ npx imani check --disclosure examples/scan-01/disclosure.json --result examples/
 
 This reads the blocks from a saved file. Use `--fetch` instead of `--chain` to download them from public Zcash servers (slower: about an hour for a day-long auction, see SPEC.md). `examples/scan-broken/` has three copies that only the scan catches: a hidden bid, a listed payment that is not on the chain in time, and a wrong block height.
 
-To also check where each refund went, the seller can list the address each bid's refund must go to (`refundAddresses` in the disclosure). `examples/receivers-01` passes, and `examples/receivers-broken/` has two copies that fail `refund-receivers`: a refund that went to a different address than the one listed, and a bid with no address listed. `npm run examples:receivers` rebuilds them.
+To also check where each refund went, the bidder can write their refund address at the end of their bid memo (`bid:<lot>:<word>:<address>`), so the seller cannot choose it. `examples/memo-01` passes and `examples/memo-broken/` has two copies that fail `refund-receivers`. Or the seller can list the address each bid's refund must go to (`refundAddresses` in the disclosure). `examples/receivers-01` passes, and `examples/receivers-broken/` has two copies that fail `refund-receivers`: a refund that went to a different address than the one listed, and a bid with no address listed. `npm run examples:receivers` rebuilds them.
 
 ## Where every number comes from
 
