@@ -5,6 +5,21 @@
   "type": "module",
   "license": "MIT",
   "private": true,
+  "files": [
+    "bin",
+    "dist",
+    "vendor/decoder",
+    "examples",
+    "README.md",
+    "SPEC.md",
+    "LOGIN_SPEC.md",
+    "THIRD_PARTY.md",
+    "LICENSE"
+  ],
+  "exports": {
+    "./login": "./dist/login.js",
+    "./package.json": "./package.json"
+  },
   "bin": {
     "imani": "bin/imani.js"
   },
@@ -12,6 +27,8 @@
     "node": ">=22.18"
   },
   "scripts": {
+    "build": "node --disable-warning=ExperimentalWarning tools/package-build.ts",
+    "prepack": "npm run build",
     "test": "tsx --test test/*.test.ts",
     "test:login": "tsx --test test/login/*.test.ts",
     "test:fetch": "tsx --test test/fetch/*.test.ts",
