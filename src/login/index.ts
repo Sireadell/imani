@@ -18,5 +18,6 @@ export { verifyLoginPayment, checkLoginMemo, FAILURES, type FailureReason, type 
 export { SignedSessions, MemorySessions, type Session, type SessionIssuer } from "./session.ts";
 export { LoginKit, type LoginKitOptions, type PublicChallenge } from "./kit.ts";
 export { buildReceipt, receiptText, receiptClean, type Receipt, type ReceiptField, type ReceiptProbe, type HeldValue } from "./receipt.ts";
+export { runScorecard, scorecardText, type LoginUnderTest, type Scorecard, type ScoreLine, type CheckStatus } from "./scorecard.ts";
 export { zcashLogin, requireZcashLogin } from "./express.ts";
 export { zcashCredentials, zcashChallengeRoute, zcashReservedChallengeRoute } from "./authjs.ts";

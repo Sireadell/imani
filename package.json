@@ -34,6 +34,7 @@
     "build": "node --disable-warning=ExperimentalWarning tools/package-build.ts",
     "prepack": "npm run build",
     "test": "tsx --test test/*.test.ts",
+    "login:scorecard": "tsx tools/login-scorecard.ts",
     "test:login": "tsx --test test/login/*.test.ts",
     "test:fetch": "tsx --test test/fetch/*.test.ts",
     "test:demo": "tsx --test test/demo/*.test.ts",

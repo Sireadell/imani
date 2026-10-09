@@ -32,6 +32,7 @@ Prefer to see the whole shop? Run `npm run demo:app` and open http://localhost:8
 | Privacy | The checker's keys | It refuses spending keys and seed phrases, and never prints or saves the key it is given. |
 | Usefulness | `imani check --mine <your bid's transaction id>` | A bidder learns whether their bid was counted, whether it won, what should come back, and whether the refund reached the address they chose. |
 | Execution | `npm test` | 77 tests. One of them installs the packed package in an empty folder and runs a check, inside 120 seconds. |
+| Usefulness | `npm run login:scorecard` | Six checks any memo-based login can be pointed at (one-time code, expiry, new wallet address, secrets in the link, sender hidden, copycat). Our login passes 6 of 6, a weak example we wrote passes 1 of 6. How to score another login: `docs/login/SCORECARD.md`. |
 | Originality | The bid memo | Bidders write their own refund address at the end of their bid memo, so a seller cannot swap it. The checker reads it from the chain. |
 
 ## The three things the checker can catch that a plain list cannot

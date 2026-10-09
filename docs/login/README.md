@@ -54,6 +54,10 @@ The login key never leaves the device and never goes into a web address. The pay
 
 `kit.receipt(accountId, { probes })` lists everything the site holds for one account, read from the kit's own storage rather than written by hand, then searches every stored value for things the site must not hold (the visitor's account key, the login memo, a wallet address, the site's viewing key) and says how many times each was found. Probe values are never printed. `receiptText(receipt)` gives the plain words and `receiptClean(receipt)` is true when every count is 0. Both example apps show it: the shop's sign-in page checks the visitor's own key and memo inside the browser tab, so they never travel, and the Next.js example shows it on the account page. A store needs a `dump()` method to build one (the default store has it). `test/login/receipt.test.ts` includes a planted leak that the receipt catches.
 
+## Scoring a login
+
+`npm run login:scorecard` runs six checks (one-time code, expiry, new wallet address, secrets in the link, sender hidden, copycat) against this repo's login and a weak example. Another login can be scored with a small adapter: see [SCORECARD.md](SCORECARD.md).
+
 ## Using your own store
 
 Put a database behind the `ChallengeStore` interface (`put`, `get`, `consume`, `markTransactionUsed`) and pass it as `store` to `LoginKit`. `consume` and `markTransactionUsed` must succeed for exactly one caller, for example an `UPDATE ... WHERE used = false` that reports one changed row.
