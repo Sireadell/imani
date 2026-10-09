@@ -5,7 +5,9 @@
 // bundled into plain JavaScript. The WebAssembly decoder stays in vendor/decoder (checked
 // against SHA256SUMS first) and is loaded from there at run time.
 import { build, type Plugin } from "esbuild";
-import { readFileSync, rmSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { verifyVendor } from "./site-build.ts";
@@ -41,9 +43,21 @@ export async function buildPackage(outDir = p("dist")): Promise<void> {
     plugins: [vendorPath],
     logLevel: "warning",
   });
+  // Type definitions for imani/login, so TypeScript users get types from the installed package.
+  const tsc = join(dirname(createRequire(import.meta.url).resolve("typescript/package.json")), "bin", "tsc");
+  execFileSync(process.execPath, [tsc, "-p", p("tsconfig.types.json"), "--outDir", join(outDir, "types")], { cwd: root, stdio: "inherit" });
+  // The sources import each other with .ts endings. In the shipped definitions, point them at .js.
+  const fix = (dir: string) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const f = join(dir, e.name);
+      if (e.isDirectory()) fix(f);
+      else if (f.endsWith(".d.ts")) writeFileSync(f, readFileSync(f, "utf8").replace(/(\bfrom\s+")(\.{1,2}\/[^"]+)\.ts(")/g, "$1$2.js$3"));
+    }
+  };
+  fix(join(outDir, "types"));
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   await buildPackage();
-  console.log("Built dist/cli.js and dist/login.js");
+  console.log("Built dist/cli.js, dist/login.js and dist/types/");
 }

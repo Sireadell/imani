@@ -7,5 +7,6 @@
 | [zcash-devtool](https://github.com/zcash/zcash-devtool) commit `5a26ee8` | Its `Cargo.lock` fixes the crate versions used by `tools/decoder` and `tools/gen-vectors`; its build setup and transaction builder make the offline test transactions in `test/vectors/offline-vectors.json` and `test/vectors/auction-round.json` (source of `examples/`); no code copied | MIT OR Apache-2.0 |
 | LedgerHQ/zcash-decrypt test case `decrypts_sapling_transaction` | One testnet transaction and viewing key kept in `test/vectors/ledger-testnet-orchard-internal.json` as a reader sanity test. The `@ledgerhq/zcash-decrypt` package itself is no longer used | MIT AND Apache-2.0 |
 | [zcash/lightwallet-protocol](https://github.com/zcash/lightwallet-protocol) `walletrpc/service.proto` and `compact_formats.proto` | Message layouts followed by the hand-written gRPC client in `src/fetch/grpc.ts`; no code or generated files copied, no runtime dependency added | MIT |
+| [vercel/next.js](https://github.com/vercel/next.js) `examples/auth` | The starting point of `examples/nextjs-app`: the app layout, page and Auth.js setup, copied and then changed so the GitHub sign-in is replaced by the Zcash login. Copyright (c) Vercel, Inc. | MIT |
 
 No code is copied from other hackathon entries. All imani code was written during the Zecathon build window.

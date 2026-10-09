@@ -40,6 +40,8 @@ test("the packed tarball installs in an empty folder and checks a lot, within 12
     writeFileSync(join(app, "login-check.mjs"), 'import { LoginKit } from "imani/login"; console.log(typeof LoginKit);');
     const login = sh("node", ["login-check.mjs"], app);
     assert.match(login, /function/);
+    // TypeScript users get types for imani/login from the installed package.
+    assert.ok(readdirSync(join(app, "node_modules", "imani", "dist", "types", "login")).includes("index.d.ts"));
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

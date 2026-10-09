@@ -10,6 +10,7 @@
     "dist",
     "vendor/decoder",
     "examples",
+    "!examples/nextjs-app",
     "README.md",
     "SPEC.md",
     "LOGIN_SPEC.md",
@@ -17,7 +18,10 @@
     "LICENSE"
   ],
   "exports": {
-    "./login": "./dist/login.js",
+    "./login": {
+      "types": "./dist/types/login/index.d.ts",
+      "default": "./dist/login.js"
+    },
     "./package.json": "./package.json"
   },
   "bin": {
