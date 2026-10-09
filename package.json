@@ -35,6 +35,7 @@
     "prepack": "npm run build",
     "test": "tsx --test test/*.test.ts",
     "login:scorecard": "tsx tools/login-scorecard.ts",
+    "test:all": "npm test && npm run test:login && npm run test:fetch && npm run test:demo && npm run test:scan && npm run test:site",
     "test:login": "tsx --test test/login/*.test.ts",
     "test:fetch": "tsx --test test/fetch/*.test.ts",
     "test:demo": "tsx --test test/demo/*.test.ts",

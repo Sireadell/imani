@@ -74,7 +74,7 @@ Full list: LOGIN_SPEC.md, section 9.
 ## Tests
 
 ```sh
-npm test
+npm run test:all
 npm run typecheck
 ```
 

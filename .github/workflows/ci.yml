@@ -14,4 +14,4 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run leak-scan
-      - run: npm test
+      - run: npm run test:all
