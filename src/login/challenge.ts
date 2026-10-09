@@ -65,6 +65,10 @@ export class MemoryChallengeStore implements ChallengeStore {
     this.#txids.add(txid);
     return true;
   }
+  /** Everything this store holds, for the "what this site learned" receipt. */
+  dump(): { challenges: StoredChallenge[]; txids: string[] } {
+    return { challenges: [...this.#challenges.values()].map((c) => ({ ...c })), txids: [...this.#txids] };
+  }
   /**
    * Forget codes that expired before `now` (seconds). Safe: an expired code is refused anyway,
    * and a forgotten one is refused as unknown. Transaction ids are kept.

@@ -352,3 +352,34 @@ test("live mode runs the same sign-in path and fails closed when no server answe
     await h.close();
   }
 });
+
+test("the receipt shows what the shop stored for the signed-in account, from its real storage", async () => {
+  const h = await startDemo();
+  try {
+    assert.equal((await h.get("/receipt.json")).status, 401, "no receipt without signing in");
+    const seed = seedOf("receipt user");
+    const first = await signIn(h, seed);
+    assert.equal(first.ok, true, first.message);
+    const cookieValue = h.cookie.split("=").slice(1).join("=");
+    const res = await h.get("/receipt.json");
+    const body = JSON.parse(res.text_);
+    assert.equal(body.ok, true);
+    const rc = body.receipt;
+    assert.equal(rc.accountId, first.accountId);
+    assert.ok(rc.stored.some((f: any) => f.field === "account id" && f.value === first.accountId));
+    assert.ok(rc.stored.some((f: any) => f.where === "session cookie" && f.value.includes(first.accountId)));
+    assert.ok(rc.notStored.length >= 2 && rc.notStored.every((n: any) => n.found === 0));
+    // The cookie is HttpOnly, so its value is searched but never shown; no key or memo is in the reply either.
+    assert.ok(!res.text_.includes(cookieValue));
+    assert.ok(!res.text_.includes(LOT_UFVK));
+    assert.ok(!res.text_.includes(SITE.ufvk));
+    assert.ok(!res.text_.includes(first.memo));
+    assert.ok(!res.text_.includes(exportAccountKey(AccountKey.fromSeed(seed))));
+    // The browser looks for its own key and memo in the stored values; none is there.
+    const stored = JSON.stringify(rc.stored);
+    assert.ok(!stored.includes(Buffer.from(seed).toString("base64url")));
+    assert.ok(!stored.includes(first.memo));
+  } finally {
+    await h.close();
+  }
+});

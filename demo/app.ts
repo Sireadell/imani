@@ -82,6 +82,14 @@ export function createApp(cfg: DemoConfig): DemoApp {
     return null;
   }
 
+  function sessionValue(req: IncomingMessage): string | null {
+    for (const part of (req.headers.cookie ?? "").split(";")) {
+      const [k, ...v] = part.trim().split("=");
+      if (k === SESSION_COOKIE) return v.join("=") || null;
+    }
+    return null;
+  }
+
   function send(res: ServerResponse, status: number, type: string, body: string | Buffer, extra: Record<string, string | string[]> = {}) {
     res.writeHead(status, {
       "Content-Type": type,
@@ -195,6 +203,18 @@ export function createApp(cfg: DemoConfig): DemoApp {
         200,
         { "Set-Cookie": cookie(sessions.issue(r.accountId), 12 * 3600) },
       );
+    }
+    if (method === "GET" && path === "/receipt.json") {
+      // What this shop stores for the signed-in account, read from the shop's real storage. The cookie itself
+      // is searched but never shown (it is HttpOnly), so the receipt shows only what is inside it.
+      const raw = sessionValue(req);
+      const s = raw ? sessions.read(raw) : undefined;
+      if (!raw || !s) return json(res, { ok: false, message: "Sign in first." }, 401);
+      const receipt = kit.receipt(s.accountId, {
+        held: [{ where: "session cookie", text: raw, show: `account id ${s.accountId}, ends ${new Date(s.expiresAt * 1000).toISOString()}` }],
+        probes: [{ label: "the shop's session secret", value: cfg.sessionSecret }],
+      });
+      return json(res, { ok: true, receipt });
     }
     if (method === "POST" && path === "/logout") {
       const wantsJson = String(req.headers.accept ?? "").includes("application/json");

@@ -17,5 +17,6 @@ export { buildPaymentUri, checkSinglePayee, formatZec } from "./uri.ts";
 export { verifyLoginPayment, checkLoginMemo, FAILURES, type FailureReason, type Failure, type LoginSuccess, type TxReader } from "./verify.ts";
 export { SignedSessions, MemorySessions, type Session, type SessionIssuer } from "./session.ts";
 export { LoginKit, type LoginKitOptions, type PublicChallenge } from "./kit.ts";
+export { buildReceipt, receiptText, receiptClean, type Receipt, type ReceiptField, type ReceiptProbe, type HeldValue } from "./receipt.ts";
 export { zcashLogin, requireZcashLogin } from "./express.ts";
 export { zcashCredentials, zcashChallengeRoute, zcashReservedChallengeRoute } from "./authjs.ts";

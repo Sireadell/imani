@@ -1,5 +1,5 @@
 // Sign-in page. The login key is kept in this module's memory only.
-import { ed25519Supported, newLoginKey, exportLoginKey, importLoginKey, buildLoginMemo, buildLoginProof, siteKey, paymentLink, formatZec, EXPORT_WARNING } from "./imani-login.js";
+import { b64url, ed25519Supported, newLoginKey, exportLoginKey, importLoginKey, buildLoginMemo, buildLoginProof, siteKey, paymentLink, formatZec, EXPORT_WARNING } from "./imani-login.js";
 
 const $ = (id) => document.getElementById(id);
 const root = $("signin");
@@ -126,6 +126,7 @@ async function verify(txid) {
     same.hidden = true;
   }
   firstAccount = firstAccount ?? r.accountId;
+  showReceipt(r.accountId).catch(() => {});
   $("step-pay").hidden = true;
   $("code-box").hidden = true;
   $("step-done").hidden = false;
@@ -133,4 +134,41 @@ async function verify(txid) {
   const acct = document.querySelector(".account");
   if (acct) acct.replaceChildren(Object.assign(document.createElement("span"), { className: "chip", textContent: `Account ${r.accountId.slice(0, 6)}` }));
   $("step-done").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// The receipt: what the shop stored, read from the shop. The two secrets only this tab holds (the account
+// key and the login memo) are searched for here, in the browser, so they never travel to the shop.
+async function showReceipt(accountId) {
+  const res = await fetch("/receipt.json", { headers: { Accept: "application/json" }, credentials: "same-origin" });
+  const data = await res.json();
+  if (!data.ok) return;
+  const rc = data.receipt;
+  const text = JSON.stringify(rc.stored);
+  const mine = [];
+  if (loginKey) mine.push(["your account key", b64url(loginKey), exportLoginKey(loginKey)]);
+  const { memo } = await buildLoginMemo(loginKey, challenge);
+  mine.push(["your login memo", memo]);
+  const rows = $("receipt-rows");
+  rows.replaceChildren();
+  for (const f of rc.stored) {
+    const tr = document.createElement("tr");
+    for (const t of [f.where, f.field, f.value.length > 40 && !f.value.includes(" ") ? f.value.slice(0, 18) + "..." + f.value.slice(-8) : f.value]) {
+      const td = document.createElement("td");
+      td.textContent = t;
+      tr.append(td);
+    }
+    rows.append(tr);
+  }
+  $("receipt-shared").textContent = rc.shared.map((f) => f.field + ": " + f.value + " (kept for all accounts together, not tied to you)").join(" ");
+  const ul = $("receipt-probes");
+  ul.replaceChildren();
+  const line = (label, n) => {
+    const li = document.createElement("li");
+    li.textContent = label + ": found in " + n;
+    ul.append(li);
+  };
+  line("the shop's own viewing key", rc.notStored.find((n) => n.label.includes("viewing key"))?.found ?? 0);
+  line("the shop's session secret", rc.notStored.find((n) => n.label.includes("session secret"))?.found ?? 0);
+  for (const [label, ...needles] of mine) line(label, needles.some((n) => text.includes(n)) ? 1 : 0);
+  $("receipt").hidden = false;
 }

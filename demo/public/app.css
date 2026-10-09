@@ -202,3 +202,10 @@ summary { cursor: pointer; color: var(--accent); }
   .chk .status { justify-self: start; }
   .card { padding: 16px; }
 }
+
+.receipt { margin-top: 1.25rem; border-top: 1px solid var(--line, #d9d9d9); padding-top: 1rem; }
+.receipt h4 { margin: 1rem 0 0.4rem; font-size: 1rem; }
+.receipt-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.receipt-table th, .receipt-table td { text-align: left; padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--line, #e3e3e3); overflow-wrap: anywhere; }
+.probes { list-style: none; padding: 0; margin: 0; }
+.probes li { padding: 0.15rem 0; }

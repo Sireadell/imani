@@ -241,6 +241,15 @@ ${signedIn}
     <p class="learned">This shop learned: <strong>account <span id="acct-short"></span></strong> and a ${zec(challengeInfo.minZat)} payment. Nothing else.</p>
     <dl class="pay"><div><dt>Account id</dt><dd><code id="acct-full"></code></dd></div><div><dt>Not learned</dt><dd>Your wallet address, your balance, your account key</dd></div></dl>
     <p class="notice ok" id="same-account" hidden></p>
+    <section class="receipt" id="receipt" aria-labelledby="receipt-h" hidden>
+      <h3 id="receipt-h">Receipt: what this shop stored</h3>
+      <p class="muted">Read from the shop's real storage just now, not typed by hand.</p>
+      <table class="receipt-table"><thead><tr><th>Where</th><th>What</th><th>Value</th></tr></thead><tbody id="receipt-rows"></tbody></table>
+      <p id="receipt-shared" class="muted"></p>
+      <h4>Searched for things the shop must not hold</h4>
+      <ul id="receipt-probes" class="probes"></ul>
+      <p class="muted">The last two lines are checked in this tab. Your account key and your login memo never leave it.</p>
+    </section>
     <div class="row">
       <a class="btn" href="/lot">Go to the lot</a>
       <button class="btn btn-quiet" type="button" id="again">Sign in again from a new wallet address</button>

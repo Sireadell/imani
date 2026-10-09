@@ -1,4 +1,5 @@
 import { createChallenge, MemoryChallengeStore, networkOfViewingKey, addressMatchesNetwork, type ChallengeStore, type Network } from "./challenge.ts";
+import { buildReceipt, type HeldValue, type Receipt, type ReceiptProbe } from "./receipt.ts";
 import { verifyLoginPayment, type Failure, type LoginSuccess, type TxReader } from "./verify.ts";
 
 export interface LoginKitOptions {
@@ -86,6 +87,21 @@ export class LoginKit {
       now: this.#now(),
       readTx: this.#opts.readTx,
       log: this.#opts.log,
+    });
+  }
+
+  /**
+   * The "what this site learned" receipt for one account, read from the kit's real storage.
+   * Probes are values the site must not hold (the visitor's account key, the login memo, a wallet address).
+   * The kit adds its own viewing key as a probe. Needs a store with a dump() method (the default one has it).
+   */
+  receipt(accountId: string, opts: { held?: HeldValue[]; probes?: ReceiptProbe[] } = {}): Receipt {
+    return buildReceipt({
+      siteId: this.#opts.siteId,
+      accountId,
+      store: this.#store,
+      held: opts.held,
+      probes: [...(opts.probes ?? []), { label: "the site's own viewing key", value: this.#opts.viewingKey }],
     });
   }
 
