@@ -18,7 +18,7 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: 
 type Selection = { kind: "example"; id: string } | { kind: "own" };
 
 let selection: Selection = { kind: "example", id: "testnet-01" };
-let tamperIndex = -1;
+let ready = false;
 const own: { disclosure?: unknown; result?: unknown; chain?: unknown; chainName?: string; bidderKeys?: unknown; names: string[] } = { names: [] };
 
 const byGroup = (g: ExampleEntry["group"]) => examples.filter((e) => e.group === g);
@@ -216,16 +216,43 @@ function syncChips(): void {
   const tampered = byGroup("tampered");
   $("tamper-count").textContent =
     current !== null && tampered.some((e) => e.id === current)
-      ? `Showing tampered copy ${tampered.findIndex((e) => e.id === current) + 1} of ${tampered.length}. Press again for the next one.`
-      : `Each press loads the next of ${tampered.length} tampered copies.`;
+      ? `Showing tampered copy ${tampered.findIndex((e) => e.id === current) + 1} of ${tampered.length}.`
+      : `Try a tampered copy: pick the honest round or any of the ${tampered.length} tampered copies.`;
 }
 
-function choose(id: string, scroll = true): void {
+/** Show "Checking..." and let the screen paint it before the check starts, because a check of the
+ * real round takes a few seconds and would otherwise look like a frozen page. */
+function showChecking(): Promise<void> {
+  const out = $("outcome");
+  out.replaceChildren();
+  const p = el("p", "checking", "Checking... this takes a few seconds for the real round.");
+  p.setAttribute("role", "status");
+  out.appendChild(p);
+  out.setAttribute("aria-busy", "true");
+  for (const b of document.querySelectorAll<HTMLButtonElement>(".chip")) b.disabled = true;
+  // A background tab never fires animation frames, so a plain timer is the fallback.
+  return new Promise((done) => {
+    requestAnimationFrame(() => setTimeout(done, 30));
+    setTimeout(done, 120);
+  });
+}
+
+function doneChecking(): void {
+  $("outcome").removeAttribute("aria-busy");
+  for (const b of document.querySelectorAll<HTMLButtonElement>(".chip")) b.disabled = false;
+}
+
+async function checkWithNotice(): Promise<void> {
+  if (!ready || (selection.kind === "own" && (own.disclosure === undefined || own.result === undefined))) { render(); return; }
+  await showChecking();
+  try { render(); } finally { doneChecking(); }
+}
+
+async function choose(id: string, scroll = true): Promise<void> {
   selection = { kind: "example", id };
-  const t = byGroup("tampered").findIndex((e) => e.id === id);
-  if (t >= 0) tamperIndex = t;
-  render();
+  syncChips();
   if (scroll) $("results").scrollIntoView({ behavior: "smooth", block: "start" });
+  await checkWithNotice();
 }
 
 function findMine(): void {
@@ -260,31 +287,26 @@ async function takeFiles(files: FileList | File[]): Promise<void> {
       problems.push(`${f.name}: ${e instanceof Error ? e.message : "could not be read."}`);
     }
   }
+  if (own.disclosure !== undefined && own.result === undefined) problems.push("Now add the seller's result file, so the checker has something to compare with.");
+  if (own.result !== undefined && own.disclosure === undefined) problems.push("Now add the seller's disclosure file.");
   const have = [own.disclosure !== undefined && "disclosure", own.result !== undefined && "result", own.chain !== undefined && "chain (scan)", own.bidderKeys !== undefined && "bidder keys"].filter(Boolean);
   status.textContent = `Loaded: ${have.length ? have.join(", ") : "nothing yet"}.${problems.length ? " " + problems.join(" ") : ""}`;
   selection = { kind: "own" };
-  render();
+  syncChips();
   $("results").scrollIntoView({ behavior: "smooth", block: "start" });
+  await checkWithNotice();
 }
 
 async function start(): Promise<void> {
   for (const e of [...byGroup("real-honest"), ...byGroup("real-tampered")]) $("chips-real").appendChild(chip(e));
   renderExplorer();
-  $("btn-real").addEventListener("click", () => choose("testnet-01"));
-  $("btn-real-cheat").addEventListener("click", () => choose(byGroup("real-tampered")[0].id));
-  for (const e of byGroup("tampered")) $("chips-tampered").appendChild(chip(e));
+  for (const e of [...byGroup("honest"), ...byGroup("tampered")]) $("chips-tampered").appendChild(chip(e));
   for (const e of [...byGroup("scan-honest"), ...byGroup("scan-tampered")]) $("chips-scan").appendChild(chip(e));
   for (const e of [...byGroup("receivers-honest"), ...byGroup("receivers-tampered")]) $("chips-receivers").appendChild(chip(e));
   for (const e of [...byGroup("memo-honest"), ...byGroup("memo-tampered")]) $("chips-memo").appendChild(chip(e));
   $("mine-go").addEventListener("click", findMine);
   $("mine-id").addEventListener("keydown", (ev) => { if ((ev as KeyboardEvent).key === "Enter") findMine(); });
-  $("btn-honest").addEventListener("click", () => choose("round-01"));
-  $("btn-tamper").addEventListener("click", () => {
-    const t = byGroup("tampered");
-    tamperIndex = (tamperIndex + 1) % t.length;
-    choose(t[tamperIndex].id);
-  });
-  $("discreet").addEventListener("change", render);
+  $("discreet").addEventListener("change", () => void checkWithNotice());
 
   const drop = $("drop");
   const input = $<HTMLInputElement>("files");
@@ -316,7 +338,8 @@ async function start(): Promise<void> {
   } catch {
     /* the line is optional */
   }
-  render();
+  ready = true;
+  await checkWithNotice();
 }
 
 void start();

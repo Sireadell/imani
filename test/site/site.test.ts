@@ -195,7 +195,7 @@ test("the built page makes no network calls and has no external hosts", () => {
   assert.match(html, /connect-src 'none'/);
   assert.match(html, /default-src 'none'/);
   assert.doesNotMatch(css, /@import|url\(/);
-  assert.deepEqual([...html.matchAll(/\b(?:src|href)="([^"]+)"/g)].map((m) => m[1]).sort(), ["app.js", "data:,", "style.css"]);
+  assert.deepEqual([...html.matchAll(/(?:src|href)="([^"]+)"/g)].map((m) => m[1]).sort(), ["app.js", "check.html", "data:,", "style.css"]);
   // check.html, check.js and check.css are the referee page, which has its own policy (see referee.test.ts); the offline page above never loads them.
   assert.deepEqual([...siteFiles].sort(), ["SHA256SUMS", "app.js", "check.css", "check.html", "check.js", "index.html", "style.css"]);
 });
@@ -269,4 +269,12 @@ test("page text rules: plain words, no banned claims, no em dashes", () => {
   assert.match(html, /seller can see bids/i);
   assert.match(html, /Try a tampered copy/);
   assert.ok(readdirSync(join(siteDir)).length > 0);
+});
+
+test("the page has one button per example, a nav slot for Check any round, and a checking notice", () => {
+  const html = readFileSync(join(siteDir, "index.html"), "utf8");
+  const js = readFileSync(join(siteDir, "app.js"), "utf8");
+  assert.equal((html.match(/<a href="check.html">Check any round<\/a>/g) ?? []).length, 1);
+  for (const id of ["btn-real", "btn-real-cheat", "btn-honest", "btn-tamper"]) assert.doesNotMatch(html, new RegExp(`id="${id}"`));
+  assert.match(js, /Checking\.\.\./);
 });

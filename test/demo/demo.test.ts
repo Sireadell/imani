@@ -383,3 +383,28 @@ test("the receipt shows what the shop stored for the signed-in account, from its
     await h.close();
   }
 });
+
+test("demo:app stops with a plain message when a port you asked for (IMANI_PORT or --port) is taken", async () => {
+  const { spawn } = await import("node:child_process");
+  const blocker = createServer();
+  await new Promise<void>((ok, bad) => { blocker.once("error", bad); blocker.listen(0, "127.0.0.1", ok); });
+  const taken = (blocker.address() as { port: number }).port;
+  const run = (args: string[], env: Record<string, string>) =>
+    new Promise<{ code: number | null; out: string }>((done) => {
+      const p = spawn(process.execPath, ["node_modules/tsx/dist/cli.mjs", "demo/server.ts", ...args], { env: { ...process.env, ...env }, cwd: new URL("../../", import.meta.url) });
+      let out = "";
+      const t = setTimeout(() => p.kill(), 20000);
+      p.stdout.on("data", (b) => { out += b; if (/Open http/.test(out)) p.kill(); });
+      p.stderr.on("data", (b) => (out += b));
+      p.on("close", (code) => { clearTimeout(t); done({ code, out }); });
+    });
+  try {
+    const asked = await run([], { IMANI_PORT: String(taken) });
+    assert.equal(asked.code, 2);
+    assert.match(asked.out, /already in use/);
+    const given = await run(["--port", String(taken)], {});
+    assert.equal(given.code, 2);
+  } finally {
+    blocker.close();
+  }
+});

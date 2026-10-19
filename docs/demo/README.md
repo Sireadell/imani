@@ -16,7 +16,7 @@ npm install
 npm run demo:app
 ```
 
-Open http://localhost:8787. No wallet and no internet needed.
+Open http://localhost:8787 (if that port is taken, the demo picks a free one and prints the address to open). No wallet and no internet needed.
 
 This starts **simulated mode**. A yellow SIMULATED banner stays at the top of every page. Payments go to a pretend network inside the app, the block clock is pretend, and nothing is sent anywhere. The lot replays the recorded test round in `examples/round-01`, so your bid is bid 2 of that round (0.02 ZEC, memo `bid:LOT-01:m3x8`) and the published files match it exactly.
 
@@ -52,7 +52,7 @@ Live mode reads real payments through `src/fetch` (two servers run by different 
 | `IMANI_SERVERS` | Optional. Comma-separated light servers, for example `https://zec.rocks:443` |
 | `IMANI_PROXY` | Optional. SOCKS5 proxy such as `socks5h://127.0.0.1:9050`, so servers do not see your internet address |
 | `IMANI_LOT_DIR` | Optional. Folder with `lot.json` (lotId, title, address, network, closeHeight, itemCount, reserveZat), and after the close the seller's `disclosure.json` and `result.json` |
-| `IMANI_PORT` | Optional. Default 8787 |
+| `IMANI_PORT` | Optional. Default 8787. If you set it (or pass `--port <n>`) and it is taken, the demo stops with a message instead of switching |
 
 In live mode the user pays the sign-in link from a real wallet, then pastes the transaction id. If no server answers or the payment is not there yet, the page says so, lists the servers it contacted, and does not sign anyone in. Live mode has been tested with a server that refuses to answer, not yet with a real payment.
 

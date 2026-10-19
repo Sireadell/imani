@@ -12,6 +12,7 @@
 <body>
 <header class="top">
   <div class="wrap">
+    <nav class="nav" aria-label="Pages"><a href="check.html">Check any round</a></nav>
     <h1>Imani auction check</h1>
     <p class="lead">Was this sealed-bid auction on Zcash run fairly? This page works it out again from the seller's own files. It runs in your browser and uploads nothing.</p>
     <ul class="adds">
@@ -30,19 +31,11 @@
   <section aria-labelledby="pick-h">
     <h2 id="pick-h">1. Pick something to check</h2>
     <p class="muted">The page opens on a real auction: a real Zcash wallet paid these bids and refunds on the public Zcash test network. Test coins have no value.</p>
-    <div class="row">
-      <button type="button" class="btn primary" id="btn-real">Real round (test network)</button>
-      <button type="button" class="btn warn" id="btn-real-cheat">The seller hides a bid</button>
-    </div>
     <div class="chips" id="chips-real" role="group" aria-label="Real round and its tampered copies"></div>
     <div id="explorer-box"></div>
     <h3>Made-up rounds, one cheat at a time</h3>
     <p class="muted small">These are built offline with throwaway keys. Each tampered copy changes one thing and fails on exactly the check built to catch it. The stories name the made-up bidders: Alice bids 3,000,000 zat, a second bidder 2,000,000, Carol 1,500,000, and Dave sends 1,200,000 after the close.</p>
-    <div class="row">
-      <button type="button" class="btn" id="btn-honest">Honest round (round 01)</button>
-      <button type="button" class="btn warn" id="btn-tamper">Try a tampered copy</button>
-    </div>
-    <p class="muted small" id="tamper-count">Each press loads the next of 6 tampered copies.</p>
+    <p class="muted small" id="tamper-count">Try a tampered copy: pick the honest round or any of the 6 tampered copies.</p>
     <div class="chips" id="chips-tampered" role="group" aria-label="Tampered copies"></div>
     <h3>With a full scan of every block</h3>
     <p class="muted small">The scan also reads every block of the auction from a saved copy of the chain, so a payment the seller left out cannot hide.</p>
