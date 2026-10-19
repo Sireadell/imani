@@ -4,7 +4,7 @@
 // the seller's word. See SPEC.md, "Scan level".
 
 import { readTransactionWithId, type ReadOutput } from "../read.ts";
-import { bidMemoAddress, bidMemoPrefix, refundMemoPrefix, type Disclosure } from "../files.ts";
+import { bidMemoAddress, bidMemoPrefix, openMemoPrefix, refundMemoPrefix, sealMemoPrefix, type Disclosure } from "../files.ts";
 import type { Check } from "../check.ts";
 import { ScanInputError, type BlockSource, type ChainBlock } from "./chain.ts";
 
@@ -159,10 +159,14 @@ export function scanChecks(
       .filter((o) => o.transferType !== "internal")
       .map((o) => `${o.transferType} ${zat(o.amountZat)}, memo ${memo(o.memo)}`)
       .join(" and ");
-  const isBid = (x: SeenTx) => x.outputs.some((o) => o.transferType === "incoming" && o.memo.startsWith(bidPrefix));
-  const bidAmount = (x: SeenTx) =>
-    x.outputs.filter((o) => o.transferType === "incoming" && o.memo.startsWith(bidPrefix)).reduce((s, o) => s + o.amountZat, 0);
-  const bidMemo = (x: SeenTx) => x.outputs.find((o) => o.transferType === "incoming" && o.memo.startsWith(bidPrefix))!.memo;
+  // In a sealed lot the bid facts are the seals and the openings.
+  const bidPrefixes = d.rules.kind === "sealed" ? [sealMemoPrefix(d.lotId), openMemoPrefix(d.lotId)] : [bidPrefix];
+  const isBidOut = (o: SeenTx["outputs"][number]) => o.transferType === "incoming" && bidPrefixes.some((p) => o.memo.startsWith(p));
+  const isBid = (x: SeenTx) => x.outputs.some(isBidOut);
+  const bidAmount = (x: SeenTx) => x.outputs.filter(isBidOut).reduce((s, o) => s + o.amountZat, 0);
+  const bidMemo = (x: SeenTx) => x.outputs.find(isBidOut)!.memo;
+  const bidKind = (x: SeenTx) =>
+    d.rules.kind !== "sealed" ? "bid" : bidMemo(x).startsWith(openMemoPrefix(d.lotId)) ? "opening" : "seal";
   const when = (h: number) => (h > range.closeHeight ? ", after the close" : h < range.openHeight ? ", before the open" : "");
 
   // Hidden bids: bid payments on the chain the seller did not list.
@@ -176,7 +180,7 @@ export function scanChecks(
     status: hidden.length ? "FAIL" : "PASS",
     reason: hidden.length
       ? hidden
-          .map((x) => `hidden bid: ${short(x.txid)} at block ${x.height}${when(x.height)}, ${zat(bidAmount(x))}, memo ${memo(bidMemo(x))}, is on the chain but not in the seller's disclosure.`)
+          .map((x) => `hidden ${bidKind(x)}: ${short(x.txid)} at block ${x.height}${when(x.height)}, ${zat(bidAmount(x))}, memo ${memo(bidMemo(x))}, is on the chain but not in the seller's disclosure.`)
           .join(" ")
       : `Every one of the ${chainBids.length} bid payments the lot key sees in blocks ${range.from} to ${range.to} is in the seller's disclosure.`,
     fromChain: chainBids.map((x) => `bid ${short(x.txid)} at block ${x.height}: ${zat(bidAmount(x))}${listed.has(x.txid) ? "" : " (not listed)"}`),

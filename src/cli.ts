@@ -11,6 +11,7 @@ import { parseServer } from "./fetch/grpc.ts";
 import { EXPLORER_PREFIX } from "./fetch/explorer.ts";
 import { ZEBRA_PREFIX, isZebra, loadZebraAuth } from "./fetch/zebra.ts";
 import { bidderCheck, bidderRange, bidderText, validateFacts, type BidClaim, type PublishedResult } from "./bidder.ts";
+import { runOpen, runSeal } from "./seal-cli.ts";
 import { LinkingInputError, linkingFromLots, linkingText, lotRefunds } from "./privacy/linking.ts";
 
 const USAGE = `Usage: imani check --disclosure <lot disclosure.json> --result <seller result.json> [options]
@@ -39,6 +40,9 @@ Exit code: 0 PASS, 1 FAIL, 2 refused or bad input.
 
   Shows how far each refund can be followed by anyone with the lot key, inside one round and
   across the rounds given. Exit code: 0 no links outside a round, 1 links found, 2 bad input.
+
+       imani seal --lot <lot id> --amount <zat> [--address <addr>]   (sealed lots: make your seal memo)
+       imani open --file seal-<word>.json                            (after the close: make your opening memo)
 
        imani bidder-check --facts <lot facts.json> --key-file <your viewing key file> [options]
 
@@ -228,6 +232,8 @@ function scanFromChainFile(opts: Opts, d: any): ScanInput {
 export function run(argv: string[]): CliResult {
   if (argv[0] === "linking") return runLinking(argv.slice(1));
   if (argv[0] === "bidder-check") return runBidder(argv.slice(1));
+  if (argv[0] === "seal") return runSeal(argv.slice(1));
+  if (argv[0] === "open") return runOpen(argv.slice(1));
   const opts = parse(argv);
   if (isResult(opts)) return opts;
   if (opts.fetch) return { code: 2, stdout: "", stderr: "--fetch downloads blocks and needs runAsync.\nServers contacted: none" };
