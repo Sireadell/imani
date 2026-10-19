@@ -29,6 +29,7 @@ Example (round-01): 2 items, reserve 1,000,000. Bids of 3,000,000, 2,000,000 and
 | `closeHeight` | Last block height at which a bid counts |
 | `openHeight` | First block height at which a bid counts. Needed only for the scan level |
 | `refundByHeight` | Last block height by which every refund is paid. Needed only for the scan level |
+| `openByHeight` | Sealed lots only: last block height at which a seal can be opened (see "Sealed lots") |
 | `rules` | `{ "itemCount": 2, "reserveZat": 1000000 }` |
 | `ufvk` | The lot's read-only viewing key, starting `uview1` (main) or `uviewtest1` (test). Optional: without it only the basic level runs |
 | `transactions` | Every bid and refund transaction of the lot: `{ "txid", "height", "txHex" }` |
@@ -131,6 +132,44 @@ Earlier trials: 20 blocks fetched 4 at a time in each request group took 203 s (
 
 The slow part is the download. The fetch helper opens a new connection for every request and fetches every transaction twice (two operators), so a block costs about 20 to 25 requests. Blocks are fetched in parallel (`--concurrency`, default 12) with retries after a busy or dropped server; too many at once and the public servers start refusing. Reading every transaction with the key is fast (about 2 percent of the time). For a day-long auction (about 1,150 mainnet blocks) the measured rate gives about 52 minutes and about 65 MB with `--fetch`. Ways to make it fast, for a later step: compact-block scanning (the light wallet `GetBlockRange` stream gives only the encrypted outputs, about 1 to 2 KB per transaction instead of 5 to 10 KB, in one stream instead of thousands of connections; the full transaction is then fetched only for the few the key can read), reusing one connection per server, or a self-hosted light server.
 
+## Sealed lots
+
+A plain lot lets the seller read every bid as it arrives, because the seller holds the lot key. A sealed lot hides the prices until the close. Plain lots work exactly as described above and are not affected.
+
+How it works, in plain words: every bidder pays the same fixed deposit, and the memo holds only a hash (a short code that proves the price later and shows nothing now). After the close each bidder sends a tiny second payment that opens the seal. The checker verifies every opened price against its seal, runs the same price rule on the opened prices, and checks the refunds.
+
+| Rule | |
+|---|---|
+| Rules in the disclosure | `{ "kind": "sealed", "itemCount", "reserveZat", "depositZat", "forfeitZat" }`. The disclosure also needs `openByHeight`, greater than `closeHeight` and at most `refundByHeight` when that is given. `0 <= forfeitZat <= depositZat` and `reserveZat <= depositZat` |
+| Seal | A payment of exactly `depositZat` to the lot address, in a block at most `closeHeight`, with memo `seal:<lotId>:<word>:<hash>` or `seal:<lotId>:<word>:<hash>:<refund address>`. `<hash>` is 64 lowercase hex characters. A word is 1 to 32 letters or digits |
+| Hash | `sha256("imani-seal/1|" + lotId + "|" + word + "|" + amountZat + "|" + salt + "|" + refundAddressOrEmpty)`, UTF-8, hex. `amountZat` is a plain decimal integer with no leading zeros. `salt` is 32 lowercase hex characters (16 random bytes) |
+| Opening | A payment of any amount above 0 to the lot address, in a block after `closeHeight` and at most `openByHeight`, with memo `open:<lotId>:<word>:<amountZat>:<salt>` |
+| A seal counts as a bid of `amountZat` when | its deposit is exactly `depositZat`, it is on time, exactly one opening for its word arrives in the window (the first opening for a word wins; later ones are replays), the hash matches, and `1 <= amountZat <= depositZat` |
+| Price rule | The same uniform price rule as above, on the counted bids, with the opened price as the bid |
+| Refund of a counted winner | `depositZat - clearingPrice + opening payment + share` |
+| Refund of a counted loser | `depositZat + opening payment + share` |
+| Refund of an unopened seal, or one with a wrong hash or a price out of range | `depositZat - forfeitZat`, plus the opening payment when a wrong opening arrived in the window |
+| Wrong deposit, late seal, repeated word, malformed memo | Everything the payment carried, no share, no penalty |
+| Opening that is replayed, outside the window, malformed, or for a word with no valid seal | Refunded in full as its own payment, with memo `refund:<lotId>:<opening txid>` |
+| `share` | The total of all penalties split equally across counted bids, rounded down. The leftover zatoshis go to the counted bid with the lowest seal txid. With no counted bids no penalty is charged at all |
+| Refund memo | `refund:<lotId>:<seal txid>`, one payment per seal |
+
+Money check: refunds plus clearing price times winners equal everything paid in (deposits plus openings). The fee allowance stays 0.
+
+The result file adds `unopened`: the txids of seals that paid the penalty (never opened, or opened wrongly). Refund `reason` may also be `unopened`, `bad-opening` or `opening`; `late` is also used for wrong-deposit, late and repeated seals.
+
+New key-level checks, only for sealed lots:
+
+| Check id | Passes when |
+|---|---|
+| `seal-deposits` | The seller counted no seal that paid the wrong deposit, arrived late, repeated a word or has a malformed memo. Those seals are refunded in full |
+| `seal-openings` | The seller counted no seal that was never opened or was opened with a price that does not match its seal. Each counted bid has exactly one on-time matching opening |
+| `seal-forfeits` | The seals the seller reports as unopened (`unopened`) are exactly the unopened or wrongly opened seals the chain shows. The message always prints how many seals were never opened |
+
+`bid-count` compares the seller's list with the counted bids only, leaving seals that the three checks above judge. `key-hygiene`, `bid-amounts` (against the opened price), `no-late-bids`, `no-duplicate-bids` (a repeated seal word or opening word), `winners-and-price`, `reserve`, `refunds-paid`, `refund-receivers` (the address comes from the seal memo) and `refund-total` run as for plain lots. The scan level counts seals and openings as bid facts: a seal or opening left out of the disclosure fails `scan-hidden-bids`.
+
+Bidders make the two memos with `imani seal --lot <id> --amount <zat> [--address <addr>]` and `imani open --file seal-<word>.json`. Neither command uses a network or a key. Examples: `examples/sealed-01` passes, `examples/sealed-broken/` has copies that each fail named checks; `npm run examples:sealed` rebuilds them.
+
 ## Privacy rules in the checker
 
 The checker accepts only `uview1` or `uviewtest1` keys and refuses seed phrases, spending keys, incoming-only keys and keys for the wrong network. It never prints the key and never writes it to a file; reports show a 12-character fingerprint instead. By default it is offline: it reads only the files given and contacts no server, and says so. Only `--scan --fetch` goes online; it asks light servers for blocks by height, never sends a key, and prints every server contacted. `--discreet` hides amounts, memos and addresses everywhere. Before anything is printed or written, the text is checked and blocked if it holds something shaped like a viewing key, spending key or seed phrase. `--offline` refuses `--fetch`. `report.html` contains no scripts and loads nothing.
@@ -147,7 +186,10 @@ The checker accepts only `uview1` or `uviewtest1` keys and refuses seed phrases,
 | A listed refund address is the seller's word | A seller could list their own address as a bidder's, then pay it. `refund-receivers` would pass | Each bidder confirms the address next to their bid, or gives their own key. Later: put the refund address inside the bid memo |
 | A refund's receiver is proven only when addresses are listed or the bidder gives their own key | Without either, a seller could pay a refund to themselves with the right memo | List `refundAddresses` in the disclosure |
 | A shared viewing key cannot be revoked | Anyone with it sees the lot forever | One fresh key per lot, enforced by `key-hygiene` |
-| The seller can see bids as they arrive | The check proves counting, amounts and refunds, not that the seller never looked | None in this design |
+| The seller can see bids as they arrive | Only in plain lots. Sealed lots hide prices until the close. In a plain lot the check proves counting, amounts and refunds, not that the seller never looked | Use a sealed lot |
+| In a sealed lot the seller sees how many deposits arrived and when | Hiding the number of bidders from the seller is out of scope | None in this design |
+| A seller can plant several seals before the close and open only the one that suits them | Each seal left closed costs the penalty, paid to the real bidders who opened, and the check prints how many seals stayed closed. A seller willing to pay the penalty on planted seals is not stopped | Set `forfeitZat` high enough to make planting expensive |
+| In a sealed lot the seller sees prices as they are opened, after the close | The seller cannot add a new seal any more (late seals are not counted) | None in this design |
 
 ## Refund address in the bid memo
 

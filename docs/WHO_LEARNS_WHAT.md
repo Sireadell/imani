@@ -12,3 +12,11 @@ Worked out by `src/privacy/who-learns.ts` from the real round in `examples/testn
 | The "Check any round" page, its host and two public Zcash servers | Only after you press the button that names them: which block numbers you asked for. The host also sees your IP address, as any website does | Your viewing key, or any amount, memo or address: the key never leaves your browser tab, and the blocks are read there. A saved block file sends nothing at all |
 
 How far a refund can be followed in any round: `npx imani linking <disclosure.json> [more disclosures]`.
+
+## Sealed lots
+
+| Who | Learns before the close | Learns after the close |
+|---|---|---|
+| The seller | How many deposits arrived and in which blocks. Every deposit is the same amount and every memo is a 64-character code | Prices, as bidders open them. The seller cannot add a new seal any more |
+| Anyone without the lot key | Nothing new: the payments are shielded | Nothing new |
+| Anyone with the published lot key | Everything the lot key shows, as today | Everything the lot key shows, as today |

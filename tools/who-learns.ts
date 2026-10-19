@@ -14,6 +14,14 @@ Worked out by \`src/privacy/who-learns.ts\` from the real round in \`examples/te
 
 ${whoLearnsMarkdown(rep)}
 How far a refund can be followed in any round: \`npx imani linking <disclosure.json> [more disclosures]\`.
+
+## Sealed lots
+
+| Who | Learns before the close | Learns after the close |
+|---|---|---|
+| The seller | How many deposits arrived and in which blocks. Every deposit is the same amount and every memo is a 64-character code | Prices, as bidders open them. The seller cannot add a new seal any more |
+| Anyone without the lot key | Nothing new: the payments are shielded | Nothing new |
+| Anyone with the published lot key | Everything the lot key shows, as today | Everything the lot key shows, as today |
 `;
 writeFileSync(new URL("docs/WHO_LEARNS_WHAT.md", root), doc);
 
