@@ -1,4 +1,4 @@
-import type { AuctionRules, GoalRules, Rules } from "./files.ts";
+import type { AuctionRules, GoalRules, Rules, SealedRules } from "./files.ts";
 
 export interface Bid {
   txid: string;
@@ -40,7 +40,7 @@ function decideGoal(bids: Bid[], rules: GoalRules): Outcome {
   return { reserveMet: reached, winners: reached ? bids.map((b) => b.txid) : [], clearingPriceZat: 0, refundsOwed };
 }
 
-function decideAuction(bids: Bid[], rules: AuctionRules): Outcome {
+function decideAuction(bids: Bid[], rules: AuctionRules | SealedRules): Outcome {
   const ranked = [...bids].sort(
     (a, b) => b.amountZat - a.amountZat || a.height - b.height || (a.txid < b.txid ? -1 : a.txid > b.txid ? 1 : 0),
   );

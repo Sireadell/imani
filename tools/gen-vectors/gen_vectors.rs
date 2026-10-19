@@ -218,6 +218,8 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.get(1).map(String::as_str) == Some("auction") {
         auction(args.get(2).cloned().unwrap_or_else(|| "auction-round.json".into()), false);
+    } else if args.get(1).map(String::as_str) == Some("sealed") {
+        sealed(args.get(2).cloned().unwrap_or_else(|| "sealed-round.json".into()));
     } else if args.get(1).map(String::as_str) == Some("auction-memo") {
         auction(args.get(2).cloned().unwrap_or_else(|| "auction-round-memo.json".into()), true);
     } else {
@@ -418,6 +420,144 @@ fn reader_cases(out_path: String) {
         "network": "test",
         "parties": parties,
         "cases": case_json,
+    });
+    fs::write(&out_path, serde_json::to_string_pretty(&doc).unwrap()).unwrap();
+    eprintln!("wrote {out_path}");
+}
+
+/// sha256("imani-seal/1|" + lotId + "|" + word + "|" + amountZat + "|" + salt + "|" + refundAddressOrEmpty), hex.
+fn seal_hash(lot: &str, word: &str, amount: u64, salt: &str, addr: &str) -> String {
+    use sha2::{Digest, Sha256};
+    let text = format!("imani-seal/1|{lot}|{word}|{amount}|{salt}|{addr}");
+    hex::encode(Sha256::digest(text.as_bytes()))
+}
+
+struct SealCase<'a> {
+    label: &'static str,
+    who: &'a Party,
+    word: &'static str,
+    sealed: u64,
+    salt: &'static str,
+    paid: u64,
+    height: u32,
+    open: Option<u64>,
+}
+
+/// A fake sealed-lot round for LOT-01 (see docs/SELLER_BLIND_PLAN.md): every seal pays the same
+/// 5,000,000 deposit and carries only a hash of the real price. Prices are opened after the close.
+/// 2 items, reserve 1,000,000, forfeit 500,000, close 4,200,100, openings until 4,200,200.
+fn sealed(out_path: String) {
+    const DEPOSIT: u64 = 5_000_000;
+    const FORFEIT: u64 = 500_000;
+    const OPEN_PAY: u64 = 10_000;
+    let lot = party("lot LOT-01");
+    let alice = party("bidder alice");
+    let bob = party("bidder bob");
+    let carol = party("bidder carol");
+    let dave = party("bidder dave");
+    let erin = party("bidder erin");
+    let frank = party("bidder frank");
+    let gina = party("bidder gina");
+
+    let mut txs = serde_json::Map::new();
+    let add = |label: &str, height: u32, outs: Vec<Out>, txs: &mut serde_json::Map<String, Value>| {
+        eprintln!("building {label} ...");
+        let tx = build_tx(height, Pool::Ironwood, &outs, &format!("sealed {label}"));
+        let raw = write_tx(&tx, height);
+        let txid = tx.txid().to_string();
+        txs.insert(
+            label.into(),
+            json!({
+                "height": height,
+                "txid": txid,
+                "txHex": hex::encode(&raw),
+                "outputs": outs.iter().map(|o| json!({
+                    "to": o.to.name,
+                    "senderOvk": o.from_ovk.map(|p| p.name),
+                    "amountZat": o.value,
+                    "memo": o.memo,
+                })).collect::<Vec<_>>(),
+                "lotKeySees": rust_check(&tx, height, &lot),
+            }),
+        );
+        txid
+    };
+
+    let seals = [
+        SealCase { label: "seal_alice", who: &alice, word: "q7k2", sealed: 3_000_000, salt: "00112233445566778899aabbccddeeff", paid: DEPOSIT, height: 4_200_010, open: Some(3_000_000) },
+        SealCase { label: "seal_bob", who: &bob, word: "m3x8", sealed: 2_000_000, salt: "a1b2c3d4e5f60718293a4b5c6d7e8f90", paid: DEPOSIT, height: 4_200_020, open: Some(2_000_000) },
+        SealCase { label: "seal_carol", who: &carol, word: "t5w1", sealed: 1_500_000, salt: "0f1e2d3c4b5a69788796a5b4c3d2e1f0", paid: DEPOSIT, height: 4_200_030, open: Some(1_500_000) },
+        SealCase { label: "seal_dave_unopened", who: &dave, word: "z9p4", sealed: 1_200_000, salt: "11223344556677889900aabbccddeeff", paid: DEPOSIT, height: 4_200_035, open: None },
+        SealCase { label: "seal_erin_badhash", who: &erin, word: "w2v6", sealed: 900_000, salt: "ffeeddccbbaa00998877665544332211", paid: DEPOSIT, height: 4_200_040, open: Some(800_000) },
+        SealCase { label: "seal_frank_wrong_deposit", who: &frank, word: "r8n3", sealed: 1_000_000, salt: "5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a", paid: DEPOSIT - 1, height: 4_200_045, open: None },
+        SealCase { label: "seal_gina_late", who: &gina, word: "h4c9", sealed: 1_100_000, salt: "9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c", paid: DEPOSIT, height: 4_200_105, open: None },
+    ];
+    let mut ids: HashMap<&str, String> = HashMap::new();
+    for s in seals.iter() {
+        let hash = seal_hash(LOT_ID, s.word, s.sealed, s.salt, &s.who.ua);
+        let memo = format!("seal:{LOT_ID}:{}:{}:{}", s.word, hash, s.who.ua);
+        let id = add(s.label, s.height, vec![Out { from_ovk: None, to: &lot, value: s.paid, memo: &memo }], &mut txs);
+        ids.insert(s.label, id);
+    }
+    // Openings after the close.
+    let mut open_pay: HashMap<&str, u64> = HashMap::new();
+    let mut open_h = 4_200_110;
+    for s in seals.iter() {
+        if let Some(amount) = s.open {
+            let memo = format!("open:{LOT_ID}:{}:{}:{}", s.word, amount, s.salt);
+            add(&s.label.replace("seal_", "open_"), open_h, vec![Out { from_ovk: None, to: &lot, value: OPEN_PAY, memo: &memo }], &mut txs);
+            open_pay.insert(s.label, OPEN_PAY);
+            open_h += 1;
+        }
+    }
+
+    // Worked refunds (rules 7 and 8 of the plan). Counted: alice, bob, carol. Price 1,500,000.
+    let counted = ["seal_alice", "seal_bob", "seal_carol"];
+    let winners = ["seal_alice", "seal_bob"];
+    let price: u64 = 1_500_000;
+    let penalties = 2 * FORFEIT; // dave unopened, erin bad opening
+    let share = penalties / counted.len() as u64;
+    let leftover = penalties - share * counted.len() as u64;
+    let lowest = *counted.iter().min_by_key(|l| ids[**l].clone()).unwrap();
+    let mut refund_plan = serde_json::Map::new();
+    let mut refunds: Vec<(String, &Party, u64, &str)> = vec![];
+    for s in seals.iter() {
+        let opened = open_pay.get(s.label).copied().unwrap_or(0);
+        let owed = if counted.contains(&s.label) {
+            DEPOSIT - if winners.contains(&s.label) { price } else { 0 } + opened + share + if lowest == s.label { leftover } else { 0 }
+        } else if s.label == "seal_dave_unopened" || s.label == "seal_erin_badhash" {
+            DEPOSIT - FORFEIT + opened
+        } else {
+            s.paid
+        };
+        refund_plan.insert(s.label.into(), json!(owed));
+        refunds.push((format!("refund_{}", s.label.trim_start_matches("seal_")), s.who, owed, s.label));
+    }
+    let mut rh = 4_200_120;
+    for (label, who, value, seal_label) in refunds.iter() {
+        let memo = format!("refund:{LOT_ID}:{}", ids[*seal_label]);
+        add(label, rh, vec![Out { from_ovk: Some(&lot), to: who, value: *value, memo: &memo }], &mut txs);
+        rh += 1;
+    }
+    // Broken copy only: Alice refunded without her share of the penalties.
+    let short = refund_plan["seal_alice"].as_u64().unwrap() - share - if lowest == "seal_alice" { leftover } else { 0 };
+    let memo = format!("refund:{LOT_ID}:{}", ids["seal_alice"]);
+    add("refund_alice_noshare", 4_200_120, vec![Out { from_ovk: Some(&lot), to: &alice, value: short, memo: &memo }], &mut txs);
+
+    let mut parties = serde_json::Map::new();
+    for p in [&lot, &alice, &bob, &carol, &dave, &erin, &frank, &gina] {
+        parties.insert(p.name.into(), json!({ "ufvk": p.ufvk.encode(&TEST_NETWORK), "address": p.ua }));
+    }
+    let doc = json!({
+        "source": "Generated offline by imani tools/gen-vectors (librustzcash transaction builder). Throwaway test seeds, invented funding coins, never broadcast.",
+        "network": "test",
+        "lotId": LOT_ID,
+        "closeHeight": CLOSE_HEIGHT,
+        "openByHeight": 4_200_200,
+        "rules": { "kind": "sealed", "itemCount": ITEM_COUNT, "reserveZat": RESERVE_ZAT, "depositZat": DEPOSIT, "forfeitZat": FORFEIT },
+        "parties": parties,
+        "refundPlan": refund_plan,
+        "transactions": txs,
     });
     fs::write(&out_path, serde_json::to_string_pretty(&doc).unwrap()).unwrap();
     eprintln!("wrote {out_path}");

@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 // File formats for the auction checker. See SPEC.md for the plain-language description.
 
 /** One transaction the seller discloses for a lot. */
@@ -19,6 +21,8 @@ export interface Disclosure {
   openHeight?: number;
   /** Last block height by which every refund is paid. Needed only for the scan level. */
   refundByHeight?: number;
+  /** Sealed lots only: last block height at which a seal can still be opened. */
+  openByHeight?: number;
   rules: Rules;
   /** One-time read-only key for this lot (uview1... or uviewtest1...). Optional: without it only the basic level runs. */
   ufvk?: string;
@@ -37,7 +41,7 @@ export interface RefundAddress {
 }
 
 /** The rule a lot runs under: the uniform price auction (the default) or an all-or-nothing goal. */
-export type Rules = AuctionRules | GoalRules;
+export type Rules = AuctionRules | GoalRules | SealedRules;
 
 /**
  * All-or-nothing collection (fundraiser, group buy). If the on-time payments add up to the goal,
@@ -58,7 +62,21 @@ export interface AuctionRules {
   reserveZat: number;
 }
 
-export type RefundReason = "loser" | "change" | "late";
+/**
+ * Sealed lot: every bidder pays the same fixed deposit with only a hash of the price in the memo,
+ * then opens the price after the close. The price rule is the uniform price rule on the opened prices.
+ */
+export interface SealedRules {
+  kind: "sealed";
+  itemCount: number;
+  reserveZat: number;
+  /** Every seal pays exactly this, in zatoshis. A price can never be higher than the deposit. */
+  depositZat: number;
+  /** Penalty for a seal that is not opened correctly, 0 to depositZat. Shared to the bidders who opened. */
+  forfeitZat: number;
+}
+
+export type RefundReason = "loser" | "change" | "late" | "unopened" | "bad-opening" | "opening";
 
 export interface SellerRefund {
   bidTxid: string;
@@ -79,6 +97,8 @@ export interface SellerResult {
   clearingPriceZat: number;
   reserveMet: boolean;
   refunds: SellerRefund[];
+  /** Sealed lots only: seals never opened or opened wrongly (they paid the penalty). */
+  unopened?: string[];
 }
 
 export const bidMemoPrefix = (lotId: string) => `bid:${lotId}:`;
@@ -98,4 +118,43 @@ export function bidMemoAddress(lotId: string, memo: string): string | null {
   if (cut < 0) return null;
   const address = rest.slice(cut + 1).trim();
   return address === "" ? null : address;
+}
+
+export const sealMemoPrefix = (lotId: string) => `seal:${lotId}:`;
+export const openMemoPrefix = (lotId: string) => `open:${lotId}:`;
+
+const WORD = /^[A-Za-z0-9]{1,32}$/;
+const HASH = /^[0-9a-f]{64}$/;
+const SALT = /^[0-9a-f]{32}$/;
+const AMOUNT = /^(0|[1-9][0-9]{0,15})$/;
+
+/**
+ * A seal memo is `seal:<lotId>:<word>:<hash>` or `seal:<lotId>:<word>:<hash>:<refund address>`.
+ * Returns null when the memo is not a well-formed seal for this lot.
+ */
+export function parseSealMemo(lotId: string, memo: string): { word: string; hash: string; address: string | null } | null {
+  const prefix = sealMemoPrefix(lotId);
+  if (!memo.startsWith(prefix)) return null;
+  const parts = memo.slice(prefix.length).split(":");
+  if (parts.length < 2 || parts.length > 3) return null;
+  const [word, hash, address] = parts;
+  if (!WORD.test(word) || !HASH.test(hash)) return null;
+  if (parts.length === 3 && address.trim() === "") return null;
+  return { word, hash, address: parts.length === 3 ? address.trim() : null };
+}
+
+/** An opening memo is `open:<lotId>:<word>:<amountZat>:<salt>`. Returns null when it is not well formed. */
+export function parseOpenMemo(lotId: string, memo: string): { word: string; amountZat: number; salt: string } | null {
+  const prefix = openMemoPrefix(lotId);
+  if (!memo.startsWith(prefix)) return null;
+  const parts = memo.slice(prefix.length).split(":");
+  if (parts.length !== 3) return null;
+  const [word, amount, salt] = parts;
+  if (!WORD.test(word) || !AMOUNT.test(amount) || !SALT.test(salt)) return null;
+  return { word, amountZat: Number(amount), salt };
+}
+
+/** sha256("imani-seal/1|" + lotId + "|" + word + "|" + amountZat + "|" + salt + "|" + refundAddressOrEmpty), hex. */
+export function sealHash(lotId: string, word: string, amountZat: number, salt: string, address?: string | null): string {
+  return createHash("sha256").update(`imani-seal/1|${lotId}|${word}|${amountZat}|${salt}|${address ?? ""}`, "utf8").digest("hex");
 }
