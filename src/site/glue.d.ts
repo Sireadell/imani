@@ -27,3 +27,8 @@ declare module "imani-examples" {
   /** Content of each file, by short hash. Identical files are stored once. */
   export const blobs: Record<string, string>;
 }
+
+declare module "imani-saved-round" {
+  /** examples/testnet-01/chain.json as text: the blocks of Imani's real round on the test network. */
+  export const savedRoundText: string;
+}

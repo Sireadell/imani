@@ -14,3 +14,7 @@ details.check.pass { border-left-color: var(--pass); }
 details.check.fail { border-left-color: var(--fail); }
 details.check summary { cursor: pointer; font-weight: 600; }
 .notice.bad { color: var(--fail); }
+.ask { border: 2px solid var(--accent); border-radius: 8px; padding: 4px 16px 12px; margin: 16px 0; background: var(--panel); }
+label.btn.file { display: inline-flex; align-items: center; margin: 0; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+input.visually-hidden:focus-visible + label.btn { outline: 3px solid #f2a900; outline-offset: 2px; }

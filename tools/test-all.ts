@@ -13,7 +13,7 @@ export const groups = [
   { script: "test:fetch", what: "Downloading blocks from two public servers and checking they agree" },
   { script: "test:demo", what: "The auction shop demo, from sign-in to the checked result" },
   { script: "test:scan", what: "The scan that reads every block of an auction to find bids the seller left out" },
-  { script: "test:site", what: "The browser page and the page that checks any round: same answers as the command line, no network calls" },
+  { script: "test:site", what: "The browser page and the page that checks any round: same answers as the command line, no network call until the reader says yes, and a saved-file check with none" },
   { script: "test:tamper", what: "Change one fact at a time in every example round; none of the changed copies may pass" },
   { script: "test:external", what: "Rounds another auction project published, read from their own files" },
   { script: "test:privacy", what: "Refund linking, the who-learns-what table, keys never printed or saved" },

@@ -190,6 +190,12 @@ export function examplesModule(): string {
   return `export const examples = ${JSON.stringify(entries)};\nexport const externals = ${JSON.stringify(externals)};\nexport const blobs = ${JSON.stringify(blobs)};\n`;
 }
 
+/** The saved blocks of the real test-network round, for the "check any round" page's offline path. */
+export function savedRoundModule(): string {
+  return `export const savedRoundText = ${JSON.stringify(readText(p("examples", "testnet-01", "chain.json")))};
+`;
+}
+
 function plugin(): Plugin {
   return {
     name: "imani-site",
@@ -197,9 +203,9 @@ function plugin(): Plugin {
       b.onResolve({ filter: /(^|[\\/])read\.ts$/ }, () => ({ path: p("src/site/read-browser.ts") }));
       b.onResolve({ filter: /(^|[\\/])reader\.ts$/ }, () => ({ path: p("src/site/read-browser.ts") }));
       b.onResolve({ filter: /^node:crypto$/ }, () => ({ path: p("src/site/crypto-shim.ts") }));
-      b.onResolve({ filter: /^imani-(decoder-glue|examples)$/ }, (a) => ({ path: a.path, namespace: "imani-virtual" }));
+      b.onResolve({ filter: /^imani-(decoder-glue|examples|saved-round)$/ }, (a) => ({ path: a.path, namespace: "imani-virtual" }));
       b.onLoad({ filter: /.*/, namespace: "imani-virtual" }, (a) => ({
-        contents: a.path === "imani-decoder-glue" ? browserGlue() : examplesModule(),
+        contents: a.path === "imani-decoder-glue" ? browserGlue() : a.path === "imani-saved-round" ? savedRoundModule() : examplesModule(),
         loader: "js",
         resolveDir: root,
       }));

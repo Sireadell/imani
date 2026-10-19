@@ -145,6 +145,8 @@ test("check.html names no outside address and says plainly what is sent and what
   assert.match(html, /Your key is never sent anywhere/);
   assert.match(html, /only requests for blocks/);
   assert.match(html, /two block servers run by different operators/);
+  assert.match(html, /Nothing is sent until you say yes/);
+  assert.match(html, /saved block file/);
 });
 
 test("the built page code makes only block requests and never puts the key in one", () => {

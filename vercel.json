@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npm run site:build",
+  "outputDirectory": "site",
+  "functions": {
+    "api/block.mjs": {
+      "maxDuration": 60,
+      "includeFiles": "vendor/decoder/**"
+    }
+  }
+}

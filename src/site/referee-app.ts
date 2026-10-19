@@ -1,9 +1,13 @@
-// Screen code for the referee page (check.html). The checking is in referee.ts and the
-// checker it calls, the same code as the command line tool. This page does make network
-// calls, and only these: GET /api/block?network=...&height=... to the site it was loaded from.
-// The lot key is never put in a request. It is read from the box, used in this tab, and not stored.
+// Screen code for the "check any round" page (check.html). The checking is in referee.ts and the
+// checker it calls, the same code as the command line tool. This page makes network calls only
+// after the reader presses the ask button, and only these: GET /api/block?network=...&height=...
+// to the site it was loaded from. The saved-file path makes none. The lot key is never put in a
+// request. It is read from the box, used in this tab, and not stored.
 import { initReader } from "./engine.ts";
 import { refereeRound, networkOfKey, type RefereeOutcome } from "./referee.ts";
+import { askText } from "./ask.ts";
+import { checkSavedRound, type RoundFields } from "./saved-round.ts";
+import { savedRoundText } from "imani-saved-round";
 import { assertViewingKey, KeyRefusedError, type Check } from "../check.ts";
 import type { ChainBlock } from "../scan/chain.ts";
 
@@ -45,19 +49,21 @@ interface BlockReply {
 
 class FetchProblem extends Error {}
 
+const OFFLINE_HINT = "You can still check the round with no network at all: use a saved block file, below.";
+
 async function getBlock(network: string, height: number): Promise<BlockReply> {
   let r: Response;
   try {
     r = await fetch(`/api/block?network=${network}&height=${height}`, { credentials: "omit", referrerPolicy: "no-referrer" });
   } catch {
-    throw new FetchProblem("Could not reach the block relay this page is served with. Open this page from the referee server (node tools/referee-serve.ts), or use the command line: imani check --scan --fetch.");
+    throw new FetchProblem(`Could not reach the site this page came from, so no block was fetched. ${OFFLINE_HINT}`);
   }
   const type = r.headers.get("content-type") ?? "";
   if (!type.includes("application/json")) {
-    throw new FetchProblem("This copy of the page has no block relay behind it, so it cannot get blocks. Run node tools/referee-serve.ts and open the page from there, or use the command line: imani check --scan --fetch.");
+    throw new FetchProblem(`This copy of the page has no block relay behind it, so it cannot get blocks. ${OFFLINE_HINT} Or open the hosted page, or run node tools/referee-serve.ts and open the page from there.`);
   }
   const body = await r.json();
-  if (!r.ok) throw new FetchProblem(`Block ${height}: ${String(body.error ?? r.status).slice(0, 300)}`);
+  if (!r.ok) throw new FetchProblem(`Block ${height} could not be fetched (${String(body.error ?? r.status).slice(0, 300)}). The public servers may be down or busy. ${OFFLINE_HINT}`);
   return body as BlockReply;
 }
 
@@ -76,7 +82,7 @@ function row(table: HTMLTableElement, cells: string[], head = false) {
   table.appendChild(tr);
 }
 
-function render(o: Extract<RefereeOutcome, { ok: true }>, replies: BlockReply[], ms: number) {
+function render(o: Extract<RefereeOutcome, { ok: true }>, replies: BlockReply[] | null, ms: number, fileName = "") {
   const out = $("result");
   out.replaceChildren();
   const v = o.verdict;
@@ -111,6 +117,21 @@ function render(o: Extract<RefereeOutcome, { ok: true }>, replies: BlockReply[],
   if (!r.refunds.length) row(rt, ["none owed", "", "", ""]);
   out.appendChild(rt);
 
+  if (replies) renderServers(out, replies, ms);
+  else {
+    out.appendChild(el("h3", undefined, "Where the blocks came from"));
+    out.appendChild(
+      el(
+        "p",
+        "meta",
+        `From the saved file ${fileName}, read in this tab in ${(ms / 1000).toFixed(1)} seconds. Nothing was requested. Every transaction's bytes were hashed here and matched to its id, so a changed transaction would show. A saved file can still leave a transaction out. A missing refund fails the check, but a small losing bid taken out together with its refund would not show. The live check closes that gap when the servers can be reached.`,
+      ),
+    );
+  }
+  renderChecks(out, o);
+}
+
+function renderServers(out: HTMLElement, replies: BlockReply[], ms: number) {
   out.appendChild(el("h3", undefined, "The two block servers"));
   const names = replies[0]?.answers.map((a) => a.server) ?? [];
   out.appendChild(
@@ -132,10 +153,12 @@ function render(o: Extract<RefereeOutcome, { ok: true }>, replies: BlockReply[],
   }
   det.appendChild(bt);
   out.appendChild(det);
+}
 
+function renderChecks(out: HTMLElement, o: Extract<RefereeOutcome, { ok: true }>) {
   out.appendChild(el("h3", undefined, "Every check"));
   const list = el("div");
-  const sorted: Check[] = [...v.checks];
+  const sorted: Check[] = [...o.verdict.checks];
   for (const c of sorted) {
     const d = el("details", `check ${c.status === "PASS" ? "pass" : "fail"}`);
     if (c.status === "FAIL") d.open = true;
@@ -154,34 +177,69 @@ function render(o: Extract<RefereeOutcome, { ok: true }>, replies: BlockReply[],
   out.appendChild(ul);
 }
 
-async function run() {
+/** The boxes, checked before anything else happens. Returns null after showing a message. */
+function readFields(): RoundFields | null {
   const key = $<HTMLTextAreaElement>("f-key").value.trim();
   const num = (id: string) => Number($<HTMLInputElement>(id).value.replace(/[,\s]/g, ""));
   const closeText = $<HTMLInputElement>("f-close").value.trim();
   const lotText = $<HTMLInputElement>("f-lot").value.trim();
   const from = num("f-from");
   const to = num("f-to");
-  const status = $("status");
-  const button = $<HTMLButtonElement>("btn-run");
   $("result").replaceChildren();
-  // Refuse a bad key before any request is made.
+  // Refuse a bad key before anything is asked or requested.
   try {
     assertViewingKey(key, networkOfKey(key));
   } catch (e) {
     showError(e instanceof KeyRefusedError ? "refused" : "error", e instanceof KeyRefusedError ? e.message : "The key could not be read.");
-    return;
+    return null;
   }
   if (!Number.isSafeInteger(from) || !Number.isSafeInteger(to) || from < 1 || to < from || to - from + 1 > 5000) {
     showError("error", "Input error: the block range must be two whole numbers, the first not after the last, at most 5000 blocks.");
-    return;
+    return null;
   }
-  const network = networkOfKey(key);
+  return {
+    key,
+    from,
+    to,
+    itemCount: num("f-items"),
+    reserveZat: num("f-reserve"),
+    closeHeight: closeText === "" ? undefined : Number(closeText.replace(/[,\s]/g, "")),
+    lotId: lotText === "" ? undefined : lotText,
+  };
+}
+
+let pending: RoundFields | null = null;
+
+/** Step one of a live check: say what would be contacted, and wait. Nothing is requested here. */
+function ask() {
+  hideAsk();
+  const f = readFields();
+  if (!f) return;
+  pending = f;
+  const t = askText(networkOfKey(f.key), location.host || "this page's own site", f.from, f.to);
+  $("ask-body").textContent = t.body;
+  $("btn-consent").textContent = t.button;
+  $("ask").hidden = false;
+  $("btn-consent").focus();
+}
+
+function hideAsk() {
+  pending = null;
+  $("ask").hidden = true;
+}
+
+/** Step two, reached only from the ask button: request the blocks and check. */
+async function fetchBlocks(f: RoundFields | null) {
+  if (!f) return;
+  const status = $("status");
+  const button = $<HTMLButtonElement>("btn-run");
+  const network = networkOfKey(f.key);
   button.disabled = true;
   const started = Date.now();
   try {
     await initReader();
     const heights: number[] = [];
-    for (let h = from; h <= to; h++) heights.push(h);
+    for (let h = f.from; h <= f.to; h++) heights.push(h);
     const replies = new Map<number, BlockReply>();
     let next = 0;
     let failure: Error | null = null;
@@ -212,13 +270,7 @@ async function run() {
     status.textContent = "Reading every block with the lot key...";
     await new Promise((r) => setTimeout(r, 20));
     const outcome = refereeRound({
-      key,
-      from,
-      to,
-      itemCount: num("f-items"),
-      reserveZat: num("f-reserve"),
-      closeHeight: closeText === "" ? undefined : Number(closeText.replace(/[,\s]/g, "")),
-      lotId: lotText === "" ? undefined : lotText,
+      ...f,
       blocks,
       missing: [],
       source: {
@@ -240,6 +292,27 @@ async function run() {
   }
 }
 
+/** The offline path: blocks from a saved file, read in this tab. No request at all. */
+async function checkFile(text: string, name: string) {
+  hideAsk();
+  const f = readFields();
+  if (!f) return;
+  const status = $("status");
+  status.textContent = "Reading every block in the file with the lot key...";
+  const started = Date.now();
+  try {
+    await initReader();
+    await new Promise((r) => setTimeout(r, 20));
+    const outcome = checkSavedRound(f, text, name);
+    if (!outcome.ok) showError(outcome.kind, outcome.message);
+    else render(outcome, null, Date.now() - started, name);
+  } catch {
+    showError("error", "Unexpected error while checking the file. Nothing was kept.");
+  } finally {
+    status.textContent = "";
+  }
+}
+
 function fillExample() {
   $<HTMLTextAreaElement>("f-key").value = EXAMPLE.key;
   $<HTMLInputElement>("f-from").value = EXAMPLE.from;
@@ -253,9 +326,26 @@ function fillExample() {
 fillExample();
 $("form").addEventListener("submit", (e) => {
   e.preventDefault();
-  void run();
+  ask();
 });
 $("btn-example").addEventListener("click", () => {
   fillExample();
-  void run();
+  ask();
+});
+$("btn-consent").addEventListener("click", () => {
+  void fetchBlocks(pending);
+  hideAsk();
+});
+$("btn-cancel").addEventListener("click", hideAsk);
+$("btn-saved").addEventListener("click", () => {
+  fillExample();
+  void checkFile(savedRoundText, "examples/testnet-01/chain.json");
+});
+$<HTMLInputElement>("f-file").addEventListener("change", async (e) => {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = "";
+  if (!file) return;
+  if (file.size > 50 * 1024 * 1024) return showError("error", "Input error: that file is over 50 MB, which is more than one round's blocks should need.");
+  await checkFile(await file.text(), file.name);
 });
