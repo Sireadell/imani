@@ -196,7 +196,8 @@ test("the built page makes no network calls and has no external hosts", () => {
   assert.match(html, /default-src 'none'/);
   assert.doesNotMatch(css, /@import|url\(/);
   assert.deepEqual([...html.matchAll(/\b(?:src|href)="([^"]+)"/g)].map((m) => m[1]).sort(), ["app.js", "data:,", "style.css"]);
-  assert.deepEqual([...siteFiles].sort(), ["SHA256SUMS", "app.js", "index.html", "style.css"]);
+  // check.html, check.js and check.css are the referee page, which has its own policy (see referee.test.ts); the offline page above never loads them.
+  assert.deepEqual([...siteFiles].sort(), ["SHA256SUMS", "app.js", "check.css", "check.html", "check.js", "index.html", "style.css"]);
 });
 
 test("running every example with network functions trapped never calls them", async () => {
