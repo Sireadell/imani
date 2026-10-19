@@ -7,6 +7,7 @@ import { blocksInRange, ScanInputError, validateChainFile, type BlockSource } fr
 import { DEFAULT_GRACE_BLOCKS, scanRange, type BidderKey, type ScanInput } from "./scan/scan.ts";
 import { lookupBid } from "./mine.ts";
 import { BlockFetchError, fetchBlocks } from "./scan/fetch-blocks.ts";
+import { LinkingInputError, linkingFromLots, linkingText, lotRefunds } from "./privacy/linking.ts";
 
 const USAGE = `Usage: imani check --disclosure <lot disclosure.json> --result <seller result.json> [options]
 
@@ -25,7 +26,12 @@ Scan level (reads every block from the lot's open height to its refund deadline)
   --proxy <url>          with --fetch: SOCKS5 proxy, for example socks5h://127.0.0.1:9050 (Tor)
   --concurrency <n>      with --fetch: blocks downloaded at the same time (default 12)
 
-Exit code: 0 PASS, 1 FAIL, 2 refused or bad input.`;
+Exit code: 0 PASS, 1 FAIL, 2 refused or bad input.
+
+       imani linking <lot disclosure.json> [more disclosures...]
+
+  Shows how far each refund can be followed by anyone with the lot key, inside one round and
+  across the rounds given. Exit code: 0 no links outside a round, 1 links found, 2 bad input.`;
 
 export interface CliResult {
   code: number;
@@ -160,6 +166,7 @@ function scanFromChainFile(opts: Opts, d: any): ScanInput {
  * runAsync. Never prints the lot key, never writes it.
  */
 export function run(argv: string[]): CliResult {
+  if (argv[0] === "linking") return runLinking(argv.slice(1));
   const opts = parse(argv);
   if (isResult(opts)) return opts;
   if (opts.fetch) return { code: 2, stdout: "", stderr: "--fetch downloads blocks and needs runAsync.\nServers contacted: none" };
@@ -169,6 +176,30 @@ export function run(argv: string[]): CliResult {
     return finish(opts, d, r, opts.scan ? scanFromChainFile(opts, d) : undefined);
   } catch (e) {
     return failure(e, []);
+  }
+}
+
+function runLinking(files: string[]): CliResult {
+  const none = "\nServers contacted: none";
+  if (files.length === 0 || files.some((f) => f.startsWith("--"))) return { code: 2, stdout: "", stderr: USAGE };
+  try {
+    const lots = files.map((f) => {
+      const d = readJson(f, "disclosure") as any;
+      if (!d || typeof d.lotId !== "string" || !Array.isArray(d.transactions)) throw new InputError(`Input error: ${basename(f)} is not a lot disclosure file.`);
+      if (d.ufvk !== undefined) assertViewingKey(d.ufvk, d.network);
+      return lotRefunds(d);
+    });
+    // Two rounds may share a lot name. The same round given twice shares its payments.
+    const keys = lots.map((l) => [...l.bids, ...l.refunds.map((f) => f.bidTxid + f.receiver)].sort().join(","));
+    const twice = lots.find((_, i) => keys.indexOf(keys[i]) !== i);
+    if (twice) return { code: 2, stdout: "", stderr: `Input error: lot ${twice.lotId} was given twice.${none}` };
+    const rep = linkingFromLots(lots);
+    const text = linkingText(rep);
+    assertNoSecret(text, "the linking report");
+    return { code: rep.linksOutside === 0 ? 0 : 1, stdout: text, stderr: "" };
+  } catch (e) {
+    if (e instanceof LinkingInputError || e instanceof InputError || e instanceof KeyRefusedError) return { code: 2, stdout: "", stderr: `${e.message}${none}` };
+    throw e;
   }
 }
 

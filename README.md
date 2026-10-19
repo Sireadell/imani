@@ -27,6 +27,8 @@ This prints every check and writes `report/verdict.json` and `report/report.html
 
 Bidders can add `--mine <your bid's transaction id>` (the first 10 characters are enough) to any check. It prints whether your bid was counted, whether it won, what should come back to you, and what the checks found about it. With `--scan` it also tells you if the seller left your bid out.
 
+To see how far a refund can be followed, run `npx imani linking examples/testnet-01/disclosure.json`. Inside a round each refund names its bid on purpose, so anyone can check it. The command counts the links that reach further: one receiver paid for two bids, or the same receiver paid in two rounds (give it several disclosures to compare rounds). A bidder who writes a fresh address in each bid memo leaves no such link.
+
 To also read every block of the auction, so a bid the seller left out still shows up:
 
 ```sh
