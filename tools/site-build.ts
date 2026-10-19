@@ -165,7 +165,12 @@ export function examplesModule(): string {
     "memo-honest",
   );
   group("memo-broken", "memo-01", "memo-tampered");
-  return `export const examples = ${JSON.stringify(entries)};\nexport const blobs = ${JSON.stringify(blobs)};\n`;
+  const externals = [
+    ["external-settlement", "demo01-settlement", "Published settlement file"],
+    ["external-reveal", "reveal", "Published reveal file"],
+    ["external-tampered", "tampered", "Published reveal file, one refund changed"],
+  ].map(([id, file, title]) => ({ id, title, blob: store(p("test", "external", "round-files", `${file}.json`)) }));
+  return `export const examples = ${JSON.stringify(entries)};\nexport const externals = ${JSON.stringify(externals)};\nexport const blobs = ${JSON.stringify(blobs)};\n`;
 }
 
 function plugin(): Plugin {

@@ -2,6 +2,7 @@
 // line tool and returns the same verdict. It never touches the network.
 import { assertViewingKey, checkLot, InputError, KeyRefusedError, type Verdict } from "../check.ts";
 import { blocksInRange, ScanInputError, validateChainFile, type BlockSource } from "../scan/chain.ts";
+import { checkExternalRound, detectExternalRound, ExternalRoundInputError, type ExternalRoundReport } from "../external/published-round.ts";
 import { DEFAULT_GRACE_BLOCKS, scanRange, type BidderKey, type ScanInput } from "../scan/scan.ts";
 
 export const MAX_FILE_BYTES = 40 * 1024 * 1024;
@@ -85,8 +86,21 @@ export function runPage(i: PageInputs): PageOutcome {
   }
 }
 
+export type ExternalOutcome = { ok: true; report: ExternalRoundReport } | { ok: false; message: string };
+
+/** Read a round another auction project published. Uses only the numbers in the file; no network. */
+export function runExternalPage(parsed: unknown): ExternalOutcome {
+  try {
+    return { ok: true, report: checkExternalRound(parsed) };
+  } catch (e) {
+    if (e instanceof ExternalRoundInputError) return { ok: false, message: e.message };
+    return { ok: false, message: "This file could not be read as a published round. Nothing was kept." };
+  }
+}
+
 /** Decide which kind of file this is, from its "format" field. */
-export function fileKind(parsed: any): "disclosure" | "result" | "chain" | "bidderKeys" | null {
+export function fileKind(parsed: any): "disclosure" | "result" | "chain" | "bidderKeys" | "external" | null {
+  if (detectExternalRound(parsed)) return "external";
   switch (parsed?.format) {
     case "imani-lot-disclosure/1": return "disclosure";
     case "imani-lot-result/1": return "result";

@@ -22,6 +22,8 @@ declare module "imani-examples" {
     chain: string | null;
   }
   export const examples: ExampleEntry[];
+  /** Round files published by another auction project, for the "other people's rounds" reader. */
+  export const externals: { id: string; title: string; blob: string }[];
   /** Content of each file, by short hash. Identical files are stored once. */
   export const blobs: Record<string, string>;
 }
