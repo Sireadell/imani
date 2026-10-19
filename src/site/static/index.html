@@ -37,7 +37,7 @@
     <div class="chips" id="chips-real" role="group" aria-label="Real round and its tampered copies"></div>
     <div id="explorer-box"></div>
     <h3>Made-up rounds, one cheat at a time</h3>
-    <p class="muted small">These are built offline with throwaway keys. Each tampered copy changes one thing and fails on exactly the check built to catch it.</p>
+    <p class="muted small">These are built offline with throwaway keys. Each tampered copy changes one thing and fails on exactly the check built to catch it. The stories name the made-up bidders: Alice bids 3,000,000 zat, a second bidder 2,000,000, Carol 1,500,000, and Dave sends 1,200,000 after the close.</p>
     <div class="row">
       <button type="button" class="btn" id="btn-honest">Honest round (round 01)</button>
       <button type="button" class="btn warn" id="btn-tamper">Try a tampered copy</button>
@@ -68,6 +68,7 @@
   <section aria-labelledby="out-h" id="results">
     <h2 id="out-h">2. Result</h2>
     <p class="story" id="story"></p>
+    <p class="muted small">Amounts are in zatoshis, the smallest unit of ZEC: 100,000,000 zatoshis make 1 ZEC, so 2,000,000 zat is 0.02 ZEC. How many checks run depends on what the files allow. 5 basic checks need no key. The lot key adds 10, plus 1 when refund addresses are known. Reading every block adds 5, and bidders' own keys add 1.</p>
     <div id="outcome" aria-live="polite"><p class="muted">Loading the reader...</p></div>
     <label class="toggle"><input type="checkbox" id="discreet"> Discreet mode: hide amounts and memos</label>
   </section>

@@ -388,6 +388,7 @@ ${honest}
 </form>
 </section>
 </div>
+<p class="muted">Amounts are in zatoshis, the smallest unit of ZEC: 100,000,000 zatoshis make 1 ZEC, so 2,000,000 zat is 0.02 ZEC. The seller's page shows the same bids in ZEC. How many checks run depends on what the files allow. 5 basic checks need no key. The lot key adds 10, plus 1 when refund addresses are known. Reading every block adds 5, and bidders' own keys add 1.</p>
 <p class="servers">Servers contacted by the check: none. It runs on this shop's computer using only the two files.</p>`);
 }
 
