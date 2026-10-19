@@ -1,0 +1,9 @@
+{
+  "format": "imani-lot-public/1",
+  "lotId": "DRY-01",
+  "network": "test",
+  "openHeight": 4489077,
+  "closeHeight": 4489085,
+  "refundByHeight": 4489110,
+  "reserveZat": 1000000
+}

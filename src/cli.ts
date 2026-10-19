@@ -7,6 +7,7 @@ import { blocksInRange, ScanInputError, validateChainFile, type BlockSource } fr
 import { DEFAULT_GRACE_BLOCKS, scanRange, type BidderKey, type ScanInput } from "./scan/scan.ts";
 import { lookupBid } from "./mine.ts";
 import { BlockFetchError, fetchBlocks } from "./scan/fetch-blocks.ts";
+import { bidderCheck, bidderRange, bidderText, validateFacts, type BidClaim, type PublishedResult } from "./bidder.ts";
 import { LinkingInputError, linkingFromLots, linkingText, lotRefunds } from "./privacy/linking.ts";
 
 const USAGE = `Usage: imani check --disclosure <lot disclosure.json> --result <seller result.json> [options]
@@ -31,7 +32,18 @@ Exit code: 0 PASS, 1 FAIL, 2 refused or bad input.
        imani linking <lot disclosure.json> [more disclosures...]
 
   Shows how far each refund can be followed by anyone with the lot key, inside one round and
-  across the rounds given. Exit code: 0 no links outside a round, 1 links found, 2 bad input.`;
+  across the rounds given. Exit code: 0 no links outside a round, 1 links found, 2 bad input.
+
+       imani bidder-check --facts <lot facts.json> --key-file <your viewing key file> [options]
+
+  Confirms your own bid landed and your refund is right, using only your own viewing key and
+  public chain data. No seller file is needed. Options:
+  --bid <txid>[:<zat>]   a bid to check (repeat for more). Without it, every bid your key can read
+  --result <file>        optional: the seller's published result, to compare with it as well
+  --chain <file>         read the blocks from this chain file (offline)
+  --fetch                download the blocks from public light servers (two operators must agree)
+  --grace, --proxy, --concurrency   as for check
+  Exit code: 0 PASS, 1 FAIL, 3 NOT PROVEN (nothing wrong, but your key alone cannot settle it), 2 bad input.`;
 
 export interface CliResult {
   code: number;
@@ -167,6 +179,7 @@ function scanFromChainFile(opts: Opts, d: any): ScanInput {
  */
 export function run(argv: string[]): CliResult {
   if (argv[0] === "linking") return runLinking(argv.slice(1));
+  if (argv[0] === "bidder-check") return runBidder(argv.slice(1));
   const opts = parse(argv);
   if (isResult(opts)) return opts;
   if (opts.fetch) return { code: 2, stdout: "", stderr: "--fetch downloads blocks and needs runAsync.\nServers contacted: none" };
@@ -176,6 +189,137 @@ export function run(argv: string[]): CliResult {
     return finish(opts, d, r, opts.scan ? scanFromChainFile(opts, d) : undefined);
   } catch (e) {
     return failure(e, []);
+  }
+}
+
+interface BidderOpts {
+  facts: string;
+  keyFile: string;
+  bids: BidClaim[];
+  result?: string;
+  chain?: string;
+  fetch: boolean;
+  grace?: string;
+  proxy?: string;
+  concurrency?: string;
+}
+
+function parseBidder(args: string[]): BidderOpts | CliResult {
+  const none = "\nServers contacted: none";
+  const o: BidderOpts = { facts: "", keyFile: "", bids: [], fetch: false };
+  const values: Record<string, "facts" | "keyFile" | "result" | "chain" | "grace" | "proxy" | "concurrency"> = {
+    "--facts": "facts", "--key-file": "keyFile", "--result": "result", "--chain": "chain", "--grace": "grace", "--proxy": "proxy", "--concurrency": "concurrency",
+  };
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    const next = args[i + 1];
+    if (a === "--fetch") o.fetch = true;
+    else if (a === "--bid" && next && !next.startsWith("--")) {
+      const m = /^([0-9a-fA-F]{64})(?::(\d+))?$/.exec(next);
+      if (!m) return { code: 2, stdout: "", stderr: `--bid needs a 64 character transaction id, optionally followed by :<amount in zatoshis>.${none}` };
+      const amountZat = m[2] === undefined ? undefined : Number(m[2]);
+      if (amountZat !== undefined && !Number.isSafeInteger(amountZat)) return { code: 2, stdout: "", stderr: `--bid amount is too large.${none}` };
+      o.bids.push({ txid: m[1].toLowerCase(), amountZat });
+      i++;
+    } else if (values[a] && next && !next.startsWith("--")) {
+      o[values[a]] = next as never;
+      i++;
+    } else return { code: 2, stdout: "", stderr: `Unknown or incomplete option: ${a}\n\n${USAGE}` };
+  }
+  if (!o.facts || !o.keyFile) return { code: 2, stdout: "", stderr: USAGE };
+  if (o.fetch && o.chain) return { code: 2, stdout: "", stderr: `Give either --chain (offline) or --fetch (online), not both.${none}` };
+  if (!o.fetch && !o.chain) return { code: 2, stdout: "", stderr: `The bidder check needs blocks: give --chain <file> to read them offline, or --fetch to download them from public light servers.${none}` };
+  if (!o.fetch && (o.proxy || o.concurrency)) return { code: 2, stdout: "", stderr: `--proxy and --concurrency only apply with --fetch.${none}` };
+  return o;
+}
+
+/** The key file is the viewing key as plain text, or JSON with a "ufvk" field. It is never printed. */
+function readKeyFile(path: string, network: string): string {
+  let text: string;
+  try {
+    text = readFileSync(path, "utf8").trim();
+  } catch {
+    throw new InputError(`Input error: cannot read the key file at ${path}.`);
+  }
+  if (text.startsWith("{")) {
+    try {
+      text = String(JSON.parse(text).ufvk ?? "");
+    } catch {
+      throw new InputError("Input error: the key file is not valid JSON.");
+    }
+  }
+  return assertViewingKey(text, network);
+}
+
+function bidderFinish(o: BidderOpts, facts: any, ufvk: string, blocks: any, missing: number[], source: BlockSource, grace: number): CliResult {
+  let published: PublishedResult | undefined;
+  if (o.result) {
+    const r = readJson(o.result, "result") as any;
+    if (!r || !Array.isArray(r.bids) || !Array.isArray(r.refunds)) throw new InputError("Input error: the seller result file needs bids and refunds lists.");
+    published = r;
+  }
+  const rep = bidderCheck({ facts, ufvk, blocks, missing, source, graceBlocks: grace, bids: o.bids, published });
+  const text = bidderText(rep);
+  assertNoSecret(text, "the bidder report");
+  return { code: rep.result === "PASS" ? 0 : rep.result === "FAIL" ? 1 : 3, stdout: text, stderr: "" };
+}
+
+function loadBidderInputs(o: BidderOpts) {
+  const facts = readJson(o.facts, "lot facts") as any;
+  validateFacts(facts);
+  const ufvk = readKeyFile(o.keyFile, facts.network);
+  const gOpts: Opts = o.grace === undefined ? {} : { grace: o.grace };
+  return { facts, ufvk, grace: graceOf(gOpts) };
+}
+
+/** Read the bidder check's blocks from a chain file. */
+function bidderBlocksFromFile(path: string, facts: any, grace: number) {
+  const range = bidderRange(facts, grace);
+  const chain = readJson(path, "chain") as any;
+  validateChainFile(chain);
+  if (chain.network !== facts.network) throw new ScanInputError(`Input error: the chain file is for the ${chain.network} network but the lot facts say ${facts.network}.`);
+  const started = Date.now();
+  const { blocks, missing } = blocksInRange(chain, range.from, range.to);
+  const source: BlockSource = { kind: "chain-file", label: `the chain file ${basename(path)} (offline)`, serversContacted: [], bytes: 0, ms: Date.now() - started };
+  return { blocks, missing, source };
+}
+
+function runBidder(args: string[]): CliResult {
+  const o = parseBidder(args);
+  if ("code" in o) return o;
+  if (o.fetch) return { code: 2, stdout: "", stderr: "--fetch downloads blocks and needs runAsync.\nServers contacted: none" };
+  try {
+    const { facts, ufvk, grace } = loadBidderInputs(o);
+    const scan = bidderBlocksFromFile(o.chain!, facts, grace);
+    return bidderFinish(o, facts, ufvk, scan.blocks, scan.missing, scan.source, grace);
+  } catch (e) {
+    return failure(e, []);
+  }
+}
+
+async function runBidderAsync(args: string[], progress?: (line: string) => void): Promise<CliResult> {
+  const o = parseBidder(args);
+  if ("code" in o || !o.fetch) return runBidder(args);
+  let servers: string[] = [];
+  try {
+    const { facts, ufvk, grace } = loadBidderInputs(o);
+    const range = bidderRange(facts, grace);
+    const concurrency = o.concurrency === undefined ? undefined : Number(o.concurrency);
+    if (concurrency !== undefined && (!Number.isSafeInteger(concurrency) || concurrency < 1 || concurrency > 32)) {
+      throw new InputError("Input error: --concurrency must be a whole number from 1 to 32.");
+    }
+    progress?.(`Downloading ${range.to - range.from + 1} blocks (${range.from} to ${range.to}) from public light servers. Your key is not sent.`);
+    let fetched;
+    try {
+      fetched = await fetchBlocks({ network: facts.network, from: range.from, to: range.to, proxy: o.proxy, concurrency });
+    } catch (e) {
+      if (e instanceof BlockFetchError) servers = e.serversContacted;
+      throw e;
+    }
+    servers = fetched.source.serversContacted;
+    return bidderFinish(o, facts, ufvk, fetched.blocks, [], fetched.source, grace);
+  } catch (e) {
+    return failure(e, servers);
   }
 }
 
@@ -205,6 +349,7 @@ function runLinking(files: string[]): CliResult {
 
 /** Same as run, and also handles --fetch. `progress` gets one line now and then while blocks download. */
 export async function runAsync(argv: string[], progress?: (line: string) => void): Promise<CliResult> {
+  if (argv[0] === "bidder-check") return runBidderAsync(argv.slice(1), progress);
   const opts = parse(argv);
   if (isResult(opts) || !opts.fetch) return run(argv);
   let servers: string[] = [];
