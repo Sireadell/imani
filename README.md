@@ -13,6 +13,8 @@ npm run demo
 
 You will see three checks of the same small auction. The first is the honest round and ends with `RESULT: PASS`. The second is a copy where the seller paid a losing bidder 100,000 zatoshis too little, and it ends with `RESULT: FAIL (1 of 15 checks failed: refunds-paid)`. In the third, the seller left a 3,000,000 bid out of their files entirely. The normal check cannot see it, because it only reads what the seller lists. The scan reads every block of the auction and ends with `RESULT: FAIL (1 of 20 checks failed: scan-hidden-bids)`. It takes about two seconds and needs no internet.
 
+To check a real round, paid by a real wallet on the Zcash test network: `npx imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --chain examples/testnet-01/chain.json` ends with `RESULT: PASS (21 of 21 checks passed)`.
+
 To check a lot yourself:
 
 ```sh
@@ -60,7 +62,7 @@ The checker only accepts a read-only viewing key (starts with `uview1` or `uview
 ## Honest limits: the auction check
 
 - A refund is proven to have left the lot with the right amount and memo. Where it went is compared with the refund address the seller lists for each bid. That list is the seller's word, so a seller could list their own address. Each bidder should check the address next to their bid is theirs, or give their own viewing key, which proves their refund arrived.
-- Block heights are checked against the chain only with `--scan`. A saved chain file is only as trustworthy as where you got it. With `--fetch`, two independent light servers must agree.
+- Block heights are checked against the chain only with `--scan`. A saved chain file is only as trustworthy as where you got it. With `--fetch`, two independent operators must agree (on the test network, a light server and the CipherScan explorer).
 - It reads only what the seller shares. A bid paid before the open height is not seen.
 
 ## Honest limits: sign in with a private wallet
@@ -78,7 +80,7 @@ npm run test:all
 npm run typecheck
 ```
 
-The example round is made of fake test-network transactions built offline with throwaway keys (see `tools/gen-vectors/README.md`). `npm run examples` rebuilds the example files from them.
+Most examples are made-up test-network transactions built offline with throwaway keys (see `tools/gen-vectors/README.md`), and `npm run examples` rebuilds them. `examples/testnet-01` is different: a real wallet paid its 3 bids and 3 refunds on the public Zcash test network, and `--scan --fetch` reads it again live from two independent servers.
 
 Status: early build for Zecathon, Core & Tooling track.
 
