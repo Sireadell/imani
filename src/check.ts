@@ -524,6 +524,11 @@ function keyChecks(
     if (got === undefined) refundProblems.push(`bid ${short(txid)} is owed ${zat(amount)} but no refund was found`);
     else if (got !== amount) refundProblems.push(`bid ${short(txid)} is owed ${zat(amount)} but was refunded ${zat(got)}`);
   }
+  // A refund the chain shows for a bid that is owed nothing, or that the lot key never saw, is
+  // money leaving the lot with no bid behind it.
+  for (const [txid, got] of paid) {
+    if (!(owed.get(txid) ?? 0)) refundProblems.push(`${zat(got)} was paid out as a refund for ${short(txid)}, but no bid the lot key sees is owed anything under that id`);
+  }
   const owedCount = [...owed.values()].filter((a) => a > 0).length;
   add({
     id: "refunds-paid",
