@@ -35,7 +35,7 @@
     "prepack": "npm run build",
     "test": "tsx --test test/*.test.ts",
     "login:scorecard": "tsx tools/login-scorecard.ts",
-    "test:all": "npm test && npm run test:login && npm run test:fetch && npm run test:demo && npm run test:scan && npm run test:site && npm run test:tamper",
+    "test:all": "npm test && npm run test:login && npm run test:fetch && npm run test:demo && npm run test:scan && npm run test:site && npm run test:tamper && npm run test:external",
     "test:login": "tsx --test test/login/*.test.ts",
     "test:fetch": "tsx --test test/fetch/*.test.ts",
     "test:demo": "tsx --test test/demo/*.test.ts",
@@ -50,7 +50,9 @@
     "site:serve": "node --disable-warning=ExperimentalWarning tools/site-serve.ts",
     "examples:memo": "node --disable-warning=ExperimentalWarning tools/make-memo-examples.ts",
     "examples:receivers": "node --disable-warning=ExperimentalWarning tools/make-receiver-examples.ts",
-    "test:tamper": "tsx --test test/tamper/*.test.ts"
+    "test:tamper": "tsx --test test/tamper/*.test.ts",
+    "check:external": "tsx tools/external-check.ts",
+    "test:external": "tsx --test test/external/*.test.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",

@@ -1,0 +1,43 @@
+{
+  "protocol": "SHIELDBID/1",
+  "auction_id": "DEMO-01",
+  "network": "mainnet",
+  "rule": "uniform price: every winner pays the lowest winning bid; overpayment refunded; losers refunded in full",
+  "reserve": "0.003",
+  "slots": 2,
+  "bids_received": 3,
+  "clearing_price": "0.009",
+  "escrow_in_lot_wallet": "0.02180000",
+  "escrow_bids_total": "0.025",
+  "payout_to_seller": "0.018",
+  "total_refund": "0.007",
+  "settlement": [
+    {
+      "rank": 1,
+      "bidder": "USER@Noir",
+      "amount": "0.012",
+      "result": "win",
+      "pays": "0.009",
+      "refund": "0.003",
+      "txid": "56bb6efa5a23841f2212211de3776f66a3231d28a230e831c0e9f6a05c715a40"
+    },
+    {
+      "rank": 2,
+      "bidder": "ROBOT-B",
+      "amount": "0.009",
+      "result": "win",
+      "pays": "0.009",
+      "refund": "0.000",
+      "txid": "91fefe4345372c4d70a85d3360430092be6ac8e21196bca0803a53862a575909"
+    },
+    {
+      "rank": 3,
+      "bidder": "ROBOT-A",
+      "amount": "0.004",
+      "result": "lose",
+      "pays": "0",
+      "refund": "0.004",
+      "txid": "4f7926eeadc0dd281b5a010a00f75b08b1a29e8e4b82fd5990d227edf08fa22f"
+    }
+  ]
+}
