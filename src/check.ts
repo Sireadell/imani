@@ -6,12 +6,17 @@ import {
   bidMemoPrefix,
   refundMemo,
   refundMemoPrefix,
+  openMemoPrefix,
+  parseOpenMemo,
+  parseSealMemo,
+  sealMemoPrefix,
   type AuctionRules,
   type Disclosure,
   type SellerResult,
 } from "./files.ts";
 import { scanChecks, scanRange, type ScanInput, type ScanRange } from "./scan/scan.ts";
 import type { BlockSource } from "./scan/chain.ts";
+import { openSeals, type OpenFact, type SealFact } from "./sealed.ts";
 
 export type Status = "PASS" | "FAIL";
 
@@ -122,7 +127,17 @@ export function validateFiles(d: any, r: any): asserts d is Disclosure {
   if (typeof d.lotId !== "string" || !/^[A-Za-z0-9._-]{1,40}$/.test(d.lotId)) bad("lotId must be 1 to 40 letters, digits, dots, dashes or underscores.");
   if (d.network !== "main" && d.network !== "test") bad('network must be "main" or "test".');
   if (!d.rules || typeof d.rules !== "object") bad("the disclosure file needs rules (itemCount and reserveZat, or kind goal with goalZat).");
-  if (d.rules.kind !== undefined && d.rules.kind !== "auction" && d.rules.kind !== "goal") bad('the rules kind must be "auction" or "goal".');
+  if (d.rules.kind !== undefined && d.rules.kind !== "auction" && d.rules.kind !== "goal" && d.rules.kind !== "sealed") bad('the rules kind must be "auction", "goal" or "sealed".');
+  if (d.rules.kind === "sealed") {
+    const q = d.rules;
+    if (!isAmount(q.itemCount) || !isCount(q.reserveZat)) bad("a sealed lot needs itemCount (above 0) and reserveZat in its rules.");
+    if (!isAmount(q.depositZat)) bad("a sealed lot needs a deposit (depositZat) above 0 in its rules.");
+    if (!isCount(q.forfeitZat) || q.forfeitZat > q.depositZat) bad("the penalty (forfeitZat) of a sealed lot must be a whole number from 0 up to the deposit.");
+    if (q.reserveZat > q.depositZat) bad("the reserve of a sealed lot cannot be higher than the deposit.");
+    if (!isAmount(d.openByHeight)) bad("a sealed lot needs openByHeight, the last block at which a seal can be opened.");
+    if (isAmount(d.closeHeight) && d.openByHeight <= d.closeHeight) bad("openByHeight must be greater than closeHeight.");
+    if (d.refundByHeight !== undefined && isAmount(d.refundByHeight) && d.openByHeight > d.refundByHeight) bad("openByHeight cannot be after refundByHeight.");
+  }
   if (d.rules.kind === "goal" && !isAmount(d.rules.goalZat)) bad("the goal in the rules (goalZat) must be a whole number above 0.");
   if (!Array.isArray(d.transactions)) bad("the disclosure file needs a transactions list.");
   for (const t of d.transactions) {
@@ -137,6 +152,7 @@ export function validateFiles(d: any, r: any): asserts d is Disclosure {
   if (!r || typeof r !== "object") bad("the result file is not a JSON object.");
   if (r.format !== "imani-lot-result/1") bad('the result file must have "format": "imani-lot-result/1".');
   if (!Array.isArray(r.bids) || !Array.isArray(r.winners) || !Array.isArray(r.refunds)) bad("the result file needs bids, winners and refunds lists.");
+  if (r.unopened !== undefined && (!Array.isArray(r.unopened) || !r.unopened.every(isTxid))) bad("unopened in the result file must be a list of 64 hex character transaction ids.");
 }
 
 /** Run every check. Never prints, never writes files, never contacts a server. */
@@ -186,13 +202,17 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
 
   const problems: string[] = [];
   const goalRules = d.rules.kind === "goal" ? d.rules : null;
+  const sealedBasic = d.rules.kind === "sealed" ? d.rules : null;
   const ar = d.rules as AuctionRules; // only read when goalRules is null
   const rulesOk = goalRules
     ? !!r.rules && r.rules.kind === "goal" && r.rules.goalZat === goalRules.goalZat
-    : isAmount(ar.itemCount) && isCount(ar.reserveZat) && r.rules && r.rules.kind !== "goal" &&
+    : sealedBasic
+      ? !!r.rules && r.rules.kind === "sealed" && r.rules.itemCount === sealedBasic.itemCount && r.rules.reserveZat === sealedBasic.reserveZat &&
+        r.rules.depositZat === sealedBasic.depositZat && r.rules.forfeitZat === sealedBasic.forfeitZat
+      : isAmount(ar.itemCount) && isCount(ar.reserveZat) && r.rules && r.rules.kind !== "goal" && r.rules.kind !== "sealed" &&
       (r.rules as AuctionRules).itemCount === ar.itemCount && (r.rules as AuctionRules).reserveZat === ar.reserveZat;
   if (r.lotId !== d.lotId) problems.push(`the result is for lot ${r.lotId}, the disclosure for lot ${d.lotId}`);
-  if (!rulesOk) problems.push(goalRules ? "the rules (goal) in the result differ from the disclosure" : "the rules (item count, reserve) in the result differ from the disclosure");
+  if (!rulesOk) problems.push(goalRules ? "the rules (goal) in the result differ from the disclosure" : sealedBasic ? "the rules (item count, reserve, deposit, penalty) in the result differ from the disclosure" : "the rules (item count, reserve) in the result differ from the disclosure");
   if (r.bidCount !== r.bids.length) problems.push(`bidCount says ${r.bidCount} but ${r.bids.length} bids are listed`);
   const listed = new Map<string, number>();
   for (const b of r.bids) {
@@ -209,12 +229,14 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
     if (goalRules && winnerSet.has(f.bidTxid)) problems.push(`refund for ${short(f.bidTxid)} but a payment counted towards a reached goal is kept, never refunded`);
     if (!isTxid(f.bidTxid) || !isAmount(f.amountZat)) problems.push("a listed refund has a bad bid txid or amount");
     else if (f.memo !== refundMemo(r.lotId, f.bidTxid)) problems.push(`refund for ${short(f.bidTxid)} does not carry the memo "refund:<lot>:<bid txid>"`);
-    else if (f.reason !== "late" && !listed.has(f.bidTxid)) problems.push(`refund for ${short(f.bidTxid)} points to a bid that is not listed`);
+    else if (f.reason !== "late" && !(sealedBasic && (f.reason === "unopened" || f.reason === "bad-opening" || f.reason === "opening")) && !listed.has(f.bidTxid)) problems.push(`refund for ${short(f.bidTxid)} points to a bid that is not listed`);
     else if (f.reason === "change" && !winnerSet.has(f.bidTxid)) problems.push(`change refund for ${short(f.bidTxid)} but that bid did not win`);
     refundsByBid.set(f.bidTxid, (refundsByBid.get(f.bidTxid) ?? 0) + (f.amountZat || 0));
   }
   for (const [txid, amount] of listed) {
-    if (!winnerSet.has(txid) && refundsByBid.get(txid) !== amount) {
+    if (sealedBasic) {
+      if (!winnerSet.has(txid) && refundsByBid.get(txid) === undefined) problems.push(`losing bid ${short(txid)} has no refund listed`);
+    } else if (!winnerSet.has(txid) && refundsByBid.get(txid) !== amount) {
       problems.push(`losing bid ${short(txid)} is not listed as refunded in full`);
     }
   }
@@ -230,7 +252,7 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
       ? `The result file contradicts itself: ${problems.join("; ")}.`
       : "Bid count, winners, reserve and refunds in the result file agree with each other and with the published rules.",
     fromSeller: [`${r.bidCount} bids`, `${r.winners.length} winners`, `${r.refunds.length} refunds`],
-    fromDisclosure: [goalRules ? `rules: goal ${zat(goalRules.goalZat)}` : `rules: ${ar.itemCount} items, reserve ${zat(ar.reserveZat)}`],
+    fromDisclosure: [goalRules ? `rules: goal ${zat(goalRules.goalZat)}` : sealedBasic ? `rules: sealed lot, ${ar.itemCount} items, reserve ${zat(ar.reserveZat)}, deposit ${zat(sealedBasic.depositZat)}, penalty ${zat(sealedBasic.forfeitZat)}` : `rules: ${ar.itemCount} items, reserve ${zat(ar.reserveZat)}`],
   });
 
   if (goalRules) {
@@ -365,6 +387,7 @@ function keyChecks(
   short: (t: string) => string,
 ) {
   const goalRules = d.rules.kind === "goal" ? d.rules : null;
+  const sealedRules = d.rules.kind === "sealed" ? d.rules : null;
   const ar = d.rules as AuctionRules; // only read when goalRules is null
   // Read every disclosed transaction with the lot key.
   const read: { txid: string; listedTxid: string; height: number; outputs: ReadOutput[] }[] = [];
@@ -395,13 +418,27 @@ function keyChecks(
   // Sort what the key sees into bids, refunds and anything else.
   const bidPrefix = bidMemoPrefix(d.lotId);
   const refPrefix = refundMemoPrefix(d.lotId);
+  const sealPrefix = sealMemoPrefix(d.lotId);
+  const openPrefix = openMemoPrefix(d.lotId);
   const bids = new Map<string, ChainBid>();
+  // Sealed lots: the seal and opening payments, one entry per transaction (outputs summed).
+  const sealTxs = new Map<string, ChainBid>();
+  const openTxs = new Map<string, ChainBid>();
   const outside: { txid: string; amountZat: number; memo: string }[] = [];
   const refunds: { txid: string; bidTxid: string; amountZat: number; pool: ReadOutput["pool"]; recipientHex: string }[] = [];
   for (const x of read) {
     for (const o of x.outputs) {
       if (o.transferType === "incoming") {
-        if (o.memo.startsWith(bidPrefix)) {
+        if (sealedRules && (o.memo.startsWith(sealPrefix) || o.memo.startsWith(openPrefix))) {
+          const into = o.memo.startsWith(sealPrefix) ? sealTxs : openTxs;
+          const prev = into.get(x.txid);
+          if (prev) {
+            prev.amountZat += o.amountZat;
+            prev.outputs += 1;
+          } else {
+            into.set(x.txid, { txid: x.txid, amountZat: o.amountZat, height: x.height, memo: o.memo, outputs: 1 });
+          }
+        } else if (!sealedRules && o.memo.startsWith(bidPrefix)) {
           const prev = bids.get(x.txid);
           if (prev) {
             prev.amountZat += o.amountZat;
@@ -426,10 +463,41 @@ function keyChecks(
     if (firstByMemo.has(b.memo)) replays.push(b);
     else firstByMemo.set(b.memo, b);
   }
-  const allBids = [...firstByMemo.values()];
-  const onTime = allBids.filter((b) => b.height <= d.closeHeight);
-  const late = allBids.filter((b) => b.height > d.closeHeight);
-  const lateIds = new Set(late.map((b) => b.txid));
+  let allBids = [...firstByMemo.values()];
+  let onTime = allBids.filter((b) => b.height <= d.closeHeight);
+  let late = allBids.filter((b) => b.height > d.closeHeight);
+  let lateIds = new Set(late.map((b) => b.txid));
+  // Sealed lots: work out which seals count. skipIds are seals the bid-count check leaves to the
+  // sealed checks, the way it leaves late bids to the late-bid check.
+  let sealedOut: ReturnType<typeof openSeals> | null = null;
+  let skipIds = lateIds;
+  let sealedAmount: (txid: string) => number | undefined = (txid) => bids.get(txid)?.amountZat;
+  if (sealedRules) {
+    const sealFacts: SealFact[] = [...sealTxs.values()].map((t) => {
+      const m = parseSealMemo(d.lotId, t.memo);
+      return { txid: t.txid, height: t.height, paidZat: t.amountZat, valid: !!m && t.outputs === 1, word: m?.word ?? "", hash: m?.hash ?? "", address: m?.address ?? null };
+    });
+    const openFacts: OpenFact[] = [...openTxs.values()].map((t) => {
+      const m = parseOpenMemo(d.lotId, t.memo);
+      return { txid: t.txid, height: t.height, paidZat: t.amountZat, valid: !!m && t.outputs === 1, word: m?.word ?? "", amountZat: m?.amountZat ?? 0, salt: m?.salt ?? "" };
+    });
+    const so = openSeals(d.lotId, sealedRules, d.closeHeight, d.openByHeight as number, sealFacts, openFacts);
+    sealedOut = so;
+    for (const [id, t] of sealTxs) bids.set(id, t);
+    const asBid = (s: { txid: string }) => sealTxs.get(s.txid)!;
+    const counted = new Set(so.counted.map((b) => b.txid));
+    allBids = so.counted.map((b) => ({ ...asBid(b), amountZat: b.amountZat }));
+    onTime = allBids;
+    late = so.lateSeals.map(asBid);
+    lateIds = new Set(late.map((b) => b.txid));
+    skipIds = new Set([...sealTxs.keys()].filter((id) => !counted.has(id)));
+    const opened = new Map<string, number>();
+    for (const s of [...so.badOpen, ...so.counted]) {
+      const o = so.openingOf.get(s.txid);
+      if (o) opened.set(s.txid, o.amountZat);
+    }
+    sealedAmount = (txid) => opened.get(txid);
+  }
 
   add({
     id: "key-hygiene",
@@ -437,14 +505,14 @@ function keyChecks(
     title: "Lot key shows only this lot's payments",
     status: outside.length ? "FAIL" : "PASS",
     reason: outside.length
-      ? `The key shows ${outside.length} payment(s) into this address that are not bids for ${d.lotId}. Publishing this key exposes them. Use a fresh one-time key for every lot.`
-      : `Every incoming payment the key shows is a bid for ${d.lotId}.`,
+      ? `The key shows ${outside.length} payment(s) into this address that are not ${sealedRules ? "seals or openings" : "bids"} for ${d.lotId}. Publishing this key exposes them. Use a fresh one-time key for every lot.`
+      : `Every incoming payment the key shows is a ${sealedRules ? "seal or an opening" : "bid"} for ${d.lotId}.`,
     fromChain: outside.map((o) => `outside payment ${short(o.txid)}: ${zat(o.amountZat)}, memo ${memo(o.memo)}`),
   });
 
   // Bid count: the seller's listed bids (leaving out late bids, which the late-bid check judges)
   // must be exactly the on-time bids the key shows.
-  const sellerIds = r.bids.map((b) => b.txid).filter((t) => !lateIds.has(t));
+  const sellerIds = r.bids.map((b) => b.txid).filter((t) => !skipIds.has(t));
   const onTimeIds = new Set(onTime.map((b) => b.txid));
   const notOnChain = sellerIds.filter((t) => !onTimeIds.has(t));
   const notListed = [...onTimeIds].filter((t) => !sellerIds.includes(t));
@@ -467,8 +535,8 @@ function keyChecks(
 
   const wrongAmounts: string[] = [];
   for (const b of r.bids) {
-    const c = bids.get(b.txid);
-    if (c && c.amountZat !== b.amountZat) wrongAmounts.push(`${short(b.txid)}: seller says ${zat(b.amountZat)}, chain shows ${zat(c.amountZat)}`);
+    const chainAmount = sealedAmount(b.txid);
+    if (chainAmount !== undefined && chainAmount !== b.amountZat) wrongAmounts.push(`${short(b.txid)}: seller says ${zat(b.amountZat)}, chain shows ${zat(chainAmount)}`);
   }
   add({
     id: "bid-amounts",
@@ -499,8 +567,13 @@ function keyChecks(
 
   const memoCount = new Map<string, string[]>();
   for (const b of [...allBids, ...replays]) memoCount.set(b.memo, [...(memoCount.get(b.memo) ?? []), b.txid]);
-  const dupMemos = [...memoCount.values()].filter((ids) => ids.length > 1);
-  const multi = allBids.filter((b) => b.outputs > 1);
+  let dupMemos = [...memoCount.values()].filter((ids) => ids.length > 1);
+  let multi = allBids.filter((b) => b.outputs > 1);
+  if (sealedOut) {
+    // A word sealed twice, or opened twice, is a replay. A transaction holding several seals or openings is also reported.
+    dupMemos = [...sealedOut.replayedSeals.map((s) => [s.txid]), ...sealedOut.replayedOpenings.map((o) => [o.txid])];
+    multi = [...sealTxs.values(), ...openTxs.values()].filter((b) => b.outputs > 1);
+  }
   const dupOk = dupMemos.length === 0 && multi.length === 0;
   add({
     id: "no-duplicate-bids",
@@ -508,15 +581,22 @@ function keyChecks(
     title: "No duplicate or replayed bid",
     status: dupOk ? "PASS" : "FAIL",
     reason: dupOk
-      ? "Every bid memo is used once and every bid transaction holds one bid."
+      ? sealedOut ? "Every seal word and every opening word is used once, and every transaction holds one seal or one opening." : "Every bid memo is used once and every bid transaction holds one bid."
       : [
-          ...dupMemos.map((ids) => `The same bid memo appears in ${ids.length} transactions (${ids.map(short).join(", ")}), a replayed bid.`),
+          ...(sealedOut
+            ? [
+                ...sealedOut.replayedSeals.map((s) => `Seal ${short(s.txid)} repeats a word that was already sealed, a replayed seal.`),
+                ...sealedOut.replayedOpenings.map((o) => `Opening ${short(o.txid)} repeats a word that was already opened, a replayed opening.`),
+              ]
+            : dupMemos.map((ids) => `The same bid memo appears in ${ids.length} transactions (${ids.map(short).join(", ")}), a replayed bid.`)),
           ...multi.map((b) => `Transaction ${short(b.txid)} holds ${b.outputs} bids.`),
         ].join(" "),
-    fromChain: [`${allBids.length + replays.length} bid payments`, `${replays.length} replayed`],
+    fromChain: sealedOut
+      ? [`${sealTxs.size} seal payments, ${openTxs.size} opening payments`, `${sealedOut.replayedSeals.length + sealedOut.replayedOpenings.length} replayed`]
+      : [`${allBids.length + replays.length} bid payments`, `${replays.length} replayed`],
   });
 
-  const outcome = decide(onTime, d.rules);
+  const outcome = sealedOut ? sealedOut.outcome : decide(onTime, d.rules);
   const sameWinners =
     outcome.winners.length === r.winners.length && outcome.winners.every((w) => r.winners.includes(w));
   const samePrice = outcome.clearingPriceZat === r.clearingPriceZat;
@@ -551,8 +631,8 @@ function keyChecks(
   });
 
   // Refunds owed, all worked out from the chain: on-time bids by the rule, late bids in full.
-  const owed = new Map(outcome.refundsOwed);
-  for (const b of [...late, ...replays]) owed.set(b.txid, b.amountZat);
+  const owed = sealedOut ? new Map(sealedOut.owed) : new Map(outcome.refundsOwed);
+  if (!sealedOut) for (const b of [...late, ...replays]) owed.set(b.txid, b.amountZat);
   const paid = new Map<string, number>();
   for (const f of refunds) paid.set(f.bidTxid, (paid.get(f.bidTxid) ?? 0) + f.amountZat);
   const refundProblems: string[] = [];
@@ -575,7 +655,9 @@ function keyChecks(
     status: refundProblems.length ? "FAIL" : "PASS",
     reason: refundProblems.length
       ? `${refundProblems.length} refund problem(s): ${refundProblems.join("; ")}.`
-      : `All ${owedCount} refunds owed (losers in full, winners their bid minus the clearing price, late bids in full) were paid exactly, each with a memo naming its bid.`,
+      : sealedOut
+        ? `All ${owedCount} refunds owed (deposits back, winners less the clearing price, penalties taken from seals not opened and shared to the bidders who opened, stray payments in full) were paid exactly, each with a memo naming its payment.`
+        : `All ${owedCount} refunds owed (losers in full, winners their bid minus the clearing price, late bids in full) were paid exactly, each with a memo naming its bid.`,
     fromChain: [
       ...[...owed].filter(([, a]) => a > 0).map(([t, a]) => `owed to ${short(t)}: ${zat(a)}`),
       ...refunds.map((f) => `refund for ${short(f.bidTxid)}: ${zat(f.amountZat)}`),
@@ -586,7 +668,7 @@ function keyChecks(
   // chain, the seller cannot choose it) or when the disclosure lists one for each bid.
   const memoAddr = new Map<string, string>();
   for (const b of bids.values()) {
-    const a = bidMemoAddress(d.lotId, b.memo);
+    const a = sealedRules ? (parseSealMemo(d.lotId, b.memo)?.address ?? null) : bidMemoAddress(d.lotId, b.memo);
     if (a) memoAddr.set(b.txid, a);
   }
   if (d.refundAddresses !== undefined || memoAddr.size > 0) {
@@ -620,6 +702,7 @@ function keyChecks(
     let checked = 0;
     for (const [txid, amount] of owed) {
       if (amount === 0) continue;
+      if (sealedRules && !bids.has(txid)) continue; // a stray opening payment: nothing was sealed under it
       if (!listedAddr.has(txid)) {
         problems.push(`no refund address is given for bid ${short(txid)} (not in its bid memo and not in the seller's list)`);
         continue;
@@ -650,8 +733,10 @@ function keyChecks(
   // Rule: refunds the seller lists (for bids the key can see) + clearing price x winners
   //       = total bid payments received - fee allowance. The fee allowance is 0: network fees
   //       are paid by the seller on top, never out of bidders' money.
-  const received = [...allBids, ...replays].reduce((s, b) => s + b.amountZat, 0);
-  const sellerRefunds = r.refunds.filter((f) => bids.has(f.bidTxid)).reduce((s, f) => s + f.amountZat, 0);
+  const received = sealedRules
+    ? [...sealTxs.values(), ...openTxs.values()].reduce((s, b) => s + b.amountZat, 0)
+    : [...allBids, ...replays].reduce((s, b) => s + b.amountZat, 0);
+  const sellerRefunds = r.refunds.filter((f) => bids.has(f.bidTxid) || openTxs.has(f.bidTxid)).reduce((s, f) => s + f.amountZat, 0);
   const kept = goalRules
     ? r.winners.reduce((s, w) => s + (bids.get(w)?.amountZat ?? 0), 0)
     : r.clearingPriceZat * r.winners.length;
@@ -668,4 +753,69 @@ function keyChecks(
     fromChain: [`received ${zat(received)}`],
     fromSeller: [`refunds listed ${zat(sellerRefunds)}`, `winners' payments ${zat(kept)}`],
   });
+
+  if (sealedRules && sealedOut) {
+    const so = sealedOut;
+    const listedIds = new Set(r.bids.map((b) => b.txid));
+
+    // Seal deposits: a seal that paid the wrong amount, paid late, repeated a word or has a broken memo is
+    // never a bid. It is refunded in full. The seller must not count it.
+    const notBids = [
+      ...so.badDeposit.map((x) => ({ txid: x.txid, why: x.valid ? `paid ${zat(x.paidZat)} instead of the deposit ${zat(sealedRules.depositZat)}` : "its memo is not a well-formed seal" })),
+      ...so.lateSeals.map((x) => ({ txid: x.txid, why: `arrived at block ${x.height}, after the close at block ${d.closeHeight}` })),
+      ...so.replayedSeals.map((x) => ({ txid: x.txid, why: "repeats a word that was already sealed" })),
+    ];
+    const countedBad = notBids.filter((x) => listedIds.has(x.txid));
+    const onTimeSeals = sealTxs.size - notBids.length;
+    add({
+      id: "seal-deposits",
+      level: 2,
+      title: "Every counted seal paid exactly the deposit, on time",
+      status: countedBad.length ? "FAIL" : "PASS",
+      reason: countedBad.length
+        ? `The seller counted ${countedBad.length} seal(s) that cannot count: ${countedBad.map((x) => `${short(x.txid)} ${x.why}`).join("; ")}.`
+        : `${onTimeSeals} seals paid exactly the deposit ${zat(sealedRules.depositZat)} before block ${d.closeHeight + 1}. ${notBids.length} other seal payments were not counted (wrong deposit, late, repeated or malformed) and are owed back in full.`,
+      fromChain: [`${onTimeSeals} seals with the right deposit, on time`, ...notBids.map((x) => `not a bid ${short(x.txid)}: ${x.why}`)],
+      fromDisclosure: [`deposit ${zat(sealedRules.depositZat)}`, `close height ${d.closeHeight}`],
+    });
+
+    // Seal openings: a seal counts only with one on-time opening whose price matches its seal.
+    const notOpened = [
+      ...so.unopened.map((x) => ({ txid: x.txid, why: "was never opened in the window" })),
+      ...so.badOpen.map((x) => ({ txid: x.txid, why: "was opened with a price that does not match its seal, or above the deposit" })),
+    ];
+    const countedWrong = notOpened.filter((x) => listedIds.has(x.txid));
+    add({
+      id: "seal-openings",
+      level: 2,
+      title: "Every counted bid has one matching opening",
+      status: countedWrong.length ? "FAIL" : "PASS",
+      reason: countedWrong.length
+        ? `The seller counted ${countedWrong.length} seal(s) without a matching opening: ${countedWrong.map((x) => `${short(x.txid)} ${x.why}`).join("; ")}.`
+        : `Each of the ${so.counted.length} counted bids has exactly one opening between block ${d.closeHeight + 1} and block ${d.openByHeight} whose price matches its seal.`,
+      fromChain: [`${so.counted.length} seals with a matching opening`, ...notOpened.map((x) => `not counted ${short(x.txid)}: ${x.why}`)],
+      fromSeller: [`${r.bids.length} bids listed`],
+      fromDisclosure: [`openings from block ${d.closeHeight + 1} to block ${d.openByHeight}`],
+    });
+
+    // Seal forfeits: the seller must report every seal that paid the penalty.
+    const chainUnopened = [...so.unopened, ...so.badOpen].map((x) => x.txid);
+    const said = new Set(r.unopened ?? []);
+    const hidden = chainUnopened.filter((t) => !said.has(t));
+    const invented = [...said].filter((t) => !chainUnopened.includes(t));
+    const forfeitOk = hidden.length === 0 && invented.length === 0;
+    const neverOpened = `${so.unopened.length} seals were never opened and ${so.badOpen.length} were opened with a price that does not match`;
+    add({
+      id: "seal-forfeits",
+      level: 2,
+      title: "Seals that paid the penalty are all reported",
+      status: forfeitOk ? "PASS" : "FAIL",
+      reason: forfeitOk
+        ? `${neverOpened}. The seller reports the same ${chainUnopened.length}. ${so.penaltyTotal > 0 ? `Their penalties of ${zat(so.penaltyTotal)} were shared to the ${so.counted.length} counted bids.` : "No penalty was charged."}`
+        : `${neverOpened}. ${hidden.length ? `Not reported by the seller: ${hidden.map(short).join(", ")}. ` : ""}${invented.length ? `Reported but not unopened on the chain: ${invented.map(short).join(", ")}.` : ""}`.trim(),
+      fromChain: [`${so.unopened.length} seals never opened`, `${so.badOpen.length} badly opened`, `penalties ${zat(so.penaltyTotal)}`],
+      fromSeller: [`${said.size} unopened seals reported`],
+      fromDisclosure: [`penalty per seal ${zat(sealedRules.forfeitZat)}`],
+    });
+  }
 }
