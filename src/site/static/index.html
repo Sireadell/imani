@@ -14,6 +14,12 @@
   <div class="wrap">
     <h1>Imani auction check</h1>
     <p class="lead">Was this sealed-bid auction on Zcash run fairly? This page works it out again from the seller's own files. It runs in your browser and uploads nothing.</p>
+    <ul class="adds">
+      <li><strong>Finds bids the seller left out.</strong> It reads every block of the auction, not only the payments the seller lists.</li>
+      <li><strong>The bidder picks the refund address.</strong> It is written in the bid memo on the chain, so the seller cannot swap it.</li>
+      <li><strong>Catches a change to any single number.</strong> Alter one bid, refund, winner or price and the check fails, naming the check that caught it.</li>
+      <li><strong>Can re-read the chain from two separate operators.</strong> The command line tool downloads every block again and accepts it only when both agree.</li>
+    </ul>
     <p class="servers" id="servers-top"><strong>Servers contacted: none.</strong> This page makes no network calls after it loads. Your files stay on your device.</p>
   </div>
 </header>
@@ -82,6 +88,25 @@
       <div class="src chain"><h3>From the chain</h3><p>Bid amounts, bid memos, refund amounts and refund memos. Read from the lot's transactions with the lot's one-time viewing key. Transaction ids are recomputed from the bytes.</p></div>
       <div class="src seller"><h3>From the seller's file</h3><p>The bid list, winners, clearing price, reserve outcome and refund list the seller claims. The checker works these out again and compares.</p></div>
       <div class="src disc"><h3>From the disclosure file</h3><p>Close height, the block height of each transaction, item count and reserve. Without the scan level these heights are taken on the seller's word.</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="who-h">
+    <h2 id="who-h">Who learns what in the real round</h2>
+    <p class="muted small">Worked out from the round's own files when this page was built, not typed by hand.</p>
+    <div class="table-scroll">
+    <!-- who-learns:start -->
+    <table class="who">
+      <thead><tr><th scope="col">Who</th><th scope="col">Learns</th><th scope="col">Cannot learn</th></tr></thead>
+      <tbody>
+      <tr><th scope="row">Anyone, without the lot key</th><td>That 80 shielded transactions in 34 blocks happened, and their fees</td><td>Any amount, memo or address, or even which 6 belong to this auction</td></tr>
+      <tr><th scope="row">Anyone, once the seller publishes the lot key</th><td>The 3 bid amounts, their memos with each bidder's refund address, the 3 refunds and which bid each one pays back</td><td>Who the bidders are, what else is in their wallets, or any payment outside this auction. Refund links that reach outside the round: 0</td></tr>
+      <tr><th scope="row">The seller</th><td>Each bid as it arrives, because the lot key is the seller's</td><td>Anything else in the bidders' wallets. The seller can see bids early, which the check cannot rule out</td></tr>
+      <tr><th scope="row">Each bidder</th><td>Their own bid and refund, and after the close everything the lot key shows</td><td>Other bidders' wallets or identities</td></tr>
+      <tr><th scope="row">This page and its host</th><td>That the page was downloaded</td><td>Anything you check here: the page makes no network calls after it loads</td></tr>
+      </tbody>
+    </table>
+    <!-- who-learns:end -->
     </div>
   </section>
 

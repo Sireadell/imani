@@ -53,7 +53,8 @@
     "test:tamper": "tsx --test test/tamper/*.test.ts",
     "check:external": "tsx tools/external-check.ts",
     "test:external": "tsx --test test/external/*.test.ts",
-    "test:privacy": "tsx --test test/privacy/*.test.ts"
+    "test:privacy": "tsx --test test/privacy/*.test.ts",
+    "who-learns": "node --disable-warning=ExperimentalWarning tools/who-learns.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
