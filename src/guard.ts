@@ -3,8 +3,8 @@
 
 const B32 = "[02-9ac-hj-np-z]";
 
-/** Read-only viewing keys (unified, and the older sapling and orchard forms). */
-export const VIEWING_KEY_RE = new RegExp(`(?:uviewtest|uview|uivktest|uivk|zxviewtestsapling|zxviews|zxview|zivk)1${B32}{40,}`);
+/** Read-only viewing keys (unified revision 0 and revision 2, and the older sapling and orchard forms). */
+export const VIEWING_KEY_RE = new RegExp(`(?:uviewtest|uview|uivktest|uivk|uvftest|uvf|uvitest|uvi|zxviewtestsapling|zxviews|zxview|zivk)1${B32}{40,}`);
 /** Spending keys: anything that can move money. */
 export const SPENDING_KEY_RE = new RegExp(
   String.raw`(?:secret-extended-key-(?:main|test)|zxsk|zxtestsk|zsk|usk|uskt)1${B32}{40,}|\b[xt]prv[1-9A-HJ-NP-Za-km-z]{50,}\b`,

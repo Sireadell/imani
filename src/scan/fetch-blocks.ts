@@ -18,6 +18,8 @@ export interface FetchBlocksOptions {
   to: number;
   /** Replaces the default light server list. */
   servers?: string[];
+  /** Require two operators to agree. Default true; the CLI turns it off for a single server you run yourself. */
+  crossCheck?: boolean;
   /** SOCKS5 proxy, for example "socks5h://127.0.0.1:9050" for a local Tor. */
   proxy?: string;
   /** How many groups of blocks are downloaded at the same time. Default 12 (measured on mainnet, see SPEC.md). */
@@ -75,6 +77,7 @@ export async function fetchBlocks(opts: FetchBlocksOptions): Promise<{ blocks: C
           network: opts.network,
           heights: group,
           servers: opts.servers,
+          crossCheck: opts.crossCheck,
           proxy: opts.proxy,
           timeoutMs: opts.timeoutMs,
         });
