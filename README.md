@@ -2,6 +2,8 @@
 
 *Imani means "trust" in Swahili.*
 
+**Try it in your browser: https://imani-check.vercel.app** opens on a real auction from the Zcash test network and checks it on your own computer. After it loads, the page makes no network requests.
+
 ## Try it in one minute
 
 You need Node 22.18 or newer. In this folder:

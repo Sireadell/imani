@@ -17,7 +17,7 @@ npm run demo
 
 You will see three checks of the same small auction. The honest round ends with `RESULT: PASS`. A copy where the seller refunded one loser 100,000 zatoshis too little ends with `RESULT: FAIL (1 of 15 checks failed: refunds-paid)`. A copy where the seller left a 3,000,000 bid out of their files ends with `RESULT: FAIL (1 of 20 checks failed: scan-hidden-bids)`. It takes about two seconds and needs no internet.
 
-Prefer a page? Run `npm run site:serve` and open http://localhost:8788. It opens on the real test-network round (PASS, 21 of 21). Press "The seller hides a bid" to see the scan catch it, or "Try a tampered copy" for the 6 made-up broken copies. The memo examples add two more. Paste a bid's transaction id into "Was my bid counted?" to see what a bidder would see.
+Prefer a page? Open https://imani-check.vercel.app, or run `npm run site:serve` and open http://localhost:8788 for the same page built from your own copy. It opens on the real test-network round (PASS, 21 of 21). Press "The seller hides a bid" to see the scan catch it, or "Try a tampered copy" for the 6 made-up broken copies. The memo examples add two more. Paste a bid's transaction id into "Was my bid counted?" to see what a bidder would see.
 
 Prefer to see the whole shop? Run `npm run demo:app` and open http://localhost:8787. It is a small auction shop where you sign in with a private wallet, place a bid, skip to the close, and check the result (8 broken copies there). A yellow banner says it is simulated, because the payments go to a pretend network.
 
