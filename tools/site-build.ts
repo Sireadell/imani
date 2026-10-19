@@ -11,6 +11,7 @@ import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { roundRows, roundsPage } from "./rounds-list.ts";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const p = (...s: string[]) => join(root, ...s);
@@ -74,7 +75,7 @@ export { decryptTx, decoderInfo, parseAddress };
 const readText = (path: string) => readFileSync(path, "utf8");
 
 /** The bundled example files, each distinct file stored once. */
-export function examplesModule(): string {
+export function exampleData(): { entries: any[]; externals: { id: string; title: string; blob: string }[]; blobs: Record<string, string> } {
   const blobs: Record<string, string> = {};
   const store = (path: string) => {
     const text = readText(path);
@@ -86,7 +87,7 @@ export function examplesModule(): string {
     const t = name.replace(/^\d+-/, "").replace(/-/g, " ");
     return t[0].toUpperCase() + t.slice(1);
   };
-  const entries: unknown[] = [];
+  const entries: any[] = [];
   const honest = (id: string, dir: string, title: string, story: string, scan: boolean, groupName?: "real-honest" | "receivers-honest" | "memo-honest" | "goal-honest") =>
     entries.push({
       id,
@@ -187,6 +188,11 @@ export function examplesModule(): string {
     ["external-reveal", "reveal", "Published reveal file"],
     ["external-tampered", "tampered", "Published reveal file, one refund changed"],
   ].map(([id, file, title]) => ({ id, title, blob: store(p("test", "external", "round-files", `${file}.json`)) }));
+  return { entries, externals, blobs };
+}
+
+export function examplesModule(): string {
+  const { entries, externals, blobs } = exampleData();
   return `export const examples = ${JSON.stringify(entries)};\nexport const externals = ${JSON.stringify(externals)};\nexport const blobs = ${JSON.stringify(blobs)};\n`;
 }
 
@@ -230,6 +236,7 @@ export async function buildSite(outDir = p("site")): Promise<string[]> {
   // The referee page: same checker, plus block requests to the site it is served from.
   await build({ ...common, entryPoints: [p("src/site/referee-app.ts")], outfile: join(outDir, "check.js"), format: "iife" });
   for (const f of readdirSync(p("src/site/static"))) copyFileSync(p("src/site/static", f), join(outDir, f));
+  writeFileSync(join(outDir, "rounds.html"), roundsPage(roundRows()));
   const files = readdirSync(outDir).sort();
   const lines = files.map((f) => `${sha(readFileSync(join(outDir, f)))}  ${f}`);
   lines.push(`${sums["imani_decoder_bg.wasm"]}  imani_decoder_bg.wasm (embedded in app.js, same bytes as vendor/decoder)`);
