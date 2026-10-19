@@ -62,7 +62,17 @@ The file formats, price rule, every check and the known limits are in [SPEC.md](
 
 ## Safety
 
-The checker only accepts a read-only viewing key (starts with `uview1` or `uviewtest1`). It refuses seed phrases and spending keys, never prints the key and never saves it. If the key shows payments that are not bids for the lot, the check fails and tells the seller to use a fresh key for every lot. By default it contacts no server and prints `Servers contacted: none`. Only `--scan --fetch` goes online (add `--server <url>` to use your own light server instead of the public ones, or `--server zebra+http://127.0.0.1:8232` to read the blocks from your own Zebra node, `18232` for testnet; Zebra's password file goes in `--zebra-auth-file`); it asks for blocks by number, never sends a key, and prints every server it used.
+The checker only accepts a read-only viewing key (starts with `uview1` or `uviewtest1`). It refuses seed phrases and spending keys, never prints the key and never saves it. If the key shows payments that are not bids for the lot, the check fails and tells the seller to use a fresh key for every lot. By default it contacts no server and prints `Servers contacted: none`. Only `--scan --fetch` goes online. It asks for blocks by number, never sends a key, and prints every server it used. It reads each block from two public sources run by different people, and only passes when they agree on every block.
+
+If you'd rather not depend on anyone else's server, point it at your own:
+
+| You run | Add |
+|---|---|
+| A light server | `--server https://your-server:443` |
+| A Zebra node (mainnet) | `--server zebra+http://127.0.0.1:8232 --zebra-auth-file <path to Zebra's .cookie>` |
+| A Zebra node (testnet) | `--server zebra+http://127.0.0.1:18232 --zebra-auth-file <path to Zebra's .cookie>` |
+
+Your node's password is read from that file, never printed, and never sent unencrypted to a machine that isn't yours.
 
 ## Honest limits: the auction check
 

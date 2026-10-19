@@ -109,7 +109,7 @@ Ways to reduce it: pass your own `servers` list (your own lightwalletd or Zaino 
 third-party leak), use `--proxy` with Tor, use height mode, or skip fetching and keep using
 a saved file (the default).
 
-## Zebra node route (added 2026-10-19)
+## Reading from your own Zebra node
 
 A source written `zebra+http://127.0.0.1:18232` (or `zebra+https://`) reads blocks from a Zebra node's JSON-RPC port. Default ports in zebra-rpc: 8232 mainnet, 18232 testnet. Checked against ZcashFoundation/zebra, `zebra-rpc` (config/rpc.rs, server/cookie.rs, server/http_request_compatibility.rs, methods.rs):
 
