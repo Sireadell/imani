@@ -1,0 +1,16 @@
+label { display: block; font-weight: 600; margin: 14px 0 4px; }
+textarea.field { width: 100%; font-family: ui-monospace, Consolas, monospace; font-size: 13px; resize: vertical; }
+input.field { width: 100%; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; }
+@media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
+table.grid { border-collapse: collapse; width: 100%; margin: 6px 0 12px; }
+table.grid th, table.grid td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+table.grid th { background: var(--panel); }
+table.small { font-size: 13px; }
+p.ok { color: var(--pass); font-weight: 600; }
+p.bad { color: var(--fail); font-weight: 600; }
+details.check { padding: 6px 12px; }
+details.check.pass { border-left-color: var(--pass); }
+details.check.fail { border-left-color: var(--fail); }
+details.check summary { cursor: pointer; font-weight: 600; }
+.notice.bad { color: var(--fail); }

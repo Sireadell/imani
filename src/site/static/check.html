@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src data:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="description" content="Check any sealed-bid auction on Zcash with its viewing key and a block range. The key stays in your browser.">
+<title>Imani referee</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="check.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1>Imani referee</h1>
+    <p class="lead">Paste the viewing key of any sealed-bid auction on Zcash, and the blocks it ran in. In seconds this page reads those blocks, counts the bids, finds the winners and the price, and checks that every refund was paid exactly as the rules say. It works on rounds Imani did not run.</p>
+    <p class="servers" id="what-is-sent"><strong>What leaves your browser:</strong> only requests for blocks, one per block, saying the network (main or test) and the block number. <strong>Your key is never sent anywhere.</strong> It is read in this tab and not stored.</p>
+    <p class="muted small"><a href="index.html">Back to the offline checker</a>, which uploads nothing at all and works from the seller's files.</p>
+  </div>
+</header>
+
+<noscript><div class="wrap"><p class="notice bad">This page needs JavaScript to run the checks.</p></div></noscript>
+
+<main class="wrap">
+  <section aria-labelledby="in-h">
+    <h2 id="in-h">1. Say which round</h2>
+    <div class="row">
+      <button type="button" class="btn primary" id="btn-example">Check Imani's own real round (test network)</button>
+    </div>
+    <p class="muted small">One press fills the boxes below with a real auction Imani ran on the public Zcash test network on 11 Oct 2026 (3 bids, 2 items) and checks it. Test coins have no value.</p>
+
+    <form id="form" autocomplete="off">
+      <label for="f-key">Lot viewing key</label>
+      <textarea id="f-key" class="field" rows="3" spellcheck="false" placeholder="uview1... or uviewtest1..."></textarea>
+      <p class="muted small">A read-only key that starts with <code>uview1</code> (main network) or <code>uviewtest1</code> (test network). A seed phrase or a spending key is refused before anything is requested.</p>
+      <div class="grid2">
+        <div><label for="f-from">First block</label><input id="f-from" class="field" inputmode="numeric"></div>
+        <div><label for="f-to">Last block</label><input id="f-to" class="field" inputmode="numeric"></div>
+        <div><label for="f-items">Items for sale</label><input id="f-items" class="field" inputmode="numeric"></div>
+        <div><label for="f-reserve">Reserve, in zatoshis</label><input id="f-reserve" class="field" inputmode="numeric"></div>
+        <div><label for="f-close">Last block a bid counts (optional)</label><input id="f-close" class="field" inputmode="numeric"></div>
+        <div><label for="f-lot">Lot name (optional)</label><input id="f-lot" class="field"></div>
+      </div>
+      <p class="muted small">1 ZEC is 100,000,000 zatoshis. The first block is when bidding opened. The last block is when every refund was due. The lot name is read from the bid memos, so fill it in only if the key shows more than one lot. If you leave the close block empty, every bid in the range counts as on time.</p>
+      <div class="row"><button type="submit" class="btn" id="btn-run">Check this round</button></div>
+    </form>
+    <p id="status" class="muted" role="status" aria-live="polite"></p>
+  </section>
+
+  <section aria-labelledby="out-h">
+    <h2 id="out-h">2. Result</h2>
+    <div id="result" aria-live="polite"><p class="muted">Nothing checked yet.</p></div>
+  </section>
+
+  <section aria-labelledby="how-h">
+    <h2 id="how-h">How it works</h2>
+    <ul>
+      <li>The blocks come from two block servers run by different operators: a Zcash light wallet server and a public explorer. A block is used only when both give the same block and the same transactions, and each transaction's bytes hash to its id. Both answers are shown with the result.</li>
+      <li>Those servers do not accept requests from a web page, so a small relay program (<code>tools/referee-serve.ts</code>) makes the requests for this page. It takes a network and a block number, nothing else, and it has no way to receive a key.</li>
+      <li>The key is used here, in your browser, with the same decoder and the same checker as the command line tool. The bids, winners, price and refunds are recomputed from the blocks alone, then compared with the refunds the lot really paid.</li>
+      <li>This page makes network requests, which the offline checker never does. Use the offline checker when you want nothing to leave your device.</li>
+    </ul>
+  </section>
+</main>
+<script src="check.js"></script>
+</body>
+</html>

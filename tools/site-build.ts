@@ -199,6 +199,8 @@ export async function buildSite(outDir = p("site")): Promise<string[]> {
   rmSync(outDir, { recursive: true, force: true });
   mkdirSync(outDir, { recursive: true });
   await build({ ...common, entryPoints: [p("src/site/app.ts")], outfile: join(outDir, "app.js"), format: "iife" });
+  // The referee page: same checker, plus block requests to the site it is served from.
+  await build({ ...common, entryPoints: [p("src/site/referee-app.ts")], outfile: join(outDir, "check.js"), format: "iife" });
   for (const f of readdirSync(p("src/site/static"))) copyFileSync(p("src/site/static", f), join(outDir, f));
   const files = readdirSync(outDir).sort();
   const lines = files.map((f) => `${sha(readFileSync(join(outDir, f)))}  ${f}`);
