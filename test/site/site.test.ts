@@ -184,7 +184,13 @@ test("the built page makes no network calls and has no external hosts", () => {
   const css = readFileSync(join(siteDir, "style.css"), "utf8");
   const banned = [/\bfetch\s*\(/, /XMLHttpRequest/, /\bWebSocket\b/, /sendBeacon/, /EventSource/, /importScripts/, /\bimport\s*\(/, /new\s+Worker\b/, /WebTransport/, /\.src\s*=/, /localStorage|sessionStorage|indexedDB|document\.cookie/];
   for (const re of banned) assert.doesNotMatch(js, re, String(re));
-  assert.deepEqual(js.match(/https?:\/\/[^\s"'`)]+/g) ?? [], [], "no URLs in the code");
+  // The only addresses allowed are the real round's explorer links. They are plain links that
+  // load nothing unless the reader clicks one, and they open in a new tab with no referrer.
+  const urls = js.match(/https?:\/\/[^\s"'`)]+/g) ?? [];
+  const explorer = JSON.parse(rd("examples/testnet-01/explorer.json"));
+  assert.deepEqual(urls.sort(), explorer.payments.map((p: { txid: string }) => `${explorer.explorer}${p.txid}`).sort(), "no URLs in the code except the explorer links");
+  for (const u of urls) assert.match(u, /^https:\/\/testnet\.zecblock\.com\/tx\/[0-9a-f]{64}$/);
+  assert.match(rd("src/site/app.ts"), /a\.rel = "noopener noreferrer"/);
   assert.deepEqual((html + css).match(/https?:\/\/[^\s"'`)]+/g) ?? [], [], "no URLs in html or css");
   assert.match(html, /connect-src 'none'/);
   assert.match(html, /default-src 'none'/);
@@ -228,7 +234,7 @@ test("running every example with network functions trapped never calls them", as
 
 test("every bundled example is in the page and all expected outcomes hold", () => {
   const app = readFileSync(join(siteDir, "app.js"), "utf8");
-  for (const id of ["round-01", "scan-01", ...brokenNames.map((n) => `broken/${n}`), ...scanNames.map((n) => `scan-broken/${n}`)]) {
+  for (const id of ["testnet-01", "testnet-broken/01-hidden-losing-bid", "testnet-broken/02-short-refund-claim", "round-01", "scan-01", ...brokenNames.map((n) => `broken/${n}`), ...scanNames.map((n) => `scan-broken/${n}`)]) {
     assert.ok(app.includes(`"id":"${id}"`) || app.includes(`"id": "${id}"`), id);
   }
 });

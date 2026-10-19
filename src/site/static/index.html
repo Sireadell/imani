@@ -23,9 +23,17 @@
 <main class="wrap">
   <section aria-labelledby="pick-h">
     <h2 id="pick-h">1. Pick something to check</h2>
-    <p class="muted">The page opens on a small made-up test auction. Every example uses fake test-network payments built with throwaway keys.</p>
+    <p class="muted">The page opens on a real auction: a real Zcash wallet paid these bids and refunds on the public Zcash test network. Test coins have no value.</p>
     <div class="row">
-      <button type="button" class="btn primary" id="btn-honest">Honest round (round 01)</button>
+      <button type="button" class="btn primary" id="btn-real">Real round (test network)</button>
+      <button type="button" class="btn warn" id="btn-real-cheat">The seller hides a bid</button>
+    </div>
+    <div class="chips" id="chips-real" role="group" aria-label="Real round and its tampered copies"></div>
+    <div id="explorer-box"></div>
+    <h3>Made-up rounds, one cheat at a time</h3>
+    <p class="muted small">These are built offline with throwaway keys. Each tampered copy changes one thing and fails on exactly the check built to catch it.</p>
+    <div class="row">
+      <button type="button" class="btn" id="btn-honest">Honest round (round 01)</button>
       <button type="button" class="btn warn" id="btn-tamper">Try a tampered copy</button>
     </div>
     <p class="muted small" id="tamper-count">Each press loads the next of 6 tampered copies.</p>

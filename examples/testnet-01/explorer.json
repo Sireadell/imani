@@ -1,0 +1,12 @@
+{
+  "about": "The 6 payments of lot DRY-01 on the public Zcash test network, for a public explorer lookup. Amounts and blocks are as the checker reads them with the lot key.",
+  "explorer": "https://testnet.zecblock.com/tx/",
+  "payments": [
+    { "label": "Bid of 3,000,000", "block": 4489081, "txid": "b76cd31fa4584857b84e16357e2fd6e958a59a9e63661529b52a93867ad8ed7c" },
+    { "label": "Bid of 2,000,000", "block": 4489081, "txid": "f7eb067b88785df5c22c9522e576a422932c853164d3d8fa69eb7a7665876b0a" },
+    { "label": "Bid of 1,500,000", "block": 4489081, "txid": "2f5e8f4f37650d415dc42867eeda74c70eb06924c117769de048fc5c158d7505" },
+    { "label": "Refund of 1,500,000 (change to the 3,000,000 bid)", "block": 4489096, "txid": "1f5c2746c2226328f7acc8549db6c058183bf7a82d2c4ec90d8d92aaf57b8f1c" },
+    { "label": "Refund of 500,000 (change to the 2,000,000 bid)", "block": 4489100, "txid": "f0056ba9a72d113172d18e4da152cbf49227cdc36100708e73c723b78fef027f" },
+    { "label": "Refund of 1,500,000 (the losing bid, in full)", "block": 4489100, "txid": "cca33721ebe9a965850029aabb79301a9b7db33d02f6b82ec9f539b474189fb3" }
+  ]
+}

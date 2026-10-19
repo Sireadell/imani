@@ -17,7 +17,7 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: 
 
 type Selection = { kind: "example"; id: string } | { kind: "own" };
 
-let selection: Selection = { kind: "example", id: "round-01" };
+let selection: Selection = { kind: "example", id: "testnet-01" };
 let tamperIndex = -1;
 const own: { disclosure?: unknown; result?: unknown; chain?: unknown; chainName?: string; bidderKeys?: unknown; names: string[] } = { names: [] };
 
@@ -107,7 +107,11 @@ function renderVerdict(v: Verdict, entry?: ExampleEntry): HTMLElement {
     }
     b.appendChild(ul);
   }
-  if (entry && entry.expectedFailingCheck) {
+  if (entry && entry.expectedFailingChecks) {
+    const want = [...entry.expectedFailingChecks].sort().join(", ");
+    const same = [...v.failed].sort().join(", ") === want;
+    b.appendChild(el("p", undefined, same ? `These are the checks this cheat was expected to trip: ${want}.` : `Expected to fail on: ${want}.`));
+  } else if (entry && entry.expectedFailingCheck) {
     const same = v.failed.length === 1 && v.failed[0] === entry.expectedFailingCheck;
     b.appendChild(el("p", undefined, same ? `This is the check this copy was built to fail: ${entry.expectedFailingCheck}.` : `Expected to fail on ${entry.expectedFailingCheck}.`));
   }
@@ -172,6 +176,28 @@ function render(): void {
   if (res.outcome.ok) last = { verdict: res.outcome.verdict, result: res.result };
   out.appendChild(res.outcome.ok ? renderVerdict(res.outcome.verdict, res.entry) : renderProblem(res.outcome));
   syncChips();
+}
+
+/** Links to the real round's payments on a public explorer. Nothing is fetched unless the reader clicks one. */
+function renderExplorer(): void {
+  const real = examples.find((e) => e.explorer);
+  if (!real?.explorer) return;
+  const box = $("explorer-box");
+  const d = el("details", "explorer");
+  d.appendChild(el("summary", undefined, `Look up the ${real.explorer.length} real payments on a public explorer`));
+  d.appendChild(el("p", "muted small", "Each link opens another website, which will see your visit. The explorer shows that each payment exists and its block. The amounts and memos are private and only show up with the lot key, as in the check above."));
+  const ul = el("ul");
+  for (const x of real.explorer) {
+    const li = el("li");
+    const a = el("a", undefined, x.label);
+    a.href = x.url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    li.appendChild(a);
+    ul.appendChild(li);
+  }
+  d.appendChild(ul);
+  box.appendChild(d);
 }
 
 function chip(e: ExampleEntry): HTMLButtonElement {
@@ -242,6 +268,10 @@ async function takeFiles(files: FileList | File[]): Promise<void> {
 }
 
 async function start(): Promise<void> {
+  for (const e of [...byGroup("real-honest"), ...byGroup("real-tampered")]) $("chips-real").appendChild(chip(e));
+  renderExplorer();
+  $("btn-real").addEventListener("click", () => choose("testnet-01"));
+  $("btn-real-cheat").addEventListener("click", () => choose(byGroup("real-tampered")[0].id));
   for (const e of byGroup("tampered")) $("chips-tampered").appendChild(chip(e));
   for (const e of [...byGroup("scan-honest"), ...byGroup("scan-tampered")]) $("chips-scan").appendChild(chip(e));
   for (const e of [...byGroup("receivers-honest"), ...byGroup("receivers-tampered")]) $("chips-receivers").appendChild(chip(e));

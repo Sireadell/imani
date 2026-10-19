@@ -87,7 +87,7 @@ export function examplesModule(): string {
     return t[0].toUpperCase() + t.slice(1);
   };
   const entries: unknown[] = [];
-  const honest = (id: string, dir: string, title: string, story: string, scan: boolean, groupName?: "receivers-honest" | "memo-honest") =>
+  const honest = (id: string, dir: string, title: string, story: string, scan: boolean, groupName?: "real-honest" | "receivers-honest" | "memo-honest") =>
     entries.push({
       id,
       group: groupName ?? (scan ? "scan-honest" : "honest"),
@@ -98,14 +98,7 @@ export function examplesModule(): string {
       result: store(p("examples", dir, "result.json")),
       chain: scan ? store(p("examples", dir, "chain.json")) : null,
     });
-  honest(
-    "round-01",
-    "round-01",
-    "Honest round (round 01)",
-    "A small test auction: 2 items, reserve 1,000,000 zatoshis, four bids (one arrives after the close). The seller's files are exactly right.",
-    false,
-  );
-  const group = (base: string, baseDir: string, groupName: "tampered" | "scan-tampered" | "receivers-tampered" | "memo-tampered") => {
+  const group = (base: string, baseDir: string, groupName: "real-tampered" | "tampered" | "scan-tampered" | "receivers-tampered" | "memo-tampered") => {
     const manifest = JSON.parse(readText(p("examples", base, "manifest.json")));
     for (const c of manifest.copies) {
       const dir = join(base, c.name);
@@ -116,12 +109,35 @@ export function examplesModule(): string {
         title: nice(c.name),
         story: c.story,
         expectedFailingCheck: c.expectedFailingCheck,
+        ...(c.expectedFailingChecks ? { expectedFailingChecks: c.expectedFailingChecks } : {}),
         disclosure: store(pick("disclosure.json")),
         result: store(pick("result.json")),
-        chain: groupName === "scan-tampered" ? store(pick("chain.json")) : null,
+        chain: groupName === "scan-tampered" || groupName === "real-tampered" ? store(pick("chain.json")) : null,
       });
     }
   };
+  // The real round goes at the top: the page opens on it.
+  honest(
+    "testnet-01",
+    "testnet-01",
+    "Real round on the Zcash test network (DRY-01)",
+    "A real wallet paid 3 bids into a fresh lot account on the public Zcash test network on 11 Oct 2026, and the lot paid 3 refunds back. 2 items, reserve 1,000,000 zatoshis. The scan reads all 34 real blocks of the auction (80 transactions) with the lot key and finds exactly the 6 payments of this lot.",
+    true,
+    "real-honest",
+  );
+  const ex = JSON.parse(readText(p("examples", "testnet-01", "explorer.json")));
+  (entries[entries.length - 1] as Record<string, unknown>).explorer = ex.payments.map((x: { label: string; block: number; txid: string }) => ({
+    label: `${x.label}, block ${x.block.toLocaleString("en-US")} (${x.txid.slice(0, 10)})`,
+    url: `${ex.explorer}${x.txid}`,
+  }));
+  group("testnet-broken", "testnet-01", "real-tampered");
+  honest(
+    "round-01",
+    "round-01",
+    "Honest round (round 01)",
+    "A small test auction: 2 items, reserve 1,000,000 zatoshis, four bids (one arrives after the close). The seller's files are exactly right.",
+    false,
+  );
   group("broken", "round-01", "tampered");
   honest(
     "scan-01",
