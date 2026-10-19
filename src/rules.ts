@@ -1,4 +1,4 @@
-import type { AuctionRules } from "./files.ts";
+import type { AuctionRules, GoalRules, Rules } from "./files.ts";
 
 export interface Bid {
   txid: string;
@@ -23,7 +23,24 @@ export interface Outcome {
  * 4. Winners get back their bid minus the clearing price. Losers get back their whole bid.
  * 5. If no bid reaches the reserve, there are no winners, the clearing price is 0, and every bid is refunded.
  */
-export function decide(bids: Bid[], rules: AuctionRules): Outcome {
+export function decide(bids: Bid[], rules: Rules): Outcome {
+  return rules.kind === "goal" ? decideGoal(bids, rules) : decideAuction(bids, rules);
+}
+
+/**
+ * The goal rule. If the payments add up to the goal, every payment is counted and kept, nothing is
+ * refunded, and there is no price (0). If they fall short there are no winners and every payment
+ * is refunded in full.
+ */
+function decideGoal(bids: Bid[], rules: GoalRules): Outcome {
+  const total = bids.reduce((s, b) => s + b.amountZat, 0);
+  const reached = bids.length > 0 && total >= rules.goalZat;
+  const refundsOwed = new Map<string, number>();
+  for (const b of bids) refundsOwed.set(b.txid, reached ? 0 : b.amountZat);
+  return { reserveMet: reached, winners: reached ? bids.map((b) => b.txid) : [], clearingPriceZat: 0, refundsOwed };
+}
+
+function decideAuction(bids: Bid[], rules: AuctionRules): Outcome {
   const ranked = [...bids].sort(
     (a, b) => b.amountZat - a.amountZat || a.height - b.height || (a.txid < b.txid ? -1 : a.txid > b.txid ? 1 : 0),
   );

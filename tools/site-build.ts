@@ -87,7 +87,7 @@ export function examplesModule(): string {
     return t[0].toUpperCase() + t.slice(1);
   };
   const entries: unknown[] = [];
-  const honest = (id: string, dir: string, title: string, story: string, scan: boolean, groupName?: "real-honest" | "receivers-honest" | "memo-honest") =>
+  const honest = (id: string, dir: string, title: string, story: string, scan: boolean, groupName?: "real-honest" | "receivers-honest" | "memo-honest" | "goal-honest") =>
     entries.push({
       id,
       group: groupName ?? (scan ? "scan-honest" : "honest"),
@@ -98,7 +98,7 @@ export function examplesModule(): string {
       result: store(p("examples", dir, "result.json")),
       chain: scan ? store(p("examples", dir, "chain.json")) : null,
     });
-  const group = (base: string, baseDir: string, groupName: "real-tampered" | "tampered" | "scan-tampered" | "receivers-tampered" | "memo-tampered") => {
+  const group = (base: string, baseDir: string, groupName: "real-tampered" | "tampered" | "scan-tampered" | "receivers-tampered" | "memo-tampered" | "goal-tampered") => {
     const manifest = JSON.parse(readText(p("examples", base, "manifest.json")));
     for (const c of manifest.copies) {
       const dir = join(base, c.name);
@@ -165,6 +165,23 @@ export function examplesModule(): string {
     "memo-honest",
   );
   group("memo-broken", "memo-01", "memo-tampered");
+  honest(
+    "goal-reached",
+    "goal-reached",
+    "Fundraiser that reached its goal",
+    "Not an auction: an all-or-nothing collection with a goal of 6,000,000 zatoshis. Three payments of 3,000,000, 2,000,000 and 1,500,000 came in on time, 6,500,000 in all, so the goal was reached and all three are kept. A fourth payment after the close is sent back.",
+    false,
+    "goal-honest",
+  );
+  honest(
+    "goal-missed",
+    "goal-missed",
+    "Fundraiser that missed its goal",
+    "The same kind of collection with a goal of 2,000,000 zatoshis. Only 1,500,000 came in on time, so the goal was missed and that payment is refunded in full, as is the late one.",
+    false,
+    "goal-honest",
+  );
+  group("goal-broken", "goal-reached", "goal-tampered");
   const externals = [
     ["external-settlement", "demo01-settlement", "Published settlement file"],
     ["external-reveal", "reveal", "Published reveal file"],

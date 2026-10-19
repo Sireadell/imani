@@ -48,7 +48,12 @@ export function lookupBid(r: any, v: Verdict, query: string): string {
     const won = Array.isArray(r.winners) && r.winners.includes(bid.txid);
     const refund = refunds.find((f) => f.bidTxid === bid.txid);
     lines.push(`Your bid: counted, ${zat(bid.amountZat)}.`);
-    lines.push(won ? `Result: you won one item at ${zat(r.clearingPriceZat)}.` : "Result: your bid did not win.");
+    const goal = r.rules?.kind === "goal";
+    if (goal) {
+      lines.push(won ? "Result: the goal was reached and your payment counts towards it and is kept." : "Result: the goal was not reached.");
+    } else {
+      lines.push(won ? `Result: you won one item at ${zat(r.clearingPriceZat)}.` : "Result: your bid did not win.");
+    }
     lines.push(
       refund
         ? `Should come back to you: ${zat(refund.amountZat)} (${won ? "your bid minus the price" : "your whole bid"}).`

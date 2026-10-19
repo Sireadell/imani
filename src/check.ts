@@ -6,6 +6,7 @@ import {
   bidMemoPrefix,
   refundMemo,
   refundMemoPrefix,
+  type AuctionRules,
   type Disclosure,
   type SellerResult,
 } from "./files.ts";
@@ -120,7 +121,9 @@ export function validateFiles(d: any, r: any): asserts d is Disclosure {
   if (d.format !== "imani-lot-disclosure/1") bad('the disclosure file must have "format": "imani-lot-disclosure/1".');
   if (typeof d.lotId !== "string" || !/^[A-Za-z0-9._-]{1,40}$/.test(d.lotId)) bad("lotId must be 1 to 40 letters, digits, dots, dashes or underscores.");
   if (d.network !== "main" && d.network !== "test") bad('network must be "main" or "test".');
-  if (!d.rules || typeof d.rules !== "object") bad("the disclosure file needs rules (itemCount, reserveZat).");
+  if (!d.rules || typeof d.rules !== "object") bad("the disclosure file needs rules (itemCount and reserveZat, or kind goal with goalZat).");
+  if (d.rules.kind !== undefined && d.rules.kind !== "auction" && d.rules.kind !== "goal") bad('the rules kind must be "auction" or "goal".');
+  if (d.rules.kind === "goal" && !isAmount(d.rules.goalZat)) bad("the goal in the rules (goalZat) must be a whole number above 0.");
   if (!Array.isArray(d.transactions)) bad("the disclosure file needs a transactions list.");
   for (const t of d.transactions) {
     if (!t || typeof t.txHex !== "string" || !/^([0-9a-f]{2})+$/i.test(t.txHex)) bad("every disclosed transaction needs txHex (hex text).");
@@ -182,11 +185,14 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
   });
 
   const problems: string[] = [];
-  const rulesOk =
-    isAmount(d.rules.itemCount) && isCount(d.rules.reserveZat) && r.rules &&
-    r.rules.itemCount === d.rules.itemCount && r.rules.reserveZat === d.rules.reserveZat;
+  const goalRules = d.rules.kind === "goal" ? d.rules : null;
+  const ar = d.rules as AuctionRules; // only read when goalRules is null
+  const rulesOk = goalRules
+    ? !!r.rules && r.rules.kind === "goal" && r.rules.goalZat === goalRules.goalZat
+    : isAmount(ar.itemCount) && isCount(ar.reserveZat) && r.rules && r.rules.kind !== "goal" &&
+      (r.rules as AuctionRules).itemCount === ar.itemCount && (r.rules as AuctionRules).reserveZat === ar.reserveZat;
   if (r.lotId !== d.lotId) problems.push(`the result is for lot ${r.lotId}, the disclosure for lot ${d.lotId}`);
-  if (!rulesOk) problems.push("the rules (item count, reserve) in the result differ from the disclosure");
+  if (!rulesOk) problems.push(goalRules ? "the rules (goal) in the result differ from the disclosure" : "the rules (item count, reserve) in the result differ from the disclosure");
   if (r.bidCount !== r.bids.length) problems.push(`bidCount says ${r.bidCount} but ${r.bids.length} bids are listed`);
   const listed = new Map<string, number>();
   for (const b of r.bids) {
@@ -200,6 +206,7 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
   if (r.reserveMet !== (r.winners.length > 0)) problems.push("reserveMet does not agree with the winners list");
   const refundsByBid = new Map<string, number>();
   for (const f of r.refunds) {
+    if (goalRules && winnerSet.has(f.bidTxid)) problems.push(`refund for ${short(f.bidTxid)} but a payment counted towards a reached goal is kept, never refunded`);
     if (!isTxid(f.bidTxid) || !isAmount(f.amountZat)) problems.push("a listed refund has a bad bid txid or amount");
     else if (f.memo !== refundMemo(r.lotId, f.bidTxid)) problems.push(`refund for ${short(f.bidTxid)} does not carry the memo "refund:<lot>:<bid txid>"`);
     else if (f.reason !== "late" && !listed.has(f.bidTxid)) problems.push(`refund for ${short(f.bidTxid)} points to a bid that is not listed`);
@@ -212,6 +219,8 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
     }
   }
   if (!isCount(r.clearingPriceZat)) problems.push("the clearing price is not a whole number");
+  if (goalRules && r.clearingPriceZat !== 0) problems.push("a goal round has no price, so the clearing price must be 0");
+  if (goalRules && r.winners.length > 0 && r.winners.length !== r.bids.length) problems.push("when the goal is reached every listed payment counts, but some are not marked as counted");
   add({
     id: "result-consistent",
     level: 1,
@@ -221,40 +230,67 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
       ? `The result file contradicts itself: ${problems.join("; ")}.`
       : "Bid count, winners, reserve and refunds in the result file agree with each other and with the published rules.",
     fromSeller: [`${r.bidCount} bids`, `${r.winners.length} winners`, `${r.refunds.length} refunds`],
-    fromDisclosure: [`rules: ${d.rules.itemCount} items, reserve ${zat(d.rules.reserveZat)}`],
+    fromDisclosure: [goalRules ? `rules: goal ${zat(goalRules.goalZat)}` : `rules: ${ar.itemCount} items, reserve ${zat(ar.reserveZat)}`],
   });
 
-  const winnerCountOk = r.winners.length <= Math.min(d.rules.itemCount, r.bids.length);
+  if (goalRules) {
+    const listedTotal = r.bids.reduce((s, b) => s + (b.amountZat || 0), 0);
+    const reachedByList = r.bids.length > 0 && listedTotal >= goalRules.goalZat;
+    const goalOk = reachedByList === r.reserveMet;
+    add({
+      id: "goal-reached",
+      level: 1,
+      title: "The goal outcome matches the listed payments",
+      status: goalOk ? "PASS" : "FAIL",
+      reason: goalOk
+        ? `The listed payments add up to ${zat(listedTotal)} against a goal of ${zat(goalRules.goalZat)}: the goal was ${reachedByList ? "" : "not "}reached, as the seller says.`
+        : `The listed payments add up to ${zat(listedTotal)} against a goal of ${zat(goalRules.goalZat)}, so the goal was ${reachedByList ? "" : "not "}reached, but the seller says it was ${r.reserveMet ? "" : "not "}reached.`,
+      fromSeller: [`listed payments ${zat(listedTotal)}`, `goal reached: ${r.reserveMet}`],
+      fromDisclosure: [`goal ${zat(goalRules.goalZat)}`],
+    });
+  }
+
+  const winnerCountOk = goalRules ? r.winners.length === 0 || r.winners.length === r.bids.length : r.winners.length <= Math.min(ar.itemCount, r.bids.length);
   add({
     id: "winner-count",
     level: 1,
     title: "Winner count fits the lot",
     status: winnerCountOk ? "PASS" : "FAIL",
-    reason: winnerCountOk
-      ? `${r.winners.length} winners, no more than the ${d.rules.itemCount} items and the ${r.bids.length} bids.`
-      : `${r.winners.length} winners is more than the ${d.rules.itemCount} items or the ${r.bids.length} bids.`,
+    reason: goalRules
+      ? winnerCountOk
+        ? r.winners.length ? `All ${r.winners.length} listed payments count towards the goal.` : "The goal was not reached, so no payment counts."
+        : `${r.winners.length} of ${r.bids.length} listed payments are marked as counted, but a reached goal counts all of them.`
+      : winnerCountOk
+        ? `${r.winners.length} winners, no more than the ${ar.itemCount} items and the ${r.bids.length} bids.`
+        : `${r.winners.length} winners is more than the ${ar.itemCount} items or the ${r.bids.length} bids.`,
     fromSeller: [`${r.winners.length} winners`, `${r.bids.length} bids`],
-    fromDisclosure: [`${d.rules.itemCount} items`],
+    fromDisclosure: goalRules ? [`goal ${zat(goalRules.goalZat)}`] : [`${ar.itemCount} items`],
   });
 
   const highest = Math.max(0, ...r.bids.map((b) => b.amountZat || 0));
-  const priceOk = r.winners.length
-    ? r.clearingPriceZat >= d.rules.reserveZat && r.clearingPriceZat <= highest
-    : r.clearingPriceZat === 0;
+  const priceOk = goalRules
+    ? r.clearingPriceZat === 0
+    : r.winners.length
+      ? r.clearingPriceZat >= ar.reserveZat && r.clearingPriceZat <= highest
+      : r.clearingPriceZat === 0;
   add({
     id: "clearing-range",
     level: 1,
     title: "Clearing price is between the reserve and the highest bid",
     status: priceOk ? "PASS" : "FAIL",
-    reason: priceOk
-      ? r.winners.length
-        ? `Clearing price ${zat(r.clearingPriceZat)} is not below the reserve ${zat(d.rules.reserveZat)} and not above the highest listed bid ${zat(highest)}.`
-        : "No winners, and the clearing price is 0."
-      : r.winners.length
-        ? `Clearing price ${zat(r.clearingPriceZat)} is outside the range from the reserve ${zat(d.rules.reserveZat)} to the highest listed bid ${zat(highest)}.`
-        : "There are no winners but the clearing price is not 0.",
+    reason: goalRules
+      ? priceOk
+        ? "A goal round has no price, and the clearing price is 0."
+        : "A goal round has no price, but the clearing price is not 0."
+      : priceOk
+        ? r.winners.length
+          ? `Clearing price ${zat(r.clearingPriceZat)} is not below the reserve ${zat(ar.reserveZat)} and not above the highest listed bid ${zat(highest)}.`
+          : "No winners, and the clearing price is 0."
+        : r.winners.length
+          ? `Clearing price ${zat(r.clearingPriceZat)} is outside the range from the reserve ${zat(ar.reserveZat)} to the highest listed bid ${zat(highest)}.`
+          : "There are no winners but the clearing price is not 0.",
     fromSeller: [`clearing price ${zat(r.clearingPriceZat)}`, `highest listed bid ${zat(highest)}`],
-    fromDisclosure: [`reserve ${zat(d.rules.reserveZat)}`],
+    fromDisclosure: [goalRules ? "no price in a goal round" : `reserve ${zat(ar.reserveZat)}`],
   });
 
   const basicLevel: Status = checks.every((c) => c.status === "PASS") ? "PASS" : "FAIL";
@@ -328,6 +364,8 @@ function keyChecks(
   memo: (m: string) => string,
   short: (t: string) => string,
 ) {
+  const goalRules = d.rules.kind === "goal" ? d.rules : null;
+  const ar = d.rules as AuctionRules; // only read when goalRules is null
   // Read every disclosed transaction with the lot key.
   const read: { txid: string; listedTxid: string; height: number; outputs: ReadOutput[] }[] = [];
   for (const t of d.transactions) {
@@ -496,7 +534,7 @@ function keyChecks(
           ].filter(Boolean).join(" "),
     fromChain: [`winners ${outcome.winners.map(short).join(", ") || "none"}`, `clearing price ${zat(outcome.clearingPriceZat)}`],
     fromSeller: [`winners ${r.winners.map(short).join(", ") || "none"}`, `clearing price ${zat(r.clearingPriceZat)}`],
-    fromDisclosure: [`${d.rules.itemCount} items, reserve ${zat(d.rules.reserveZat)}`],
+    fromDisclosure: [goalRules ? `goal ${zat(goalRules.goalZat)}` : `${ar.itemCount} items, reserve ${zat(ar.reserveZat)}`],
   });
 
   add({
@@ -614,7 +652,9 @@ function keyChecks(
   //       are paid by the seller on top, never out of bidders' money.
   const received = [...allBids, ...replays].reduce((s, b) => s + b.amountZat, 0);
   const sellerRefunds = r.refunds.filter((f) => bids.has(f.bidTxid)).reduce((s, f) => s + f.amountZat, 0);
-  const kept = r.clearingPriceZat * r.winners.length;
+  const kept = goalRules
+    ? r.winners.reduce((s, w) => s + (bids.get(w)?.amountZat ?? 0), 0)
+    : r.clearingPriceZat * r.winners.length;
   const FEE_ALLOWANCE = 0;
   const totalOk = sellerRefunds + kept === received - FEE_ALLOWANCE;
   add({
