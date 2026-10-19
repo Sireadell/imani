@@ -10,6 +10,7 @@
 
 import { fetchTransactions, FetchError, type Network } from "../fetch/index.ts";
 import { EXPLORER_PREFIX } from "../fetch/explorer.ts";
+import { isZebra } from "../fetch/zebra.ts";
 import type { BlockSource, ChainBlock } from "./chain.ts";
 
 export interface FetchBlocksOptions {
@@ -22,6 +23,8 @@ export interface FetchBlocksOptions {
   crossCheck?: boolean;
   /** SOCKS5 proxy, for example "socks5h://127.0.0.1:9050" for a local Tor. */
   proxy?: string;
+  /** Password for zebra+ sources, "user:password". Sent only to those. */
+  zebraAuth?: string;
   /** How many groups of blocks are downloaded at the same time. Default 12 (measured on mainnet, see SPEC.md). */
   concurrency?: number;
   /** Blocks per request group. Default 1. */
@@ -68,7 +71,7 @@ export async function fetchBlocks(opts: FetchBlocksOptions): Promise<{ blocks: C
   // `retries` times. Servers that disagree, or send different bytes, are never retried: that
   // is a real warning and stops the scan.
   const retries = opts.retries ?? 3;
-  const security = /disagree|different bytes/;
+  const security = /disagree|different bytes|wants a password|refused the password|refusing to send/;
   let next = 0;
   async function getGroup(group: number[]) {
     for (let attempt = 0; ; attempt++) {
@@ -79,6 +82,7 @@ export async function fetchBlocks(opts: FetchBlocksOptions): Promise<{ blocks: C
           servers: opts.servers,
           crossCheck: opts.crossCheck,
           proxy: opts.proxy,
+          zebraAuth: opts.zebraAuth,
           timeoutMs: opts.timeoutMs,
         });
         touch(res.serversContacted);
@@ -123,9 +127,16 @@ export async function fetchBlocks(opts: FetchBlocksOptions): Promise<{ blocks: C
     blocks,
     source: {
       kind: "light-servers",
-      label: contacted.some((s) => s.startsWith(EXPLORER_PREFIX))
-        ? "a light server and an explorer, two independent operators agreeing on every block and every transaction"
-        : "light servers, two independent operators agreeing on every block and every transaction",
+      label:
+        opts.crossCheck === false
+          ? contacted.some(isZebra)
+            ? "the Zebra node you chose (one source, trusted as your own, no second opinion)"
+            : "the one server you chose (no second opinion)"
+          : contacted.some(isZebra)
+            ? "a Zebra node and another server, two independent operators agreeing on every block and every transaction"
+            : contacted.some((s) => s.startsWith(EXPLORER_PREFIX))
+              ? "a light server and an explorer, two independent operators agreeing on every block and every transaction"
+              : "light servers, two independent operators agreeing on every block and every transaction",
       serversContacted: contacted,
       bytes,
       ms: Date.now() - started,

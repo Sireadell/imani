@@ -17,6 +17,7 @@ import {
   decodeLightdInfo,
 } from "./grpc.ts";
 import { EXPLORER_PREFIX, explorerGetBlock, explorerGetTransaction } from "./explorer.ts";
+import { isZebra, zebraBase, zebraChain, zebraGetBlock, zebraGetTransaction } from "./zebra.ts";
 import { checkTxBytes, TXID_RE } from "./verify.ts";
 
 import { DEFAULT_SERVERS, type Network } from "./servers.ts";
@@ -38,6 +39,8 @@ export interface FetchOptions {
   retries?: number;
   /** SOCKS5 proxy for every connection, e.g. "socks5h://127.0.0.1:9050" for a local Tor. */
   proxy?: string;
+  /** Password for zebra+ sources, as "user:password" (see loadZebraAuth in ./zebra.ts). Sent only to zebra+ sources, never printed. */
+  zebraAuth?: string;
 }
 
 export interface FetchedTx {
@@ -75,7 +78,7 @@ const MAX_HEIGHT_SENTINEL = 2n ** 63n;
 
 /** Who runs a server, roughly: the last two labels of the host name, or host:port for addresses. */
 export function operatorOf(server: string): string {
-  const s = parseServer(server.startsWith(EXPLORER_PREFIX) ? server.slice(EXPLORER_PREFIX.length) : server);
+  const s = parseServer(bareAddress(server));
   const host = s.host.replace(/^\[|\]$/g, "");
   if (/^[0-9.]+$/.test(host) || host.includes(":") || !host.includes(".")) return `${host}:${s.port}`;
   return host.split(".").slice(-2).join(".");
@@ -83,9 +86,12 @@ export function operatorOf(server: string): string {
 
 const isExplorer = (s: string) => s.startsWith(EXPLORER_PREFIX);
 
+/** The http(s) address inside a source written as cipherscan:..., zebra+... or a plain light server address. */
+const bareAddress = (s: string) => (isExplorer(s) ? s.slice(EXPLORER_PREFIX.length) : isZebra(s) ? zebraBase(s) : s);
+
 function validateServers(list: string[]): string[] {
   if (!Array.isArray(list) || list.length === 0) throw new Error("no servers given");
-  for (const s of list) parseServer(isExplorer(s) ? s.slice(EXPLORER_PREFIX.length) : s);
+  for (const s of list) parseServer(bareAddress(s));
   return [...new Set(list)];
 }
 
@@ -105,6 +111,10 @@ export async function fetchTransactions(opts: FetchOptions): Promise<FetchResult
   const servers = validateServers(opts.servers ?? DEFAULT_SERVERS[opts.network]);
   const need = opts.crossCheck === false ? 1 : 2;
   const call = { timeoutMs: opts.timeoutMs ?? 15000, proxy: opts.proxy };
+  const zebraCall = { ...call, auth: opts.zebraAuth };
+  // A Zebra node hands over a whole block with every transaction in one reply; keep it so the
+  // transaction step below does not ask the same node again.
+  const zebraBlocks = new Map<string, Map<string, string>>();
   const retries = opts.retries ?? 1;
 
   const contacted: string[] = [];
@@ -126,7 +136,7 @@ export async function fetchTransactions(opts: FetchOptions): Promise<FetchResult
       } catch (e) {
         last = e;
         // A clear "not found" or a grpc error is an answer, not a network hiccup.
-        if (/http status 404|grpc status/.test(String((e as Error).message))) break;
+        if (/http status 404|grpc status|node error|refused the password|wants a password|refusing to send|not in the address/.test(String((e as Error).message))) break;
       }
     }
     throw last;
@@ -137,6 +147,13 @@ export async function fetchTransactions(opts: FetchOptions): Promise<FetchResult
     if (isExplorer(server)) return true;
     if (networkOk.has(server)) return networkOk.get(server)!;
     try {
+      if (isZebra(server)) {
+        const chain = await withRetry(server, () => zebraChain(server, zebraCall));
+        const ok = chain === opts.network;
+        if (!ok) problems.push({ server, error: `serves the "${chain}" network, not "${opts.network}"` });
+        networkOk.set(server, ok);
+        return ok;
+      }
       const info = decodeLightdInfo(await withRetry(server, () => unary(server, "GetLightdInfo", Buffer.alloc(0), call)));
       const ok = info.chainName === opts.network;
       if (!ok) problems.push({ server, error: `serves the "${info.chainName}" network, not "${opts.network}"` });
@@ -162,7 +179,14 @@ export async function fetchTransactions(opts: FetchOptions): Promise<FetchResult
       if (isExplorer(server) && lists.length === 0) continue;
       if (!isExplorer(server) && !(await checkNetwork(server))) continue;
       try {
-        const b = isExplorer(server)
+        let zb: Awaited<ReturnType<typeof zebraGetBlock>> | undefined;
+        if (isZebra(server)) {
+          zb = await withRetry(server, () => zebraGetBlock(server, h, zebraCall));
+          zebraBlocks.set(`${server}#${h}`, new Map(zb.txs.map((t) => [t.txid, t.hex])));
+        }
+        const b = zb
+          ? zb
+          : isExplorer(server)
           ? await withRetry(server, () => explorerGetBlock(server.slice(EXPLORER_PREFIX.length), h, call))
           : decodeCompactBlock(await withRetry(server, () => unary(server, "GetBlock", encodeBlockId(h), call)));
         if (b.height !== h || b.txids.length === 0) throw new Error(`block ${h} not returned`);
@@ -172,7 +196,10 @@ export async function fetchTransactions(opts: FetchOptions): Promise<FetchResult
         problems.push({ server, error: `block ${h}: ${(e as Error).message}` });
       }
     }
-    if (lists.length < need) fail(`could not get block ${h} from ${need} independent servers`);
+    if (lists.length < need) {
+      const why = [...new Set(problems.filter((p) => p.error.startsWith(`block ${h}:`) || !p.error.startsWith("block ")).map((p) => `${p.server}: ${p.error}`))].slice(-2);
+      fail(`could not get block ${h} from ${need} independent servers${why.length ? ` (${why.join("; ")})` : ""}`);
+    }
     if (lists.some((l) => l.key !== lists[0].key)) fail(`servers disagree about block ${h}: ${lists.map((l) => l.server).join(" vs ")}`);
     for (const t of lists[0].txids) {
       heightOf.set(t, h);
@@ -196,7 +223,17 @@ export async function fetchTransactions(opts: FetchOptions): Promise<FetchResult
       let hex: string;
       let height: number | undefined;
       try {
-        if (isExplorer(server)) {
+        if (isZebra(server)) {
+          const cached = [...zebraBlocks].find(([k, m]) => k.startsWith(`${server}#`) && m.has(t));
+          if (cached) {
+            hex = cached[1].get(t)!;
+            height = Number(cached[0].slice(server.length + 1));
+          } else {
+            const r = await withRetry(server, () => zebraGetTransaction(server, t, zebraCall));
+            hex = r.hex;
+            height = r.height;
+          }
+        } else if (isExplorer(server)) {
           hex = (await withRetry(server, () => explorerGetTransaction(server.slice(EXPLORER_PREFIX.length), t, call))).hex;
         } else {
           const raw = decodeRawTransaction(await withRetry(server, () => unary(server, "GetTransaction", encodeTxFilter(t), call)));

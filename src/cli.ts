@@ -9,6 +9,7 @@ import { lookupBid } from "./mine.ts";
 import { BlockFetchError, fetchBlocks } from "./scan/fetch-blocks.ts";
 import { parseServer } from "./fetch/grpc.ts";
 import { EXPLORER_PREFIX } from "./fetch/explorer.ts";
+import { ZEBRA_PREFIX, isZebra, loadZebraAuth } from "./fetch/zebra.ts";
 import { bidderCheck, bidderRange, bidderText, validateFacts, type BidClaim, type PublishedResult } from "./bidder.ts";
 import { LinkingInputError, linkingFromLots, linkingText, lotRefunds } from "./privacy/linking.ts";
 
@@ -27,7 +28,9 @@ Scan level (reads every block from the lot's open height to its refund deadline)
   --grace <blocks>       read at least this many blocks past the close (default ${DEFAULT_GRACE_BLOCKS})
   --bidder-keys <file>   bidders' own viewing keys, to prove their refunds reached them
   --proxy <url>          with --fetch: SOCKS5 proxy, for example socks5h://127.0.0.1:9050 (Tor)
-  --server <url>         with --fetch: ask this light server instead of the public ones (repeat, or comma-separate; one server is trusted alone, two or more must agree)
+  --server <url>         with --fetch: ask this light server instead of the public ones (repeat, or comma-separate; one server is trusted alone, two or more must agree).
+                         zebra+http://127.0.0.1:8232 reads blocks from your own Zebra node (zebra+http://127.0.0.1:18232 for testnet)
+  --zebra-auth-file <f>  with a zebra+ server: file holding the node password (Zebra's .cookie file, or user:password); or set IMANI_ZEBRA_AUTH
   --concurrency <n>      with --fetch: blocks downloaded at the same time (default 12)
 
 Exit code: 0 PASS, 1 FAIL, 2 refused or bad input.
@@ -45,7 +48,7 @@ Exit code: 0 PASS, 1 FAIL, 2 refused or bad input.
   --result <file>        optional: the seller's published result, to compare with it as well
   --chain <file>         read the blocks from this chain file (offline)
   --fetch                download the blocks from public light servers (two operators must agree)
-  --grace, --proxy, --server, --concurrency   as for check
+  --grace, --proxy, --server, --zebra-auth-file, --concurrency   as for check
   Exit code: 0 PASS, 1 FAIL, 3 NOT PROVEN (nothing wrong, but your key alone cannot settle it), 2 bad input.`;
 
 export interface CliResult {
@@ -56,7 +59,7 @@ export interface CliResult {
 
 type Opts = Record<string, string | boolean>;
 const FLAGS = new Set(["--basic", "--discreet", "--offline", "--scan", "--fetch"]);
-const VALUES = new Set(["--disclosure", "--result", "--out", "--chain", "--grace", "--bidder-keys", "--proxy", "--server", "--concurrency", "--mine"]);
+const VALUES = new Set(["--disclosure", "--result", "--out", "--chain", "--grace", "--bidder-keys", "--proxy", "--server", "--concurrency", "--mine", "--zebra-auth-file"]);
 
 /**
  * Read --server values (repeatable, or comma-separated) into a list of light server addresses.
@@ -69,7 +72,7 @@ export function parseServerList(raw: string | undefined): string[] | undefined {
   if (list.length === 0) throw new InputError("Input error: --server needs an address such as https://my-node.example:9067.");
   for (const s of list) {
     try {
-      parseServer(s.startsWith(EXPLORER_PREFIX) ? s.slice(EXPLORER_PREFIX.length) : s);
+      parseServer(s.startsWith(EXPLORER_PREFIX) ? s.slice(EXPLORER_PREFIX.length) : s.startsWith(ZEBRA_PREFIX) ? s.slice(ZEBRA_PREFIX.length) : s);
     } catch {
       throw new InputError(`Input error: --server "${s.slice(0, 80)}" is not a server address. Use https://host:port (or http:// for a node on your own machine), nothing after the port.`);
     }
@@ -78,9 +81,18 @@ export function parseServerList(raw: string | undefined): string[] | undefined {
 }
 
 /** Fetch options for --server: the chosen servers, and no cross-check when there is only one. */
-function serverOpts(raw: string | undefined): { servers?: string[]; crossCheck?: boolean } {
+function serverOpts(raw: string | undefined, authFile?: string): { servers?: string[]; crossCheck?: boolean; zebraAuth?: string } {
   const servers = parseServerList(raw);
-  return servers ? { servers, crossCheck: servers.length > 1 } : {};
+  if (!servers) return {};
+  let zebraAuth: string | undefined;
+  if (servers.some(isZebra)) {
+    try {
+      zebraAuth = loadZebraAuth(authFile);
+    } catch (e) {
+      throw new InputError(`Input error: ${(e as Error).message}.`);
+    }
+  }
+  return { servers, crossCheck: servers.length > 1, zebraAuth };
 }
 
 function readJson(path: string, what: string): unknown {
@@ -120,7 +132,7 @@ function parse(argv: string[]): Opts | CliResult {
   if (opts.scan && !opts.fetch && !opts.chain) {
     return { code: 2, stdout: "", stderr: `The scan needs blocks: give --chain <file> to read them offline, or --fetch to download them from public light servers.${none}` };
   }
-  if (!opts.fetch && (opts.proxy || opts.concurrency || opts.server)) return { code: 2, stdout: "", stderr: `--proxy, --server and --concurrency only apply with --fetch.${none}` };
+  if (!opts.fetch && (opts.proxy || opts.concurrency || opts.server || opts["zebra-auth-file"])) return { code: 2, stdout: "", stderr: `--proxy, --server, --zebra-auth-file and --concurrency only apply with --fetch.${none}` };
   try {
     parseServerList(opts.server as string | undefined);
   } catch (e) {
@@ -239,13 +251,14 @@ interface BidderOpts {
   proxy?: string;
   server?: string;
   concurrency?: string;
+  zebraAuthFile?: string;
 }
 
 function parseBidder(args: string[]): BidderOpts | CliResult {
   const none = "\nServers contacted: none";
   const o: BidderOpts = { facts: "", keyFile: "", bids: [], fetch: false };
-  const values: Record<string, "facts" | "keyFile" | "result" | "chain" | "grace" | "proxy" | "server" | "concurrency"> = {
-    "--facts": "facts", "--key-file": "keyFile", "--result": "result", "--chain": "chain", "--grace": "grace", "--proxy": "proxy", "--server": "server", "--concurrency": "concurrency",
+  const values: Record<string, "facts" | "keyFile" | "result" | "chain" | "grace" | "proxy" | "server" | "concurrency" | "zebraAuthFile"> = {
+    "--facts": "facts", "--key-file": "keyFile", "--result": "result", "--chain": "chain", "--grace": "grace", "--proxy": "proxy", "--server": "server", "--concurrency": "concurrency", "--zebra-auth-file": "zebraAuthFile",
   };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
@@ -269,7 +282,7 @@ function parseBidder(args: string[]): BidderOpts | CliResult {
   if (!o.facts || !o.keyFile) return { code: 2, stdout: "", stderr: USAGE };
   if (o.fetch && o.chain) return { code: 2, stdout: "", stderr: `Give either --chain (offline) or --fetch (online), not both.${none}` };
   if (!o.fetch && !o.chain) return { code: 2, stdout: "", stderr: `The bidder check needs blocks: give --chain <file> to read them offline, or --fetch to download them from public light servers.${none}` };
-  if (!o.fetch && (o.proxy || o.concurrency || o.server)) return { code: 2, stdout: "", stderr: `--proxy, --server and --concurrency only apply with --fetch.${none}` };
+  if (!o.fetch && (o.proxy || o.concurrency || o.server || o.zebraAuthFile)) return { code: 2, stdout: "", stderr: `--proxy, --server, --zebra-auth-file and --concurrency only apply with --fetch.${none}` };
   try {
     parseServerList(o.server);
   } catch (e) {
@@ -356,7 +369,7 @@ async function runBidderAsync(args: string[], progress?: (line: string) => void)
     progress?.(`Downloading ${range.to - range.from + 1} blocks (${range.from} to ${range.to}) from ${o.server ? "your chosen server" : "public light servers"}. Your key is not sent.`);
     let fetched;
     try {
-      fetched = await fetchBlocks({ network: facts.network, from: range.from, to: range.to, proxy: o.proxy, concurrency, ...serverOpts(o.server) });
+      fetched = await fetchBlocks({ network: facts.network, from: range.from, to: range.to, proxy: o.proxy, concurrency, ...serverOpts(o.server, o.zebraAuthFile) });
     } catch (e) {
       if (e instanceof BlockFetchError) servers = e.serversContacted;
       throw e;
@@ -420,7 +433,7 @@ export async function runAsync(argv: string[], progress?: (line: string) => void
         from: range.from,
         to: range.to,
         proxy: typeof opts.proxy === "string" ? opts.proxy : undefined,
-        ...serverOpts(typeof opts.server === "string" ? opts.server : undefined),
+        ...serverOpts(typeof opts.server === "string" ? opts.server : undefined, typeof opts["zebra-auth-file"] === "string" ? (opts["zebra-auth-file"] as string) : undefined),
         concurrency,
         onProgress: (done, all) => {
           const pct = Math.floor((done / all) * 100);

@@ -239,8 +239,13 @@ async function getJson(urlText, opts) {
     const req = lib.request(
       url,
       {
-        method: "GET",
-        headers: { accept: "application/json", "user-agent": "node" },
+        method: opts.body === void 0 ? "GET" : "POST",
+        headers: {
+          accept: "application/json",
+          "user-agent": "node",
+          ...opts.body === void 0 ? {} : { "content-type": "application/json", "content-length": String(Buffer.byteLength(opts.body)) },
+          ...opts.headers
+        },
         agent: false,
         ...createConnection ? { createConnection } : {},
         timeout: opts.timeoutMs
@@ -271,7 +276,7 @@ async function getJson(urlText, opts) {
     req.on("close", () => clearTimeout(timer));
     req.on("timeout", () => req.destroy(new Error(`timeout after ${opts.timeoutMs} ms`)));
     req.on("error", reject);
-    req.end();
+    req.end(opts.body);
   });
 }
 async function explorerGetTransaction(base, txid, opts) {
@@ -290,6 +295,66 @@ async function explorerGetBlock(base, height, opts) {
   const txids = txs.map((t) => t.txid);
   if (!txids.every((t) => typeof t === "string" && /^[0-9a-f]{64}$/i.test(t))) throw new Error("reply has a malformed transaction id");
   return { height: Number(b.height), hash: b.hash.toLowerCase(), txids: txids.map((t) => t.toLowerCase()) };
+}
+
+// src/fetch/zebra.ts
+var ZEBRA_PREFIX = "zebra+";
+var ZEBRA_AUTH_ENV = "IMANI_ZEBRA_AUTH";
+var isZebra = (server) => server.startsWith(ZEBRA_PREFIX);
+var zebraBase = (server) => server.slice(ZEBRA_PREFIX.length);
+function isLocalHost(host) {
+  const h = host.replace(/^\[|\]$/g, "").toLowerCase();
+  return h === "localhost" || h.endsWith(".localhost") || h === "::1" || /^127\./.test(h) || /^10\./.test(h) || /^192\.168\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
+}
+async function rpc(server, method, params, opts) {
+  const base = zebraBase(server);
+  const u = new URL(base);
+  if (u.username || u.password) throw new Error("put the password in a file (--zebra-auth-file) or the environment, not in the address");
+  if (opts.auth && u.protocol === "http:" && !isLocalHost(u.hostname)) {
+    throw new Error("refusing to send a password over plain http to a machine that is not yours; use zebra+https:// or a local address");
+  }
+  const headers = opts.auth ? { authorization: `Basic ${Buffer.from(opts.auth).toString("base64")}` } : void 0;
+  let reply;
+  try {
+    reply = await getJson(base, { ...opts, maxBytes: opts.maxBytes ?? 64 * 1024 * 1024, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }), headers });
+  } catch (e) {
+    const m = e.message;
+    if (/http status 40[13]/.test(m)) throw new Error(opts.auth ? "the node refused the password" : "the node wants a password (give --zebra-auth-file, or set " + ZEBRA_AUTH_ENV + ")");
+    throw e;
+  }
+  if (reply.status === 401 || reply.status === 403) {
+    throw new Error(opts.auth ? "the node refused the password" : "the node wants a password (give --zebra-auth-file, or set " + ZEBRA_AUTH_ENV + ")");
+  }
+  const b = reply.body;
+  if (b && typeof b === "object" && b.error) {
+    throw new Error(`node error ${String(b.error.code)}: ${String(b.error.message).slice(0, 120)}`);
+  }
+  if (reply.status !== 200 || !b || typeof b !== "object" || !("result" in b)) throw new Error(`http status ${reply.status}, no result`);
+  return b.result;
+}
+async function zebraChain(server, opts) {
+  const r = await rpc(server, "getblockchaininfo", [], opts);
+  if (typeof r?.chain !== "string") throw new Error("reply has no chain name");
+  return r.chain;
+}
+var HASH_RE = /^[0-9a-f]{64}$/i;
+async function zebraGetBlock(server, height, opts) {
+  const r = await rpc(server, "getblock", [String(height), 2], opts);
+  if (typeof r?.hash !== "string" || !HASH_RE.test(r.hash) || !Array.isArray(r.tx)) throw new Error("reply has no block hash or transaction list");
+  const txs = [];
+  for (const t of r.tx) {
+    if (typeof t?.txid !== "string" || !HASH_RE.test(t.txid) || typeof t.hex !== "string" || !/^(?:[0-9a-f]{2})+$/i.test(t.hex)) {
+      throw new Error("reply has a malformed transaction");
+    }
+    txs.push({ txid: t.txid.toLowerCase(), hex: t.hex.toLowerCase() });
+  }
+  return { height: Number(r.height), hash: r.hash.toLowerCase(), txids: txs.map((t) => t.txid), txs };
+}
+async function zebraGetTransaction(server, txid, opts) {
+  const r = await rpc(server, "getrawtransaction", [txid, 1], opts);
+  if (typeof r?.hex !== "string" || !/^(?:[0-9a-f]{2})+$/i.test(r.hex)) throw new Error("reply has no transaction hex");
+  const h = typeof r.height === "number" && Number.isSafeInteger(r.height) && r.height > 0 ? r.height : void 0;
+  return { hex: r.hex.toLowerCase(), height: h };
 }
 
 // src/fetch/verify.ts
@@ -350,15 +415,16 @@ var FetchError = class extends Error {
 };
 var MAX_HEIGHT_SENTINEL = 2n ** 63n;
 function operatorOf(server) {
-  const s = parseServer(server.startsWith(EXPLORER_PREFIX) ? server.slice(EXPLORER_PREFIX.length) : server);
+  const s = parseServer(bareAddress(server));
   const host = s.host.replace(/^\[|\]$/g, "");
   if (/^[0-9.]+$/.test(host) || host.includes(":") || !host.includes(".")) return `${host}:${s.port}`;
   return host.split(".").slice(-2).join(".");
 }
 var isExplorer = (s) => s.startsWith(EXPLORER_PREFIX);
+var bareAddress = (s) => isExplorer(s) ? s.slice(EXPLORER_PREFIX.length) : isZebra(s) ? zebraBase(s) : s;
 function validateServers(list) {
   if (!Array.isArray(list) || list.length === 0) throw new Error("no servers given");
-  for (const s of list) parseServer(isExplorer(s) ? s.slice(EXPLORER_PREFIX.length) : s);
+  for (const s of list) parseServer(bareAddress(s));
   return [...new Set(list)];
 }
 async function fetchTransactions(opts) {
@@ -371,6 +437,8 @@ async function fetchTransactions(opts) {
   const servers = validateServers(opts.servers ?? DEFAULT_SERVERS[opts.network]);
   const need = opts.crossCheck === false ? 1 : 2;
   const call = { timeoutMs: opts.timeoutMs ?? 15e3, proxy: opts.proxy };
+  const zebraCall = { ...call, auth: opts.zebraAuth };
+  const zebraBlocks = /* @__PURE__ */ new Map();
   const retries = opts.retries ?? 1;
   const contacted = [];
   const problems = [];
@@ -389,7 +457,7 @@ async function fetchTransactions(opts) {
         return await f();
       } catch (e) {
         last = e;
-        if (/http status 404|grpc status/.test(String(e.message))) break;
+        if (/http status 404|grpc status|node error|refused the password|wants a password|refusing to send|not in the address/.test(String(e.message))) break;
       }
     }
     throw last;
@@ -398,6 +466,13 @@ async function fetchTransactions(opts) {
     if (isExplorer(server)) return true;
     if (networkOk.has(server)) return networkOk.get(server);
     try {
+      if (isZebra(server)) {
+        const chain = await withRetry(server, () => zebraChain(server, zebraCall));
+        const ok2 = chain === opts.network;
+        if (!ok2) problems.push({ server, error: `serves the "${chain}" network, not "${opts.network}"` });
+        networkOk.set(server, ok2);
+        return ok2;
+      }
       const info = decodeLightdInfo(await withRetry(server, () => unary(server, "GetLightdInfo", Buffer.alloc(0), call)));
       const ok = info.chainName === opts.network;
       if (!ok) problems.push({ server, error: `serves the "${info.chainName}" network, not "${opts.network}"` });
@@ -420,7 +495,12 @@ async function fetchTransactions(opts) {
       if (isExplorer(server) && lists.length === 0) continue;
       if (!isExplorer(server) && !await checkNetwork(server)) continue;
       try {
-        const b = isExplorer(server) ? await withRetry(server, () => explorerGetBlock(server.slice(EXPLORER_PREFIX.length), h, call)) : decodeCompactBlock(await withRetry(server, () => unary(server, "GetBlock", encodeBlockId(h), call)));
+        let zb;
+        if (isZebra(server)) {
+          zb = await withRetry(server, () => zebraGetBlock(server, h, zebraCall));
+          zebraBlocks.set(`${server}#${h}`, new Map(zb.txs.map((t) => [t.txid, t.hex])));
+        }
+        const b = zb ? zb : isExplorer(server) ? await withRetry(server, () => explorerGetBlock(server.slice(EXPLORER_PREFIX.length), h, call)) : decodeCompactBlock(await withRetry(server, () => unary(server, "GetBlock", encodeBlockId(h), call)));
         if (b.height !== h || b.txids.length === 0) throw new Error(`block ${h} not returned`);
         lists.push({ server, key: `${b.hash}:${b.txids.join(",")}`, txids: b.txids });
         ops.add(operatorOf(server));
@@ -428,7 +508,10 @@ async function fetchTransactions(opts) {
         problems.push({ server, error: `block ${h}: ${e.message}` });
       }
     }
-    if (lists.length < need) fail(`could not get block ${h} from ${need} independent servers`);
+    if (lists.length < need) {
+      const why = [...new Set(problems.filter((p) => p.error.startsWith(`block ${h}:`) || !p.error.startsWith("block ")).map((p) => `${p.server}: ${p.error}`))].slice(-2);
+      fail(`could not get block ${h} from ${need} independent servers${why.length ? ` (${why.join("; ")})` : ""}`);
+    }
     if (lists.some((l) => l.key !== lists[0].key)) fail(`servers disagree about block ${h}: ${lists.map((l) => l.server).join(" vs ")}`);
     for (const t of lists[0].txids) {
       heightOf.set(t, h);
@@ -449,7 +532,17 @@ async function fetchTransactions(opts) {
       let hex;
       let height;
       try {
-        if (isExplorer(server)) {
+        if (isZebra(server)) {
+          const cached = [...zebraBlocks].find(([k, m]) => k.startsWith(`${server}#`) && m.has(t));
+          if (cached) {
+            hex = cached[1].get(t);
+            height = Number(cached[0].slice(server.length + 1));
+          } else {
+            const r = await withRetry(server, () => zebraGetTransaction(server, t, zebraCall));
+            hex = r.hex;
+            height = r.height;
+          }
+        } else if (isExplorer(server)) {
           hex = (await withRetry(server, () => explorerGetTransaction(server.slice(EXPLORER_PREFIX.length), t, call))).hex;
         } else {
           const raw = decodeRawTransaction(await withRetry(server, () => unary(server, "GetTransaction", encodeTxFilter(t), call)));

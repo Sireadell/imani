@@ -109,6 +109,24 @@ Ways to reduce it: pass your own `servers` list (your own lightwalletd or Zaino 
 third-party leak), use `--proxy` with Tor, use height mode, or skip fetching and keep using
 a saved file (the default).
 
+## Zebra node route (added 2026-10-19)
+
+A source written `zebra+http://127.0.0.1:18232` (or `zebra+https://`) reads blocks from a Zebra node's JSON-RPC port. Default ports in zebra-rpc: 8232 mainnet, 18232 testnet. Checked against ZcashFoundation/zebra, `zebra-rpc` (config/rpc.rs, server/cookie.rs, server/http_request_compatibility.rs, methods.rs):
+
+| Call | Used for |
+|---|---|
+| `getblockchaininfo` | `chain` is `main` or `test`; a node on the other network is refused |
+| `getblock "<height>" 2` | the height goes in as a string; verbosity 2 returns `hash`, `height` and `tx` as objects with `txid` and `hex` |
+| `getrawtransaction <txid> 1` | one transaction with `hex` and `height` |
+
+Verbosity 2 is used instead of verbosity 0 (raw block hex) so no transaction splitting is hand-written: every `hex` still goes through the librustzcash txid check like on the other routes. Zebra's own docs list verbosity 0 as hex data, 1 as a JSON object, 2 as a JSON object with transaction data.
+
+Password: Zebra asks for HTTP Basic auth by default (`enable_cookie_auth = true`). It writes `.cookie` in its cookie directory holding `__cookie__:<secret>`; only the text after the first colon is checked. Give the file with `--zebra-auth-file`, or put the text in `IMANI_ZEBRA_AUTH`. It is never taken from the address or the command line, never printed, and never sent over plain http to a machine that is not local or on a private network.
+
+Trust: one `zebra+` source alone is trusted as your own node. Next to a light server or explorer, the two must agree on the block hash, the transaction list and every byte, like any two operators. Zebra can also serve the light server protocol itself (`lightwalletd_listen_addr`, experimental, no password), which the existing `--server https://...` route already reads.
+
+Not tested against a real node: no Zebra node was available. The tests use a fake node that answers in the shape of Zebra's source, filled with real testnet blocks. `LIVE=1 IMANI_ZEBRA_URL=zebra+http://127.0.0.1:18232 npm run test:fetch` checks a real node of your own.
+
 ## Known limits (2026-10-07)
 
 - **NU7 (fixed 2026-10-07).** Testnet activated NU7 (branch id 0x77190ad9, ZIP 259) at

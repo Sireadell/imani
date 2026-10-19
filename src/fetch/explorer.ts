@@ -13,9 +13,13 @@ export interface GetOptions {
   timeoutMs: number;
   proxy?: string;
   maxBytes?: number;
+  /** Send this body with a POST instead of a plain GET (used for JSON-RPC to a node). */
+  body?: string;
+  /** Extra request headers, for example a node's password. Never logged. */
+  headers?: Record<string, string>;
 }
 
-/** GET a URL and parse JSON. Sends no cookies, no referrer and a generic user agent. */
+/** GET (or, with a body, POST) a URL and parse JSON. Sends no cookies, no referrer and a generic user agent. */
 export async function getJson(urlText: string, opts: GetOptions): Promise<{ status: number; body: unknown }> {
   const url = new URL(urlText);
   const isTls = url.protocol === "https:";
@@ -32,8 +36,13 @@ export async function getJson(urlText: string, opts: GetOptions): Promise<{ stat
     const req = lib.request(
       url,
       {
-        method: "GET",
-        headers: { accept: "application/json", "user-agent": "node" },
+        method: opts.body === undefined ? "GET" : "POST",
+        headers: {
+          accept: "application/json",
+          "user-agent": "node",
+          ...(opts.body === undefined ? {} : { "content-type": "application/json", "content-length": String(Buffer.byteLength(opts.body)) }),
+          ...opts.headers,
+        },
         agent: false,
         ...(createConnection ? { createConnection } : {}),
         timeout: opts.timeoutMs,
@@ -64,7 +73,7 @@ export async function getJson(urlText: string, opts: GetOptions): Promise<{ stat
     req.on("close", () => clearTimeout(timer));
     req.on("timeout", () => req.destroy(new Error(`timeout after ${opts.timeoutMs} ms`)));
     req.on("error", reject);
-    req.end();
+    req.end(opts.body);
   });
 }
 
