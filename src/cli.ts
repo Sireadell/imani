@@ -7,6 +7,8 @@ import { blocksInRange, ScanInputError, validateChainFile, type BlockSource } fr
 import { DEFAULT_GRACE_BLOCKS, scanRange, type BidderKey, type ScanInput } from "./scan/scan.ts";
 import { lookupBid } from "./mine.ts";
 import { BlockFetchError, fetchBlocks } from "./scan/fetch-blocks.ts";
+import { parseServer } from "./fetch/grpc.ts";
+import { EXPLORER_PREFIX } from "./fetch/explorer.ts";
 import { bidderCheck, bidderRange, bidderText, validateFacts, type BidClaim, type PublishedResult } from "./bidder.ts";
 import { LinkingInputError, linkingFromLots, linkingText, lotRefunds } from "./privacy/linking.ts";
 
@@ -25,6 +27,7 @@ Scan level (reads every block from the lot's open height to its refund deadline)
   --grace <blocks>       read at least this many blocks past the close (default ${DEFAULT_GRACE_BLOCKS})
   --bidder-keys <file>   bidders' own viewing keys, to prove their refunds reached them
   --proxy <url>          with --fetch: SOCKS5 proxy, for example socks5h://127.0.0.1:9050 (Tor)
+  --server <url>         with --fetch: ask this light server instead of the public ones (repeat, or comma-separate; one server is trusted alone, two or more must agree)
   --concurrency <n>      with --fetch: blocks downloaded at the same time (default 12)
 
 Exit code: 0 PASS, 1 FAIL, 2 refused or bad input.
@@ -42,7 +45,7 @@ Exit code: 0 PASS, 1 FAIL, 2 refused or bad input.
   --result <file>        optional: the seller's published result, to compare with it as well
   --chain <file>         read the blocks from this chain file (offline)
   --fetch                download the blocks from public light servers (two operators must agree)
-  --grace, --proxy, --concurrency   as for check
+  --grace, --proxy, --server, --concurrency   as for check
   Exit code: 0 PASS, 1 FAIL, 3 NOT PROVEN (nothing wrong, but your key alone cannot settle it), 2 bad input.`;
 
 export interface CliResult {
@@ -53,7 +56,32 @@ export interface CliResult {
 
 type Opts = Record<string, string | boolean>;
 const FLAGS = new Set(["--basic", "--discreet", "--offline", "--scan", "--fetch"]);
-const VALUES = new Set(["--disclosure", "--result", "--out", "--chain", "--grace", "--bidder-keys", "--proxy", "--concurrency", "--mine"]);
+const VALUES = new Set(["--disclosure", "--result", "--out", "--chain", "--grace", "--bidder-keys", "--proxy", "--server", "--concurrency", "--mine"]);
+
+/**
+ * Read --server values (repeatable, or comma-separated) into a list of light server addresses.
+ * Throws InputError for anything that is not https:// or http:// host[:port]. One server you run
+ * yourself is trusted without a second opinion; two or more must agree, as with the defaults.
+ */
+export function parseServerList(raw: string | undefined): string[] | undefined {
+  if (raw === undefined) return undefined;
+  const list = raw.split(",").map((x) => x.trim()).filter(Boolean);
+  if (list.length === 0) throw new InputError("Input error: --server needs an address such as https://my-node.example:9067.");
+  for (const s of list) {
+    try {
+      parseServer(s.startsWith(EXPLORER_PREFIX) ? s.slice(EXPLORER_PREFIX.length) : s);
+    } catch {
+      throw new InputError(`Input error: --server "${s.slice(0, 80)}" is not a server address. Use https://host:port (or http:// for a node on your own machine), nothing after the port.`);
+    }
+  }
+  return [...new Set(list)];
+}
+
+/** Fetch options for --server: the chosen servers, and no cross-check when there is only one. */
+function serverOpts(raw: string | undefined): { servers?: string[]; crossCheck?: boolean } {
+  const servers = parseServerList(raw);
+  return servers ? { servers, crossCheck: servers.length > 1 } : {};
+}
 
 function readJson(path: string, what: string): unknown {
   let text: string;
@@ -76,7 +104,10 @@ function parse(argv: string[]): Opts | CliResult {
   for (let i = 0; i < rest.length; i++) {
     const a = rest[i];
     if (FLAGS.has(a)) opts[a.slice(2)] = true;
-    else if (VALUES.has(a) && rest[i + 1] && !rest[i + 1].startsWith("--")) opts[a.slice(2)] = rest[++i];
+    else if (a === "--server" && rest[i + 1] && !rest[i + 1].startsWith("--")) {
+      const v = rest[++i];
+      opts.server = typeof opts.server === "string" ? `${opts.server},${v}` : v;
+    } else if (VALUES.has(a) && rest[i + 1] && !rest[i + 1].startsWith("--")) opts[a.slice(2)] = rest[++i];
     else return { code: 2, stdout: "", stderr: `Unknown or incomplete option: ${a}\n\n${USAGE}` };
   }
   if (typeof opts.disclosure !== "string" || typeof opts.result !== "string") return { code: 2, stdout: "", stderr: USAGE };
@@ -89,7 +120,12 @@ function parse(argv: string[]): Opts | CliResult {
   if (opts.scan && !opts.fetch && !opts.chain) {
     return { code: 2, stdout: "", stderr: `The scan needs blocks: give --chain <file> to read them offline, or --fetch to download them from public light servers.${none}` };
   }
-  if (!opts.fetch && (opts.proxy || opts.concurrency)) return { code: 2, stdout: "", stderr: `--proxy and --concurrency only apply with --fetch.${none}` };
+  if (!opts.fetch && (opts.proxy || opts.concurrency || opts.server)) return { code: 2, stdout: "", stderr: `--proxy, --server and --concurrency only apply with --fetch.${none}` };
+  try {
+    parseServerList(opts.server as string | undefined);
+  } catch (e) {
+    return { code: 2, stdout: "", stderr: `${(e as Error).message}${none}` };
+  }
   return opts;
 }
 
@@ -201,14 +237,15 @@ interface BidderOpts {
   fetch: boolean;
   grace?: string;
   proxy?: string;
+  server?: string;
   concurrency?: string;
 }
 
 function parseBidder(args: string[]): BidderOpts | CliResult {
   const none = "\nServers contacted: none";
   const o: BidderOpts = { facts: "", keyFile: "", bids: [], fetch: false };
-  const values: Record<string, "facts" | "keyFile" | "result" | "chain" | "grace" | "proxy" | "concurrency"> = {
-    "--facts": "facts", "--key-file": "keyFile", "--result": "result", "--chain": "chain", "--grace": "grace", "--proxy": "proxy", "--concurrency": "concurrency",
+  const values: Record<string, "facts" | "keyFile" | "result" | "chain" | "grace" | "proxy" | "server" | "concurrency"> = {
+    "--facts": "facts", "--key-file": "keyFile", "--result": "result", "--chain": "chain", "--grace": "grace", "--proxy": "proxy", "--server": "server", "--concurrency": "concurrency",
   };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
@@ -221,6 +258,9 @@ function parseBidder(args: string[]): BidderOpts | CliResult {
       if (amountZat !== undefined && !Number.isSafeInteger(amountZat)) return { code: 2, stdout: "", stderr: `--bid amount is too large.${none}` };
       o.bids.push({ txid: m[1].toLowerCase(), amountZat });
       i++;
+    } else if (a === "--server" && next && !next.startsWith("--")) {
+      o.server = o.server ? `${o.server},${next}` : next;
+      i++;
     } else if (values[a] && next && !next.startsWith("--")) {
       o[values[a]] = next as never;
       i++;
@@ -229,7 +269,12 @@ function parseBidder(args: string[]): BidderOpts | CliResult {
   if (!o.facts || !o.keyFile) return { code: 2, stdout: "", stderr: USAGE };
   if (o.fetch && o.chain) return { code: 2, stdout: "", stderr: `Give either --chain (offline) or --fetch (online), not both.${none}` };
   if (!o.fetch && !o.chain) return { code: 2, stdout: "", stderr: `The bidder check needs blocks: give --chain <file> to read them offline, or --fetch to download them from public light servers.${none}` };
-  if (!o.fetch && (o.proxy || o.concurrency)) return { code: 2, stdout: "", stderr: `--proxy and --concurrency only apply with --fetch.${none}` };
+  if (!o.fetch && (o.proxy || o.concurrency || o.server)) return { code: 2, stdout: "", stderr: `--proxy, --server and --concurrency only apply with --fetch.${none}` };
+  try {
+    parseServerList(o.server);
+  } catch (e) {
+    return { code: 2, stdout: "", stderr: `${(e as Error).message}${none}` };
+  }
   return o;
 }
 
@@ -308,10 +353,10 @@ async function runBidderAsync(args: string[], progress?: (line: string) => void)
     if (concurrency !== undefined && (!Number.isSafeInteger(concurrency) || concurrency < 1 || concurrency > 32)) {
       throw new InputError("Input error: --concurrency must be a whole number from 1 to 32.");
     }
-    progress?.(`Downloading ${range.to - range.from + 1} blocks (${range.from} to ${range.to}) from public light servers. Your key is not sent.`);
+    progress?.(`Downloading ${range.to - range.from + 1} blocks (${range.from} to ${range.to}) from ${o.server ? "your chosen server" : "public light servers"}. Your key is not sent.`);
     let fetched;
     try {
-      fetched = await fetchBlocks({ network: facts.network, from: range.from, to: range.to, proxy: o.proxy, concurrency });
+      fetched = await fetchBlocks({ network: facts.network, from: range.from, to: range.to, proxy: o.proxy, concurrency, ...serverOpts(o.server) });
     } catch (e) {
       if (e instanceof BlockFetchError) servers = e.serversContacted;
       throw e;
@@ -366,7 +411,7 @@ export async function runAsync(argv: string[], progress?: (line: string) => void
       throw new InputError("Input error: --concurrency must be a whole number from 1 to 32.");
     }
     const total = range.to - range.from + 1;
-    progress?.(`Downloading ${total} blocks (${range.from} to ${range.to}) from public light servers. No key is sent.`);
+    progress?.(`Downloading ${total} blocks (${range.from} to ${range.to}) from ${opts.server ? "your chosen server" : "public light servers"}. No key is sent.`);
     let lastPct = -1;
     let fetched;
     try {
@@ -375,6 +420,7 @@ export async function runAsync(argv: string[], progress?: (line: string) => void
         from: range.from,
         to: range.to,
         proxy: typeof opts.proxy === "string" ? opts.proxy : undefined,
+        ...serverOpts(typeof opts.server === "string" ? opts.server : undefined),
         concurrency,
         onProgress: (done, all) => {
           const pct = Math.floor((done / all) * 100);

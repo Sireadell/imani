@@ -55,6 +55,17 @@ test("guard names what it blocks and never repeats it", () => {
   assert.doesNotThrow(() => assertNoSecret("refund:LOT-01:d928588fc1", "a memo"));
 });
 
+test("the guard also catches revision 2 unified viewing keys (uvf, uvi) on both networks", () => {
+  const body = "canarysecret".repeat(5);
+  for (const hrp of ["uvf", "uvftest", "uvi", "uvitest"]) {
+    assert.equal(findSecret(`key ${hrp}1${body} end`), "viewing key", hrp);
+    assert.throws(() => assertNoSecret(`${hrp}1${body}`, "the memo"), LeakGuardError, hrp);
+  }
+  // Harmless look-alikes: too short to be a key, or the prefix is just part of a word.
+  for (const hrp of ["uvf", "uvftest", "uvi", "uvitest"]) assert.equal(findSecret(`${hrp}1abc`), null, `${hrp} short`);
+  assert.equal(findSecret("the uvi index and uvf1 are not keys"), null);
+});
+
 test("a key-shaped lot name is stopped before anything is printed or written", () => {
   tmp((dir) => {
     for (const secret of [CANARY_VIEW, CANARY_SPEND, CANARY_SEED]) {

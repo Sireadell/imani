@@ -107,5 +107,5 @@ export function parseLoginMemo(text: string): ParseResult {
  * A past wallet bug leaked viewing keys inside memos, so the kit refuses to write one.
  */
 export function looksLikeKey(text: string): boolean {
-  return /(uviewtest|uview|uivktest|uivk|zxviewtestsapling|zxviews|zxview|secret-extended-key-[a-z]+|zivk|zxsk)1[02-9ac-hj-np-z]{40,}/.test(text);
+  return /(uviewtest|uview|uivktest|uivk|uvftest|uvf|uvitest|uvi|zxviewtestsapling|zxviews|zxview|secret-extended-key-[a-z]+|zivk|zxsk)1[02-9ac-hj-np-z]{40,}/.test(text);
 }

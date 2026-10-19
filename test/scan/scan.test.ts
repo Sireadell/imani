@@ -304,3 +304,40 @@ test("--fetch mode: a height the seller states wrongly is caught against what tw
   assert.equal(claims(4200105).status, "PASS");
   assert.deepEqual(fetched.source.serversContacted, [a.url, b.url]);
 });
+
+// ---------- --server: use your own node ----------
+
+test("fetchBlocks with one server and no cross-check reads from just that server", async () => {
+  const mine = await fakeLightServer(someBlocks);
+  const h = [...someBlocks.keys()][0];
+  const r = await fetchBlocks({ network: "test", from: h, to: h, servers: [mine.url], crossCheck: false });
+  assert.deepEqual(r.source.serversContacted, [mine.url]);
+  assert.deepEqual(r.blocks[0].txs.map((t) => t.txid), someBlocks.get(h)!.map((t) => t.txid));
+  // By default one server is not enough: two operators must agree.
+  await assert.rejects(fetchBlocks({ network: "test", from: h, to: h, servers: [mine.url], retries: 0 }));
+});
+
+test("CLI --server: bad address and missing --fetch are refused before any connection", async () => {
+  const base = ["check", "--disclosure", path("scan-01/disclosure.json"), "--result", path("scan-01/result.json"), "--scan"];
+  for (const bad of ["not a url", "ftp://node.example:9067", "https://node.example:9067/path", "https://user:pw@node.example", "https://ok.example:9067,nope"]) {
+    const res = await runAsync([...base, "--fetch", "--server", bad]);
+    assert.equal(res.code, 2, bad);
+    assert.match(res.stderr, /--server .* is not a server address/, bad);
+    assert.match(res.stderr, /Servers contacted: none$/);
+  }
+  const noFetch = run([...base, "--chain", path("scan-01/chain.json"), "--server", "https://node.example:9067"]);
+  assert.equal(noFetch.code, 2);
+  assert.match(noFetch.stderr, /only apply with --fetch/);
+  const bidder = await runAsync(["bidder-check", "--facts", "x.json", "--key-file", "k.txt", "--fetch", "--server", "gopher://x"]);
+  assert.equal(bidder.code, 2);
+  assert.match(bidder.stderr, /is not a server address/);
+});
+
+test("CLI --server: only the chosen server is contacted, never the public ones", async () => {
+  const mine = await fakeLightServer(someBlocks);
+  const args = ["check", "--disclosure", path("scan-01/disclosure.json"), "--result", path("scan-01/result.json"), "--scan", "--fetch", "--concurrency", "1"];
+  const res = await runAsync([...args, "--server", mine.url]);
+  // The fake serves only some blocks, so the run stops, but it must name only the server we chose.
+  assert.match(res.stderr + res.stdout, new RegExp(`Servers contacted: ${mine.url.replace(/[.]/g, "\.")}$`, "m"));
+  assert.ok(!/zec\.rocks|cipherscan/.test(res.stderr + res.stdout), "no public server was contacted");
+});

@@ -62,7 +62,7 @@ The file formats, price rule, every check and the known limits are in [SPEC.md](
 
 ## Safety
 
-The checker only accepts a read-only viewing key (starts with `uview1` or `uviewtest1`). It refuses seed phrases and spending keys, never prints the key and never saves it. If the key shows payments that are not bids for the lot, the check fails and tells the seller to use a fresh key for every lot. By default it contacts no server and prints `Servers contacted: none`. Only `--scan --fetch` goes online; it asks for blocks by number, never sends a key, and prints every server it used.
+The checker only accepts a read-only viewing key (starts with `uview1` or `uviewtest1`). It refuses seed phrases and spending keys, never prints the key and never saves it. If the key shows payments that are not bids for the lot, the check fails and tells the seller to use a fresh key for every lot. By default it contacts no server and prints `Servers contacted: none`. Only `--scan --fetch` goes online (add `--server <url>` to use your own light server instead of the public ones); it asks for blocks by number, never sends a key, and prints every server it used.
 
 ## Honest limits: the auction check
 
