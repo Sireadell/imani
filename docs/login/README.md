@@ -81,6 +81,7 @@ npm run test:login
 | `test/login/frontrun.test.ts` | A copied link or code does not log the attacker in or burn the user's code; the proof stays out of the link |
 | `test/login/core.test.ts` | Codes, memo format, payment link, every refusal by name, racing logins, separate stores, backup export |
 | `test/login/offline.test.ts` | Real transaction bytes: wallet A logs in, wallet B (different address) lands in the same account, Orchard and Ironwood both work, replays and wrong-site payments fail |
+| `test/login/real-wallet.test.ts` | One real payment from a real wallet on the Zcash test network (`examples/real-login/`): login works, replay, missing proof, expired code and wrong site are refused |
 | `test/login/adapters.test.ts` | Express middleware and Auth.js provider settings, driven with real transactions |
 | `test/login/leak.test.ts` | Login key, memo and viewing key never appear in logs, errors, responses, cookies, sessions or web addresses |
 | `test/login/conformance.test.ts` | Checks `docs/login/vectors.json` and that it regenerates byte for byte |
