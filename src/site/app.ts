@@ -1,7 +1,7 @@
 // Screen code for the checker page. All the checking is in engine.ts (the same checks as the
 // command line tool). Nothing here talks to a network, and nothing is stored in the browser.
 import { examples, externals, blobs, type ExampleEntry } from "imani-examples";
-import { decoderBytes, decoderInfo, fileKind, initReader, parseJsonText, runExternalPage, runPage, scanSourceLine, serversLine, type PageOutcome, type Verdict } from "./engine.ts";
+import { decoderBytes, decoderInfo, fileKind, initReader, parseJsonText, runExternalPage, runPage, scanSourceLine, sealedLine, serversLine, type PageOutcome, type Verdict } from "./engine.ts";
 import { sha256Hex } from "./crypto-shim.ts";
 import type { Check } from "../check.ts";
 import { lookupBid } from "../mine.ts";
@@ -130,6 +130,7 @@ function renderVerdict(v: Verdict, entry?: ExampleEntry): HTMLElement {
   );
   root.appendChild(key);
   if (v.discreet) root.appendChild(el("p", "meta", "Discreet mode is on: amounts and memos are hidden."));
+  if (v.sealed) root.appendChild(el("p", "meta", sealedLine(v)));
 
   for (const L of LEVELS) {
     const cs = v.checks.filter((c) => c.level === L.level);

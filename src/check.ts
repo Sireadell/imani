@@ -56,8 +56,19 @@ export interface Verdict {
   keyFingerprint: string | null;
   serversContacted: string[];
   discreet: boolean;
+  /** Sealed lots only: what the seals and openings came to. Absent for other lots. */
+  sealed?: SealedSummary;
   failed: string[];
   checks: Check[];
+}
+
+export interface SealedSummary {
+  seals: number;
+  counted: number;
+  /** Seals never opened in the window. */
+  unopened: number;
+  /** Seals opened with a price that does not match, or above the deposit. */
+  badlyOpened: number;
 }
 
 export class KeyRefusedError extends Error {}
@@ -321,6 +332,7 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
   let keyLevel: Status | "not run" = "not run";
   let keyLevelNote = "";
   let fingerprint: string | null = null;
+  let sealedSummary: SealedSummary | undefined;
   if (opts.basicOnly) {
     keyLevelNote = "Basic level only was asked for. The key level was not run.";
   } else if (d.ufvk === undefined || d.ufvk === null || d.ufvk === "") {
@@ -328,7 +340,7 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
   } else {
     const key = assertViewingKey(d.ufvk, d.network);
     fingerprint = keyFingerprint(key);
-    keyChecks(d, r, key, add, zat, memo, short);
+    sealedSummary = keyChecks(d, r, key, add, zat, memo, short);
     keyLevel = checks.filter((c) => c.level === 2).every((c) => c.status === "PASS") ? "PASS" : "FAIL";
     keyLevelNote = "Amounts, memos and refunds were read from the disclosed transactions with the lot key.";
   }
@@ -367,6 +379,7 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
     keyFingerprint: fingerprint,
     serversContacted: opts.scan ? [...opts.scan.source.serversContacted] : [],
     discreet,
+    ...(sealedSummary ? { sealed: sealedSummary } : {}),
     failed,
     checks,
   };
@@ -385,7 +398,7 @@ function keyChecks(
   zat: (n: number) => string,
   memo: (m: string) => string,
   short: (t: string) => string,
-) {
+): SealedSummary | undefined {
   const goalRules = d.rules.kind === "goal" ? d.rules : null;
   const sealedRules = d.rules.kind === "sealed" ? d.rules : null;
   const ar = d.rules as AuctionRules; // only read when goalRules is null
@@ -817,5 +830,7 @@ function keyChecks(
       fromSeller: [`${said.size} unopened seals reported`],
       fromDisclosure: [`penalty per seal ${zat(sealedRules.forfeitZat)}`],
     });
+    return { seals: so.counted.length + so.unopened.length + so.badOpen.length, counted: so.counted.length, unopened: so.unopened.length, badlyOpened: so.badOpen.length };
   }
+  return undefined;
 }

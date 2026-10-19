@@ -25,6 +25,13 @@ export function scanSourceLine(v: Verdict): string {
   return `Scan range: blocks ${r.from} to ${r.to} (open ${r.openHeight}, close ${r.closeHeight}, refunds by ${r.refundByHeight}, grace window ${r.graceBlocks} blocks). Source: ${s.label}. ${(s.ms / 1000).toFixed(1)} s, ${kb} KB of transactions.`;
 }
 
+/** One plain sentence for sealed lots: what the seller could and could not see. */
+export function sealedLine(v: Verdict): string {
+  if (!v.sealed) return "";
+  const s = v.sealed;
+  return `Sealed lot: the seller could not read prices before the close. ${s.unopened} seals were never opened, ${s.badlyOpened} were opened with a price that does not match, ${s.counted} were counted.`;
+}
+
 /** Plain text for the terminal. */
 export function toText(v: Verdict): string {
   const lines: string[] = [];
@@ -36,6 +43,7 @@ export function toText(v: Verdict): string {
       : "Lot key: not used.",
   );
   if (v.discreet) lines.push("Discreet mode: amounts and memos are hidden.");
+  if (v.sealed) lines.push(sealedLine(v));
   for (const level of levels(v)) {
     const cs = v.checks.filter((c) => c.level === level);
     lines.push("");
@@ -115,6 +123,7 @@ ul { margin:0; padding-left:18px; } code { color:var(--muted); font-size:12px; }
 <h1>Lot ${esc(v.lotId)}: auction check</h1>
 <p class="meta">Network: ${esc(v.network)}. Servers contacted: ${esc(serversLine(v).replace(/https?:\/\//g, ""))}. This page has no scripts and loads nothing from the internet.</p>
 <p class="meta">Lot key: ${v.keyFingerprint ? `accepted as read-only, fingerprint ${esc(v.keyFingerprint)}. The key itself is not in this page.` : "not used."}${v.discreet ? " Discreet mode: amounts and memos are hidden." : ""}</p>
+${v.sealed ? `<p class="meta">${esc(sealedLine(v))}</p>` : ""}
 <div class="verdict ${v.result.toLowerCase()}">${v.result === "PASS" ? `PASS: all ${v.checks.length} checks passed${v.keyLevel === "not run" ? " (basic level only)" : ""}` : `FAIL: ${v.failed.length} of ${v.checks.length} checks failed`}</div>
 <p>Amounts, memos and refunds in the "From the chain" column were read from the lot's own transactions with the lot key. The bid list, winners, clearing price and refund list in the next column are what the seller published. Block heights and rules come from the seller's disclosure file.${v.scanLevel !== "not run" ? " The scan level then read every block in the lot's range with the lot key and checked those heights against the blocks the transactions were really in." : ""}</p>
 <div class="wrap">${section(1)}</div>
