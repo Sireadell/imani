@@ -1,0 +1,71 @@
+{
+  "about": "Broken copies of examples/sealed-01, a sealed lot. Each changes one thing the seller says or sends and fails the named checks.",
+  "copies": [
+    {
+      "name": "01-counts-unopened-seal",
+      "changed": "result.json",
+      "expectedFailingChecks": [
+        "seal-openings"
+      ],
+      "story": "Dave paid a deposit but never opened his seal. The seller counts it as a bid of 1,200,000 anyway."
+    },
+    {
+      "name": "02-counts-wrong-opening",
+      "changed": "result.json",
+      "expectedFailingChecks": [
+        "seal-openings"
+      ],
+      "story": "Erin sealed 900,000 and then opened 800,000, which does not match her seal. The seller counts her at 800,000."
+    },
+    {
+      "name": "03-hides-unopened-seal",
+      "changed": "result.json",
+      "expectedFailingChecks": [
+        "seal-forfeits"
+      ],
+      "story": "Erin's seal was opened wrongly, so she paid the penalty. The seller leaves her out of the list of seals that paid it."
+    },
+    {
+      "name": "04-keeps-the-penalty",
+      "changed": "disclosure.json (Alice's refund transaction) and result.json",
+      "expectedFailingChecks": [
+        "refunds-paid",
+        "refund-total"
+      ],
+      "story": "The seller pays Alice her refund without her share of the two penalties, and keeps it."
+    },
+    {
+      "name": "05-counts-wrong-deposit",
+      "changed": "result.json",
+      "expectedFailingChecks": [
+        "seal-deposits"
+      ],
+      "story": "Frank paid a deposit of 4,999,999 instead of 5,000,000. The seller counts his seal as a bid of 1,000,000."
+    },
+    {
+      "name": "06-counts-late-seal",
+      "changed": "result.json",
+      "expectedFailingChecks": [
+        "no-late-bids",
+        "seal-deposits"
+      ],
+      "story": "Gina's seal arrived 5 blocks after the close. The seller counts it as a bid of 1,100,000."
+    },
+    {
+      "name": "07-wrong-opened-price",
+      "changed": "result.json",
+      "expectedFailingChecks": [
+        "bid-amounts"
+      ],
+      "story": "The seller reports Alice's opened price as 2,900,000. She opened 3,000,000."
+    },
+    {
+      "name": "08-missing-refund",
+      "changed": "disclosure.json",
+      "expectedFailingChecks": [
+        "refunds-paid"
+      ],
+      "story": "Carol lost and her refund was never sent. The seller's file still lists it."
+    }
+  ]
+}

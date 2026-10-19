@@ -268,3 +268,71 @@ test("--mine reads a memo-01 winner and the receiver check shows in the report",
   assert.match(out.stdout, /Your bid: counted/);
   assert.match(out.stdout, /refund went to your address: PASS/);
 });
+
+// ---- Sealed lots ----
+// Answers written before the first run, from docs/SELLER_BLIND_PLAN.md:
+//   sealed-01 passes every check. Each sealed-broken copy fails exactly the checks named in its manifest.
+//   Every plain example gives the same verdict text as before sealed lots existed (a hash per round
+//   in test/vectors/plain-verdicts.json, taken from the code before this change).
+const sealed = load("sealed-01");
+const SEALED_CHECKS = ["seal-deposits", "seal-openings", "seal-forfeits"];
+
+test("sealed-01 passes every check and says 3 seals were counted, 1 never opened, 1 opened wrongly", () => {
+  const v = checkLot(sealed.d, sealed.r);
+  assert.equal(v.result, "PASS", v.failed.join(", "));
+  assert.deepEqual(v.sealed, { seals: 5, counted: 3, unopened: 1, badlyOpened: 1 });
+  for (const id of SEALED_CHECKS) assert.equal(v.checks.find((c) => c.id === id)?.status, "PASS", id);
+  assert.match(v.checks.find((c) => c.id === "seal-forfeits")!.reason, /1 seals were never opened/);
+  const res = cli("sealed-01");
+  assert.equal(res.code, 0);
+  assert.match(res.stdout, /Sealed lot: the seller could not read prices before the close\. 1 seals were never opened/);
+});
+
+test("plain lots do not get the sealed checks or a sealed notice", () => {
+  const v = checkLot(round.d, round.r);
+  assert.equal(v.sealed, undefined);
+  assert.ok(!("sealed" in v));
+  for (const id of SEALED_CHECKS) assert.equal(v.checks.find((c) => c.id === id), undefined);
+});
+
+const sealedManifest = JSON.parse(readFileSync(ex("sealed-broken/manifest.json"), "utf8"));
+test("there are eight broken sealed copies", () => assert.equal(sealedManifest.copies.length, 8));
+for (const copy of sealedManifest.copies) {
+  test(`sealed-broken ${copy.name} fails on ${copy.expectedFailingChecks.join(" and ")} only`, () => {
+    const { d, r } = load(`sealed-broken/${copy.name}`);
+    const v = checkLot(d, r);
+    assert.equal(v.result, "FAIL");
+    assert.deepEqual([...v.failed].sort(), [...copy.expectedFailingChecks].sort());
+  });
+}
+
+test("every plain example gives the same verdict text as before sealed lots", async () => {
+  const { createHash } = await import("node:crypto");
+  const { toText } = await import("../src/report.ts");
+  const want = JSON.parse(readFileSync(new URL("./vectors/plain-verdicts.json", import.meta.url), "utf8")) as Record<string, string>;
+  assert.ok(Object.keys(want).length >= 30);
+  for (const [dir, hash] of Object.entries(want)) {
+    const { d, r } = load(dir);
+    let text: string;
+    try {
+      text = toText(checkLot(d, r));
+    } catch (e) {
+      text = "refused: " + (e as Error).message;
+    }
+    assert.equal(createHash("sha256").update(text).digest("hex"), hash, `${dir} changed`);
+  }
+});
+
+test("sealed lots: a bad rule set is refused with a plain message", () => {
+  const bad = (edit: (d: any) => void) => {
+    const d = JSON.parse(JSON.stringify(sealed.d));
+    edit(d);
+    return () => checkLot(d, sealed.r);
+  };
+  assert.throws(bad((d) => delete d.openByHeight), /openByHeight/);
+  assert.throws(bad((d) => (d.openByHeight = d.closeHeight)), /greater than closeHeight/);
+  assert.throws(bad((d) => (d.rules.forfeitZat = d.rules.depositZat + 1)), /penalty/);
+  assert.throws(bad((d) => (d.rules.reserveZat = d.rules.depositZat + 1)), /reserve/);
+  assert.throws(bad((d) => (d.refundByHeight = d.openByHeight - 1)), /refundByHeight/);
+  assert.throws(bad((d) => delete d.rules.depositZat), /deposit/);
+});

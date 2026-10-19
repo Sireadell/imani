@@ -1,0 +1,84 @@
+{
+  "format": "imani-lot-result/1",
+  "lotId": "LOT-01",
+  "rules": {
+    "depositZat": 5000000,
+    "forfeitZat": 500000,
+    "itemCount": 2,
+    "kind": "sealed",
+    "reserveZat": 1000000
+  },
+  "bidCount": 4,
+  "bids": [
+    {
+      "txid": "a2b72e11b9706edea360488cb18650f6c974ea6eb49f1b6d58973f4f6cf49317",
+      "amountZat": 3000000
+    },
+    {
+      "txid": "e18831cd9f67f084a1f7edaaa5ec8b21f8fc62a4728046e0d5b6f442d307babb",
+      "amountZat": 2000000
+    },
+    {
+      "txid": "ef125c1c0ceed0ef1c5a07de39c0335d8f767b6414135cdf7112464368a85683",
+      "amountZat": 1500000
+    },
+    {
+      "txid": "c3efaa754c5ac485725bb4c6b550002c8db1238f89d83b4792c94e976850ddc1",
+      "amountZat": 1000000
+    }
+  ],
+  "winners": [
+    "a2b72e11b9706edea360488cb18650f6c974ea6eb49f1b6d58973f4f6cf49317",
+    "e18831cd9f67f084a1f7edaaa5ec8b21f8fc62a4728046e0d5b6f442d307babb"
+  ],
+  "clearingPriceZat": 1500000,
+  "reserveMet": true,
+  "refunds": [
+    {
+      "bidTxid": "a2b72e11b9706edea360488cb18650f6c974ea6eb49f1b6d58973f4f6cf49317",
+      "amountZat": 3843334,
+      "reason": "change",
+      "memo": "refund:LOT-01:a2b72e11b9706edea360488cb18650f6c974ea6eb49f1b6d58973f4f6cf49317"
+    },
+    {
+      "bidTxid": "e18831cd9f67f084a1f7edaaa5ec8b21f8fc62a4728046e0d5b6f442d307babb",
+      "amountZat": 3843333,
+      "reason": "change",
+      "memo": "refund:LOT-01:e18831cd9f67f084a1f7edaaa5ec8b21f8fc62a4728046e0d5b6f442d307babb"
+    },
+    {
+      "bidTxid": "ef125c1c0ceed0ef1c5a07de39c0335d8f767b6414135cdf7112464368a85683",
+      "amountZat": 5343333,
+      "reason": "loser",
+      "memo": "refund:LOT-01:ef125c1c0ceed0ef1c5a07de39c0335d8f767b6414135cdf7112464368a85683"
+    },
+    {
+      "bidTxid": "aaa5f1d6cb61ec26929fd803ef81d1163ac540bd5ede6a8370b471ec29441234",
+      "amountZat": 4500000,
+      "reason": "unopened",
+      "memo": "refund:LOT-01:aaa5f1d6cb61ec26929fd803ef81d1163ac540bd5ede6a8370b471ec29441234"
+    },
+    {
+      "bidTxid": "2d5baba9b76a2c7752a3bd2853f34e79217eab46ab7e78e2adeece99463f4994",
+      "amountZat": 4510000,
+      "reason": "bad-opening",
+      "memo": "refund:LOT-01:2d5baba9b76a2c7752a3bd2853f34e79217eab46ab7e78e2adeece99463f4994"
+    },
+    {
+      "bidTxid": "c3efaa754c5ac485725bb4c6b550002c8db1238f89d83b4792c94e976850ddc1",
+      "amountZat": 4999999,
+      "reason": "late",
+      "memo": "refund:LOT-01:c3efaa754c5ac485725bb4c6b550002c8db1238f89d83b4792c94e976850ddc1"
+    },
+    {
+      "bidTxid": "ba9bb57c220cd1c5851c7768e3682ab5c9afae07c9a42231c59c734a6e8e9f68",
+      "amountZat": 5000000,
+      "reason": "late",
+      "memo": "refund:LOT-01:ba9bb57c220cd1c5851c7768e3682ab5c9afae07c9a42231c59c734a6e8e9f68"
+    }
+  ],
+  "unopened": [
+    "aaa5f1d6cb61ec26929fd803ef81d1163ac540bd5ede6a8370b471ec29441234",
+    "2d5baba9b76a2c7752a3bd2853f34e79217eab46ab7e78e2adeece99463f4994"
+  ]
+}

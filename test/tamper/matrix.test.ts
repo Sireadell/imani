@@ -35,6 +35,7 @@ const ROUNDS: Record<string, Files> = {
   "receivers-01": { d: ex("receivers-01/disclosure.json"), r: ex("receivers-01/result.json") },
   "scan-01": { d: ex("scan-01/disclosure.json"), r: ex("scan-01/result.json"), chain: ex("scan-01/chain.json") },
   "testnet-01": { d: ex("testnet-01/disclosure.json"), r: ex("testnet-01/result.json"), chain: ex("testnet-01/chain.json") },
+  "sealed-01": { d: ex("sealed-01/disclosure.json"), r: ex("sealed-01/result.json") },
 };
 
 function scanOf(d: any, chain: any): ScanInput | undefined {
@@ -119,7 +120,7 @@ function factChanges(f: Files): Change[] {
   add("disclosure: item count one lower", (x) => { x.d.rules.itemCount -= 1; });
   add("disclosure: reserve above the clearing price", (x) => { x.d.rules.reserveZat = x.r.clearingPriceZat + 1; });
   add("disclosure: lot id changed", (x) => { x.d.lotId = `${x.d.lotId}X`; });
-  add("disclosure: lot key swapped for another lot's key", (x) => { x.d.ufvk = Object.values(ROUNDS).map((o) => o.d.ufvk).find((k) => k && k !== x.d.ufvk); });
+  add("disclosure: lot key swapped for another lot's key", (x) => { x.d.ufvk = ROUNDS["testnet-01"].d.ufvk !== x.d.ufvk ? ROUNDS["testnet-01"].d.ufvk : ROUNDS["round-01"].d.ufvk; });
   add("disclosure: network changed", (x) => { x.d.network = x.d.network === "test" ? "main" : "test"; });
   if (d.refundAddresses) {
     d.refundAddresses.forEach((_: any, i: number) => {
@@ -129,6 +130,33 @@ function factChanges(f: Files): Change[] {
       });
       add(`disclosure: refund address ${i + 1} left out`, (x) => { x.d.refundAddresses.splice(i, 1); });
     });
+  }
+
+  // Sealed lots: the new facts. Deposit, penalty, opening deadline, the unopened list and each opening's block.
+  if (d.rules.kind === "sealed") {
+    add("disclosure: deposit one zatoshi higher", (x) => { x.d.rules.depositZat += 1; });
+    add("disclosure: deposit one zatoshi lower", (x) => { x.d.rules.depositZat -= 1; });
+    add("disclosure: penalty one zatoshi higher", (x) => { x.d.rules.forfeitZat += 1; });
+    add("disclosure: penalty one zatoshi lower", (x) => { x.d.rules.forfeitZat -= 1; });
+    add("disclosure: penalty set to zero", (x) => { x.d.rules.forfeitZat = 0; });
+    add("disclosure: opening deadline moved before the first opening", (x) => { x.d.openByHeight = x.d.closeHeight + 1; });
+    add("disclosure: opening deadline removed", (x) => { delete x.d.openByHeight; });
+    add("result: deposit one zatoshi higher", (x) => { x.r.rules.depositZat += 1; });
+    add("result: penalty one zatoshi lower", (x) => { x.r.rules.forfeitZat -= 1; });
+    add("result: unopened list emptied", (x) => { x.r.unopened = []; });
+    add("result: unopened list removed", (x) => { delete x.r.unopened; });
+    add("result: a made-up unopened seal added", (x) => { x.r.unopened.push(OTHER_TXID); });
+    (r.unopened as string[]).forEach((_: string, i: number) => {
+      add(`result: unopened seal ${i + 1} left out`, (x) => { x.r.unopened.splice(i, 1); });
+      add(`result: unopened seal ${i + 1} id changed`, (x) => { x.r.unopened[i] = flipHex(x.r.unopened[i], 5); });
+      add(`result: unopened seal ${i + 1} counted as a bid too`, (x) => { x.r.bids.push({ txid: x.r.unopened[i], amountZat: 1_000_000 }); x.r.bidCount += 1; });
+    });
+    // The openings are the four payments 6 to 15 blocks after the close (the seals and refunds sit elsewhere).
+    const openingIdx = d.transactions.map((t: any, i: number) => ({ t, i })).filter(({ t }: any) => t.height > d.closeHeight + 5 && t.height < d.closeHeight + 15);
+    for (const { i } of openingIdx) {
+      add(`disclosure: transaction ${i + 1} (an opening) moved to the close block`, (x) => { x.d.transactions[i].height = x.d.closeHeight; });
+      add(`disclosure: transaction ${i + 1} (an opening) moved past the opening deadline`, (x) => { x.d.transactions[i].height = x.d.openByHeight + 1; });
+    }
   }
 
   // The blocks, for rounds with a scan.

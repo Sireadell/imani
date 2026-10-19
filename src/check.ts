@@ -787,7 +787,7 @@ function keyChecks(
       status: countedBad.length ? "FAIL" : "PASS",
       reason: countedBad.length
         ? `The seller counted ${countedBad.length} seal(s) that cannot count: ${countedBad.map((x) => `${short(x.txid)} ${x.why}`).join("; ")}.`
-        : `${onTimeSeals} seals paid exactly the deposit ${zat(sealedRules.depositZat)} before block ${d.closeHeight + 1}. ${notBids.length} other seal payments were not counted (wrong deposit, late, repeated or malformed) and are owed back in full.`,
+        : `${onTimeSeals} seals paid exactly the deposit ${zat(sealedRules.depositZat)} by block ${d.closeHeight}. ${notBids.length} other seal payments were not counted (wrong deposit, late, repeated or malformed) and are owed back in full.`,
       fromChain: [`${onTimeSeals} seals with the right deposit, on time`, ...notBids.map((x) => `not a bid ${short(x.txid)}: ${x.why}`)],
       fromDisclosure: [`deposit ${zat(sealedRules.depositZat)}`, `close height ${d.closeHeight}`],
     });
@@ -805,10 +805,10 @@ function keyChecks(
       status: countedWrong.length ? "FAIL" : "PASS",
       reason: countedWrong.length
         ? `The seller counted ${countedWrong.length} seal(s) without a matching opening: ${countedWrong.map((x) => `${short(x.txid)} ${x.why}`).join("; ")}.`
-        : `Each of the ${so.counted.length} counted bids has exactly one opening between block ${d.closeHeight + 1} and block ${d.openByHeight} whose price matches its seal.`,
+        : `Each of the ${so.counted.length} counted bids has exactly one opening after block ${d.closeHeight} and up to block ${d.openByHeight} whose price matches its seal.`,
       fromChain: [`${so.counted.length} seals with a matching opening`, ...notOpened.map((x) => `not counted ${short(x.txid)}: ${x.why}`)],
       fromSeller: [`${r.bids.length} bids listed`],
-      fromDisclosure: [`openings from block ${d.closeHeight + 1} to block ${d.openByHeight}`],
+      fromDisclosure: [`openings after block ${d.closeHeight}, up to block ${d.openByHeight}`],
     });
 
     // Seal forfeits: the seller must report every seal that paid the penalty.

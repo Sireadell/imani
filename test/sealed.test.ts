@@ -3,6 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { openMemoPrefix, parseOpenMemo, parseSealMemo, sealHash, sealMemoPrefix, type SealedRules } from "../src/files.ts";
+import { writeFileSync } from "node:fs";
 import { openSeals, type OpenFact, type SealFact } from "../src/sealed.ts";
 
 const LOT = "LOT-01";
@@ -172,4 +173,85 @@ test("a seal with a refund address in its memo needs the address in the hash", (
   assert.equal(openSeals(LOT, RULES, CLOSE, OPEN_BY, [s], [opening(1, 3_000_000)]).counted.length, 1);
   const wrong = { ...s, address: "utest1other" };
   assert.equal(openSeals(LOT, RULES, CLOSE, OPEN_BY, [wrong], [opening(1, 3_000_000)]).badOpen.length, 1);
+});
+
+// ---- Command line: imani seal and imani open ----
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { run } from "../src/cli.ts";
+import { checkLot } from "../src/check.ts";
+import { toText } from "../src/report.ts";
+
+test("imani seal then imani open round-trip: the hash recomputes and no server is contacted", () => {
+  const dir = mkdtempSync(join(tmpdir(), "imani-seal-"));
+  try {
+    const s = run(["seal", "--lot", LOT, "--amount", "3000000", "--address", "utest1abcdef", "--deposit", "5000000", "--out", dir]);
+    assert.equal(s.code, 0, s.stderr);
+    assert.match(s.stdout, /Servers contacted: none/);
+    const memo = s.stdout.split("\n").find((l) => l.startsWith("seal:"))!;
+    const parsed = parseSealMemo(LOT, memo)!;
+    assert.ok(parsed);
+    const file = join(dir, `seal-${parsed.word}.json`);
+    const rec = JSON.parse(readFileSync(file, "utf8"));
+    assert.equal(rec.amountZat, 3_000_000);
+    assert.equal(parsed.address, "utest1abcdef");
+    assert.equal(parsed.hash, sealHash(LOT, parsed.word, 3_000_000, rec.salt, "utest1abcdef"));
+    const o = run(["open", "--file", file]);
+    assert.equal(o.code, 0, o.stderr);
+    assert.match(o.stdout, /Servers contacted: none/);
+    const openMemo = o.stdout.split("\n").find((l) => l.startsWith("open:"))!;
+    assert.deepEqual(parseOpenMemo(LOT, openMemo), { word: parsed.word, amountZat: 3_000_000, salt: rec.salt });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("imani seal refuses a price above the deposit, a bad amount and a missing lot", () => {
+  const dir = mkdtempSync(join(tmpdir(), "imani-seal-"));
+  try {
+    assert.equal(run(["seal", "--lot", LOT, "--amount", "5000001", "--deposit", "5000000", "--out", dir]).code, 2);
+    assert.match(run(["seal", "--lot", LOT, "--amount", "5000001", "--deposit", "5000000", "--out", dir]).stderr, /higher than the lot's deposit/);
+    assert.equal(run(["seal", "--lot", LOT, "--amount", "007", "--out", dir]).code, 2);
+    assert.equal(run(["seal", "--amount", "5", "--out", dir]).code, 2);
+    assert.equal(run(["open", "--file", join(dir, "missing.json")]).code, 2);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a seal file made by hand with a price that does not match its memo is not opened", () => {
+  const dir = mkdtempSync(join(tmpdir(), "imani-seal-"));
+  try {
+    const s = run(["seal", "--lot", LOT, "--amount", "3000000", "--word", "ab12", "--out", dir]);
+    const file = join(dir, "seal-ab12.json");
+    const rec = JSON.parse(readFileSync(file, "utf8"));
+    rec.amountZat = 3_000_001;
+    writeFileSync(file, JSON.stringify(rec));
+    assert.equal(s.code, 0);
+    assert.equal(run(["open", "--file", file]).code, 2);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ---- The seal file's salt never reaches a --discreet verdict ----
+test("sealed-01 --discreet: no salt, price, seal hash or refund address of the round appears in the verdict", () => {
+  const vec = JSON.parse(readFileSync(new URL("./vectors/sealed-round.json", import.meta.url), "utf8"));
+  const d = JSON.parse(readFileSync(new URL("../examples/sealed-01/disclosure.json", import.meta.url), "utf8"));
+  const r = JSON.parse(readFileSync(new URL("../examples/sealed-01/result.json", import.meta.url), "utf8"));
+  const text = JSON.stringify(checkLot(d, r, { discreet: true })) + toText(checkLot(d, r, { discreet: true }));
+  const secrets: string[] = [];
+  for (const t of Object.values(vec.transactions) as any[]) {
+    for (const out of t.outputs) {
+      const m = parseOpenMemo(LOT, out.memo);
+      if (m) secrets.push(m.salt);
+      const sm = parseSealMemo(LOT, out.memo);
+      if (sm) secrets.push(sm.hash);
+      if (sm?.address) secrets.push(sm.address);
+    }
+  }
+  assert.ok(secrets.length >= 10);
+  for (const x of secrets) assert.ok(!text.includes(x), `${x.slice(0, 12)} leaked`);
+  for (const a of ["3,000,000 zat", "5,000,000 zat", "1,500,000 zat"]) assert.ok(!text.includes(a), a);
 });
