@@ -20,7 +20,7 @@ test("the numbers come from the real round", () => {
 
 test("every party has a row, and the onlooker without the key learns no amount", () => {
   const parties = rep.rows.map((r) => r.party);
-  assert.deepEqual(parties, ["Anyone, without the lot key", "Anyone, once the seller publishes the lot key", "The seller", "Each bidder", "This page and its host"]);
+  assert.deepEqual(parties, ["Anyone, without the lot key", "Anyone, once the seller publishes the lot key", "The seller", "Each bidder", "The checker page and its host", "The \"Check any round\" page, its host and two public Zcash servers"]);
   const onlooker = rep.rows[0];
   assert.match(onlooker.learns, /80 shielded transactions in 34 blocks/);
   assert.match(onlooker.cannotLearn, /which 6 belong to this auction/);

@@ -1,6 +1,6 @@
 # Judge guide
 
-Imani checks that a sealed-bid auction on Zcash was fair, and lets people sign in with a private Zcash wallet. This page shows you how to try it in two minutes and how to test our privacy claim yourself.
+Imani checks that a sealed-bid auction on Zcash was fair, and lets people sign in by paying from a private Zcash wallet. This page shows you how to try it in two minutes and how to test our privacy claim yourself.
 
 If a seller of something on Zcash runs a sealed auction, the bidders have to take the seller's word that the winner and price are right. Imani lets anyone recompute the result from the chain, using a read-only key the seller shares after the close. It answers PASS or FAIL, and names the check that failed.
 
@@ -19,16 +19,17 @@ You will see three checks of the same small auction. The honest round ends with 
 
 Prefer a page? Open https://imani-check.vercel.app, or run `npm run site:serve` and open http://localhost:8788 for the same page built from your own copy. It opens on the real test-network round (PASS, 21 of 21). Press "The seller hides a bid" to see the scan catch it, or "Try a tampered copy" for the 6 made-up broken copies. The memo examples add two more. Paste a bid's transaction id into "Was my bid counted?" to see what a bidder would see.
 
-Prefer to see the whole shop? Run `npm run demo:app` and open the address it prints (usually http://localhost:8787, a free port if that one is taken). It is a small auction shop where you sign in with a private wallet, place a bid, skip to the close, and check the result (8 broken copies there). A yellow banner says it is simulated, because the payments go to a pretend network.
+Prefer to see the whole shop? Run `npm run demo:app` and open the address it prints (usually http://localhost:8787, a free port if that one is taken). It is a small auction shop where you sign in by paying from a private wallet, place a bid, skip to the close, and check the result (8 broken copies there). A yellow banner says it is simulated, because the payments go to a pretend network.
 
 ## What to look at for each score line
 
 | You score | Where to look | What you will find |
 |---|---|---|
-| Privacy | The browser page's network tab | No request after the page loads. The page's security policy forbids network calls (`connect-src 'none'`), and the page prints "Servers contacted: none". |
+| Privacy | The checker page's network tab (https://imani-check.vercel.app) | No request after the page loads. The page's security policy forbids network calls (`connect-src 'none'`), and the page prints "Servers contacted: none". |
+| Privacy | The "Check any round" page's network tab (`check.html`) | This page does use the network, and says so before it does. Nothing is sent until you press the button that names the servers. Then it sends one request per block to our site, with only the network and the block number. Our site fetches each block from two public Zcash servers (on the test network, testnet.zec.rocks and CipherScan). They learn which block numbers were asked for, and our site also sees your IP address. Your viewing key stays in the tab. A saved block file, or `imani check --offline`, sends nothing. |
 | Privacy | `npm run leak-scan` and `npm run leak-scan:history` | Fails if any tracked file, or any file in any commit of the history, holds something shaped like a viewing key, spending key or seed phrase. CI runs both. |
 | Privacy | `npx imani linking examples/testnet-01/disclosure.json` | How far a refund can be followed by anyone with the lot key. Inside the round each refund names its bid on purpose. Links that reach outside it (one receiver paid for two bids, or the same receiver in two rounds): 0 in the real round. Give it `examples/memo-01/disclosure.json examples/receivers-01/disclosure.json` to see 4 bidders followed from one round to the other. |
-| Privacy | `docs/WHO_LEARNS_WHAT.md`, and the same table on the page | What an onlooker, anyone with the published key, the seller, each bidder and the page's host can learn in the real round, worked out from its files by `npm run who-learns`. A test fails if the table drifts from the code. |
+| Privacy | `docs/WHO_LEARNS_WHAT.md`, and the same table on the page | What an onlooker, anyone with the published key, the seller, each bidder, the hosts of both pages and the public servers can learn in the real round, worked out from its files by `npm run who-learns`. A test fails if the table drifts from the code. |
 | Privacy | `imani check ... --offline` | Opens no connection at all. Every run prints the exact list of servers it contacted. |
 | Privacy | The sign-in receipt (shop page after signing in, and the Next.js example's account page) | Lists what the site stored for your account, read from its real storage, and counts how often secrets (your account key, your login memo, the site's viewing key and session secret) appear in it: 0 each. A planted leak is caught in `test/login/receipt.test.ts`. |
 | Privacy | The checker's keys | It refuses spending keys and seed phrases, and never prints or saves the key it is given. |

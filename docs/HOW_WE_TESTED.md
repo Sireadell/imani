@@ -49,7 +49,7 @@ The second live test, `LIVE=1 npm run test:fetch`, reads a main-network transact
 |---|---|---|
 | No secrets in the files | `npm run leak-scan` | No tracked file holds something shaped like a viewing key, spending key or seed phrase, except public test keys listed with a reason in `tools/leak-scan.allow.json` |
 | No secrets in the history | `npm run leak-scan:history` | The same scan over every file of every commit |
-| The page stays offline | `npm run test:site` | The built page contains no network call, and its security policy forbids one (`connect-src 'none'`) |
+| The checker page stays offline | `npm run test:site` | The built checker page contains no network call, and its security policy forbids one (`connect-src 'none'`). The "Check any round" page is tested to send nothing until the reader says yes |
 | Refunds that can be followed | `npx imani linking examples/testnet-01/disclosure.json` | 0 links that reach outside the real round |
 | Who learns what | `npm run who-learns` | Rebuilds `docs/WHO_LEARNS_WHAT.md` from the real round; a test fails if the table drifts |
 

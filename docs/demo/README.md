@@ -1,6 +1,6 @@
 # Imani shop: the demo auction
 
-A small shop that sells one lot (two clay mugs) by sealed bid. You sign in with a private Zcash wallet, bid with a private payment, the seller publishes the result and a one-time lot key, and anyone checks the auction: PASS, or FAIL with the reason named.
+A small shop that sells one lot (two clay mugs) by sealed bid. You sign in by paying from a private Zcash wallet, bid with a private payment, the seller publishes the result and a one-time lot key, and anyone checks the auction: PASS, or FAIL with the reason named.
 
 It uses the same login kit (`src/login`) and the same checker (`src/check.ts`) as the rest of this repo. No extra packages, no outside scripts, no fonts from elsewhere, no analytics.
 

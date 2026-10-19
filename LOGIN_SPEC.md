@@ -1,6 +1,6 @@
 # imani login, version 1
 
-Sign in with a private Zcash wallet. A website shows a one-time code, the user sends a tiny shielded payment to the site with a signed login message in the memo, and the site reads that memo with its own read-only viewing key. The user's account is a login key the user holds, not a wallet address.
+Sign in by paying from a private Zcash wallet. A website shows a one-time code, the user sends a tiny shielded payment to the site with a signed login message in the memo, and the site reads that memo with its own read-only viewing key. The user's account is a random login key the user holds (an Ed25519 key, not a Zcash key and not a wallet address). The Zcash part is the payment, which shows that whoever holds that login key can spend shielded ZEC.
 
 imani login is not a wallet. It never holds money, never asks for a seed phrase or spending key, and never asks the user for their viewing key.
 
@@ -145,7 +145,7 @@ The leak test (`test/login/leak.test.ts`) runs the whole login, good and bad pat
 - **Live relay is not stopped.** A fake site can show the real site's code and ask the user to pay it. The memo names the real site, and wallets that show the memo let the user notice, but nothing in the protocol stops a user who pays anyway.
 - **It costs a payment and a wait.** The user pays the minimum (default 0.0001 ZEC) plus the network fee, and the site must wait for the transaction to reach it.
 - **The site's viewing key cannot be revoked.** A Zcash core developer has said that shared viewing key access cannot be taken back. Use a separate address and key only for logins, and never share it.
-- **Not checked against a real wallet yet.** The tests use real transaction bytes built offline by the librustzcash builder on the test network. A login from a real wallet on mainnet is a later step.
+- **Checked with a real wallet on the test network only.** Most tests use real transaction bytes built offline by the librustzcash builder on the test network. One sign-in was paid from a real wallet and mined on the public test network, and it logs in (see `examples/real-login/README.md` and `test/login/real-wallet.test.ts`). A login from a real wallet on mainnet is a later step.
 
 ## 10. Test vectors
 

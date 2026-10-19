@@ -57,9 +57,14 @@ export function whoLearns(d: Disclosure, chain: { blocks: { height: number; txs:
       cannotLearn: "Other bidders' wallets or identities",
     },
     {
-      party: "This page and its host",
+      party: "The checker page and its host",
       learns: "That the page was downloaded",
-      cannotLearn: "Anything you check here: the page makes no network calls after it loads",
+      cannotLearn: "Anything you check here: the checker page makes no network calls after it loads",
+    },
+    {
+      party: "The \"Check any round\" page, its host and two public Zcash servers",
+      learns: "Only after you press the button that names them: which block numbers you asked for. The host also sees your IP address, as any website does",
+      cannotLearn: "Your viewing key, or any amount, memo or address: the key never leaves your browser tab, and the blocks are read there. A saved block file sends nothing at all",
     },
   ];
   return { lotId: d.lotId, blocks: blocks.length, transactionsInRange: txs, lotTransactions: seen, bids, refunds, linksOutside: link.linksOutside, rows };

@@ -107,7 +107,8 @@
       <tr><th scope="row">Anyone, once the seller publishes the lot key</th><td>The 3 bid amounts, their memos with each bidder's refund address, the 3 refunds and which bid each one pays back</td><td>Who the bidders are, what else is in their wallets, or any payment outside this auction. Refund links that reach outside the round: 0</td></tr>
       <tr><th scope="row">The seller</th><td>Each bid as it arrives, because the lot key is the seller's</td><td>Anything else in the bidders' wallets. The seller can see bids early, which the check cannot rule out</td></tr>
       <tr><th scope="row">Each bidder</th><td>Their own bid and refund, and after the close everything the lot key shows</td><td>Other bidders' wallets or identities</td></tr>
-      <tr><th scope="row">This page and its host</th><td>That the page was downloaded</td><td>Anything you check here: the page makes no network calls after it loads</td></tr>
+      <tr><th scope="row">The checker page and its host</th><td>That the page was downloaded</td><td>Anything you check here: the checker page makes no network calls after it loads</td></tr>
+      <tr><th scope="row">The "Check any round" page, its host and two public Zcash servers</th><td>Only after you press the button that names them: which block numbers you asked for. The host also sees your IP address, as any website does</td><td>Your viewing key, or any amount, memo or address: the key never leaves your browser tab, and the blocks are read there. A saved block file sends nothing at all</td></tr>
       </tbody>
     </table>
     <!-- who-learns:end -->

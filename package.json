@@ -1,7 +1,7 @@
 {
   "name": "imani",
   "version": "0.0.1",
-  "description": "Check that a sealed-bid auction on Zcash was fair, and sign in with a private Zcash wallet.",
+  "description": "Check that a sealed-bid auction on Zcash was fair, and sign in by paying from a private Zcash wallet.",
   "type": "module",
   "license": "MIT",
   "private": true,

@@ -4,7 +4,7 @@
 
 After a sealed-bid auction on Zcash closes, the seller shares a one-time read-only viewing key for that lot. Imani reads the lot's private payments with that key, works out the bids, the winner, the clearing price and the refunds again, and compares them to the seller's published result: PASS or FAIL, with the failed check named.
 
-**Try it in your browser: https://imani-check.vercel.app** opens on a real auction from the Zcash test network and checks it on your own computer. You can also drop a seller's disclosure file and result file onto the page and get the verdict in the browser. After it loads, the page makes no network requests.
+**Try it in your browser: https://imani-check.vercel.app** opens on a real auction from the Zcash test network and checks it on your own computer. You can also drop a seller's disclosure file and result file onto the page and get the verdict in the browser. After it loads, that page makes no network requests. The separate "Check any round" page (`check.html`) is different: it asks first, and only after you press its button does it fetch blocks through our site from two public Zcash servers, which see the block numbers you asked for. Your viewing key stays in your browser.
 
 ## Try it in one minute
 
@@ -70,9 +70,9 @@ The checker only accepts a read-only viewing key (starts with `uview1` or `uview
 - Block heights are checked against the chain only with `--scan`. A saved chain file is only as trustworthy as where you got it. With `--fetch`, two independent operators must agree (on the test network, a light server and the CipherScan explorer).
 - It reads only what the seller shares. A bid paid before the open height is not seen.
 
-## Also: sign in with a private Zcash wallet
+## Also: sign in by paying from a private Zcash wallet
 
-A login button any website can add. Your account is tied to a login key, so it survives a change of wallet address. The kit is `src/login` (exported as `imani/login`), the format is in [LOGIN_SPEC.md](LOGIN_SPEC.md), and `npm run demo:app` runs a small auction shop that uses it (it picks a free port if 8787 is taken, or use `--port <n>` or `IMANI_PORT`).
+A login button any website can add. You sign in by sending a tiny private payment from any shielded Zcash wallet. Your account is a random login key kept on your device, not a Zcash key, so it survives a change of wallet address. The kit is `src/login` (exported as `imani/login`), the format is in [LOGIN_SPEC.md](LOGIN_SPEC.md), and `npm run demo:app` runs a small auction shop that uses it (it picks a free port if 8787 is taken, or use `--port <n>` or `IMANI_PORT`).
 
 Honest limits:
 

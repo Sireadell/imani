@@ -152,9 +152,9 @@ export function homePage(ctx: PageContext): string {
 <section class="hero">
   <div>
     <h1>A sealed-bid auction you can check yourself.</h1>
-    <p class="lead">Sign in with a private Zcash wallet, bid without anyone else seeing your bid, and after the close check from the payments themselves that the seller counted every bid and paid every refund.</p>
+    <p class="lead">Sign in by paying from a private Zcash wallet, bid without anyone else seeing your bid, and after the close check from the payments themselves that the seller counted every bid and paid every refund.</p>
     <ol class="steps">
-      <li><a href="/signin"><span><strong>Sign in</strong> with a private Zcash wallet</span></a></li>
+      <li><a href="/signin"><span><strong>Sign in</strong> by paying from a private Zcash wallet</span></a></li>
       <li><a href="/lot"><span><strong>Bid</strong> with a private payment</span></a></li>
       <li><a href="/seller"><span><strong>Seller publishes</strong> the result and a one-time lot key</span></a></li>
       <li><a href="/check"><span><strong>Anyone checks</strong> the auction: pass or fail</span></a></li>
@@ -196,8 +196,8 @@ export function signinPage(ctx: PageContext, challengeInfo: { siteId: string; ne
   <button class="btn" type="button" id="check-pay">Check my payment</button>
 </div>`;
   return layout(ctx, "Sign in", "/signin", `
-<h1>Sign in with a private Zcash wallet</h1>
-<p class="lead">No email and no password. Your wallet sends a tiny private payment (${zec(challengeInfo.minZat)}) carrying a signed note. The shop reads the note and signs you in. It never learns your wallet address or your balance.</p>
+<h1>Sign in by paying from a private Zcash wallet</h1>
+<p class="lead">No email and no password. Your wallet sends a tiny private payment (${zec(challengeInfo.minZat)}) carrying a note signed by an account key made on your device, not by your wallet. The shop reads the note and signs you in. It never learns your wallet address or your balance.</p>
 ${signedIn}
 <noscript><p class="notice">Signing in needs JavaScript, because your account key is made on your device and is never sent to the shop. The rest of this site works without it.</p></noscript>
 <div id="signin" data-mode="${ctx.mode}" data-site="${esc(challengeInfo.siteId)}" hidden>
