@@ -238,7 +238,7 @@ ${signedIn}
   </section>
   <section class="card step result" id="step-done" hidden>
     <h2>Signed in</h2>
-    <p class="learned">This shop learned: <strong>account <span id="acct-short"></span></strong> and a ${zec(challengeInfo.minZat)} payment. Nothing else.</p>
+    <p class="learned">This shop knows you as <strong>account <span id="acct-short"></span></strong>, and that you paid ${zec(challengeInfo.minZat)}. The receipt below lists every item it stored to keep you signed in.</p>
     <dl class="pay"><div><dt>Account id</dt><dd><code id="acct-full"></code></dd></div><div><dt>Not learned</dt><dd>Your wallet address, your balance, your account key</dd></div></dl>
     <p class="notice ok" id="same-account" hidden></p>
     <section class="receipt" id="receipt" aria-labelledby="receipt-h" hidden>
