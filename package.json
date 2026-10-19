@@ -54,7 +54,8 @@
     "check:external": "tsx tools/external-check.ts",
     "test:external": "tsx --test test/external/*.test.ts",
     "test:privacy": "tsx --test test/privacy/*.test.ts",
-    "who-learns": "node --disable-warning=ExperimentalWarning tools/who-learns.ts"
+    "who-learns": "node --disable-warning=ExperimentalWarning tools/who-learns.ts",
+    "leak-scan:history": "node --disable-warning=ExperimentalWarning tools/leak-scan.ts --history"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",

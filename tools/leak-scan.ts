@@ -73,16 +73,43 @@ export function scanRepo(root: string, list: AllowEntry[]): Finding[] {
   return [...out, ...scanFiles(files, list)];
 }
 
+/**
+ * Scan every file in every commit of `root`, so a key that was committed and later deleted is
+ * still found. Each distinct file version is read once and named by the oldest commit holding it.
+ */
+export function scanHistory(root: string, list: AllowEntry[]): Finding[] {
+  const run = (args: string[], input?: string) => execFileSync("git", args, { cwd: root, encoding: "utf8", maxBuffer: 1 << 30, input });
+  const commits = run(["rev-list", "--all", "--reverse"]).split("\n").filter(Boolean);
+  const versions = new Map<string, { file: string; blob: string; commit: string }>();
+  for (const c of commits) {
+    for (const entry of run(["ls-tree", "-r", "-z", c]).split("\0").filter(Boolean)) {
+      const tab = entry.indexOf("\t");
+      const [, type, blob] = entry.slice(0, tab).split(" ");
+      const file = entry.slice(tab + 1);
+      const k = `${file}\0${blob}`;
+      if (type === "blob" && !versions.has(k)) versions.set(k, { file, blob, commit: c.slice(0, 7) });
+    }
+  }
+  const out: Finding[] = [];
+  for (const v of versions.values()) {
+    const buf = execFileSync("git", ["cat-file", "blob", v.blob], { cwd: root, maxBuffer: 1 << 30 });
+    const text = buf.includes(0) ? "" : buf.toString("utf8");
+    for (const f of scanFile(v.file, text, list)) out.push({ file: f.file, problem: `${f.problem} (commit ${v.commit})` });
+  }
+  return out;
+}
+
 if (process.argv[1]?.endsWith("leak-scan.ts")) {
   const root = fileURLToPath(new URL("..", import.meta.url));
   const list = loadAllowlist(fileURLToPath(new URL("./leak-scan.allow.json", import.meta.url)));
-  const findings = scanRepo(root, list);
+  const history = process.argv.includes("--history");
+  const findings = history ? scanHistory(root, list) : scanRepo(root, list);
   if (findings.length) {
     console.error("leak-scan FAILED:");
     for (const f of findings) console.error(`  ${f.file}: ${f.problem}`);
     console.error(`${findings.length} problem(s). The key itself is not printed. Remove it, or if it is a public test key, add the file to tools/leak-scan.allow.json with a reason.`);
     process.exitCode = 1;
   } else {
-    console.log(`leak-scan: clean. No viewing key, spending key, seed phrase or .env in any tracked file (${list.length} allowlisted public test-key paths).`);
+    console.log(`leak-scan: clean. No viewing key, spending key, seed phrase or .env in any ${history ? "file of any commit in the history" : "tracked file"} (${list.length} allowlisted public test-key paths).`);
   }
 }

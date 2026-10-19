@@ -8,10 +8,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm ci
       - run: npm run typecheck
       - run: npm run leak-scan
+      - run: npm run leak-scan:history
       - run: npm run test:all

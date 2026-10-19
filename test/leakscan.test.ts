@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadAllowlist, scanFile, scanRepo } from "../tools/leak-scan.ts";
+import { loadAllowlist, scanFile, scanHistory, scanRepo } from "../tools/leak-scan.ts";
 
 // Built at run time so this file holds nothing key-shaped.
 const VIEW = "uviewtest1" + "canarysecret".repeat(5);
@@ -54,6 +54,41 @@ test("scanRepo reads only tracked files", () => {
     git("add", "src");
     assert.deepEqual(scanRepo(dir, []), [{ file: "src/bad.ts", problem: "line 1 holds something shaped like a viewing key" }]);
     assert.deepEqual(scanRepo(dir, [{ path: "src/bad.ts", reason: "A public test key for this test." }]), []);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// History scan. Answers locked 2026-10-19 before the code was written: a key committed and then
+// deleted is clean in the current files but found in history, named by commit and path; an
+// allowlisted path stays allowed in history; a clean history gives no finding.
+test("scanHistory finds a key that was committed and later deleted, and names the commit", () => {
+  const dir = mkdtempSync(join(tmpdir(), "imani-hist-"));
+  try {
+    const git = (...a: string[]) => execFileSync("git", a, { cwd: dir, encoding: "utf8" });
+    git("init", "-q");
+    git("config", "user.email", "t@example.invalid");
+    git("config", "user.name", "t");
+    mkdirSync(join(dir, "src"));
+    writeFileSync(join(dir, "src/ok.ts"), "export const a = 1;\n");
+    git("add", "src");
+    git("commit", "-q", "-m", "one");
+    assert.deepEqual(scanHistory(dir, []), []);
+    writeFileSync(join(dir, "src/bad.ts"), `const k = "${SPEND}";\n`);
+    git("add", "src");
+    git("commit", "-q", "-m", "two");
+    const bad = git("rev-parse", "--short", "HEAD").trim();
+    rmSync(join(dir, "src/bad.ts"));
+    git("add", "-u");
+    git("commit", "-q", "-m", "three");
+    assert.deepEqual(scanRepo(dir, []), []);
+    const found = scanHistory(dir, []);
+    assert.equal(found.length, 1);
+    assert.equal(found[0].file, "src/bad.ts");
+    assert.match(found[0].problem, /spending key/);
+    assert.match(found[0].problem, new RegExp(`commit ${bad}`));
+    assert.ok(!JSON.stringify(found).includes(SPEND.slice(0, 30)));
+    assert.deepEqual(scanHistory(dir, [{ path: "src/bad.ts", reason: "A public test key for this test." }]), []);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
