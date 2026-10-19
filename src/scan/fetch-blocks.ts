@@ -9,6 +9,7 @@
 // (`concurrency`) and progress is reported after each group.
 
 import { fetchTransactions, FetchError, type Network } from "../fetch/index.ts";
+import { EXPLORER_PREFIX } from "../fetch/explorer.ts";
 import type { BlockSource, ChainBlock } from "./chain.ts";
 
 export interface FetchBlocksOptions {
@@ -119,7 +120,9 @@ export async function fetchBlocks(opts: FetchBlocksOptions): Promise<{ blocks: C
     blocks,
     source: {
       kind: "light-servers",
-      label: "light servers, two independent operators agreeing on every block and every transaction",
+      label: contacted.some((s) => s.startsWith(EXPLORER_PREFIX))
+        ? "a light server and an explorer, two independent operators agreeing on every block and every transaction"
+        : "light servers, two independent operators agreeing on every block and every transaction",
       serversContacted: contacted,
       bytes,
       ms: Date.now() - started,

@@ -76,3 +76,20 @@ export async function explorerGetTransaction(base: string, txid: string, opts: G
   if (typeof hex !== "string" || hex.length === 0) throw new Error("reply has no hex field");
   return { hex: hex.toLowerCase() };
 }
+
+/**
+ * List one block's transactions from a CipherScan-style API: GET /api/block/{height}.
+ * Gives the block hash and the transaction ids in block order, the same shape a light server's
+ * compact block gives, so the two can be compared. On the test network this is the second
+ * independent source for blocks, because only one public light server answered in October 2026.
+ */
+export async function explorerGetBlock(base: string, height: number, opts: GetOptions): Promise<{ height: number; hash: string; txids: string[] }> {
+  const { status, body } = await getJson(`${base.replace(/\/+$/, "")}/api/block/${height}`, opts);
+  if (status !== 200) throw new Error(`http status ${status}`);
+  const b = body as { height?: unknown; hash?: unknown; transactions?: unknown };
+  const txs = Array.isArray(b.transactions) ? (b.transactions as { txid?: unknown }[]) : null;
+  if (typeof b.hash !== "string" || !txs) throw new Error("reply has no block hash or transaction list");
+  const txids = txs.map((t) => t.txid);
+  if (!txids.every((t): t is string => typeof t === "string" && /^[0-9a-f]{64}$/i.test(t))) throw new Error("reply has a malformed transaction id");
+  return { height: Number(b.height), hash: b.hash.toLowerCase(), txids: txids.map((t) => t.toLowerCase()) };
+}

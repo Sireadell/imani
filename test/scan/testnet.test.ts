@@ -65,3 +65,10 @@ function existsDisclosure(name: string): boolean {
     return false;
   }
 }
+
+test("live: the real round passes when every block is fetched from two public operators", { skip: process.env.LIVE !== "1" && "set LIVE=1 to run" }, async () => {
+  const { runAsync } = await import("../../src/cli.ts");
+  const r = await runAsync(["check", "--disclosure", path("testnet-01/disclosure.json"), "--result", path("testnet-01/result.json"), "--scan", "--fetch"]);
+  assert.match(r.stdout, /RESULT: PASS \(21 of 21 checks passed\)/);
+  assert.match(r.stdout, /two independent operators agreeing on every block/);
+});

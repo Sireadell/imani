@@ -111,7 +111,7 @@ What `refund-receivers` catches: a seller who publishes honest-looking addresses
 
 ### Block heights against the chain
 
-`scan-heights` compares the block each listed transaction was found in with the height the seller states. With `--chain` the blocks come from the saved file. With `--fetch` each transaction's block comes from what two independent light servers return, and a block is refused when they disagree. A wrong height is a named FAIL, and the message says when the true block is on the other side of the close. Without `--scan` no height is checked and the seller's word is used. A chain file is only as trustworthy as where you got it.
+`scan-heights` compares the block each listed transaction was found in with the height the seller states. With `--chain` the blocks come from the saved file. With `--fetch` each transaction's block comes from what two independent operators return (two light servers, or on the test network a light server and the CipherScan explorer, which only counts as the second of the two), and a block is refused when they disagree. A wrong height is a named FAIL, and the message says when the true block is on the other side of the close. Without `--scan` no height is checked and the seller's word is used. A chain file is only as trustworthy as where you got it.
 
 ### Speed and cost
 
@@ -143,7 +143,7 @@ The checker accepts only `uview1` or `uviewtest1` keys and refuses seed phrases,
 | Without `--scan`, only disclosed transactions are read | A seller could hide a bid by not listing it | Run the scan level: `scan-hidden-bids` reads every block of the range |
 | The scan only covers `openHeight` to the refund deadline | A bid paid before `openHeight` is not seen | The seller publishes `openHeight` before bidding starts |
 | `--fetch` is slow: about an hour for a day-long auction | Checking a long auction online takes patience | Compact-block scanning, one connection per server |
-| `--fetch` trusts that two independent light servers do not both leave the same transaction out of a block | Two colluding servers could hide a bid | Use your own light server with `--chain` saved from it, or more operators |
+| `--fetch` trusts that two independent operators (light servers, or a light server and an explorer) do not both leave the same transaction out of a block | Two colluding servers could hide a bid | Use your own light server with `--chain` saved from it, or more operators |
 | A listed refund address is the seller's word | A seller could list their own address as a bidder's, then pay it. `refund-receivers` would pass | Each bidder confirms the address next to their bid, or gives their own key. Later: put the refund address inside the bid memo |
 | A refund's receiver is proven only when addresses are listed or the bidder gives their own key | Without either, a seller could pay a refund to themselves with the right memo | List `refundAddresses` in the disclosure |
 | A shared viewing key cannot be revoked | Anyone with it sees the lot forever | One fresh key per lot, enforced by `key-hygiene` |

@@ -16,7 +16,7 @@ import {
   decodeCompactBlock,
   decodeLightdInfo,
 } from "./grpc.ts";
-import { EXPLORER_PREFIX, explorerGetTransaction } from "./explorer.ts";
+import { EXPLORER_PREFIX, explorerGetBlock, explorerGetTransaction } from "./explorer.ts";
 import { checkTxBytes, TXID_RE } from "./verify.ts";
 
 export type Network = "main" | "test";
@@ -175,10 +175,14 @@ export async function fetchTransactions(opts: FetchOptions): Promise<FetchResult
     const ops = new Set<string>();
     for (const server of servers) {
       if (lists.length >= need) break;
-      if (isExplorer(server) || ops.has(operatorOf(server))) continue;
-      if (!(await checkNetwork(server))) continue;
+      if (ops.has(operatorOf(server))) continue;
+      // An explorer only counts as a second opinion: at least one light server must have answered.
+      if (isExplorer(server) && lists.length === 0) continue;
+      if (!isExplorer(server) && !(await checkNetwork(server))) continue;
       try {
-        const b = decodeCompactBlock(await withRetry(server, () => unary(server, "GetBlock", encodeBlockId(h), call)));
+        const b = isExplorer(server)
+          ? await withRetry(server, () => explorerGetBlock(server.slice(EXPLORER_PREFIX.length), h, call))
+          : decodeCompactBlock(await withRetry(server, () => unary(server, "GetBlock", encodeBlockId(h), call)));
         if (b.height !== h || b.txids.length === 0) throw new Error(`block ${h} not returned`);
         lists.push({ server, key: `${b.hash}:${b.txids.join(",")}`, txids: b.txids });
         ops.add(operatorOf(server));
@@ -186,7 +190,7 @@ export async function fetchTransactions(opts: FetchOptions): Promise<FetchResult
         problems.push({ server, error: `block ${h}: ${(e as Error).message}` });
       }
     }
-    if (lists.length < need) fail(`could not get block ${h} from ${need} independent light servers`);
+    if (lists.length < need) fail(`could not get block ${h} from ${need} independent servers`);
     if (lists.some((l) => l.key !== lists[0].key)) fail(`servers disagree about block ${h}: ${lists.map((l) => l.server).join(" vs ")}`);
     for (const t of lists[0].txids) {
       heightOf.set(t, h);

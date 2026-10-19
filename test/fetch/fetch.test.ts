@@ -105,10 +105,18 @@ async function fakeLightServer(b: Behaviour) {
   return { url, seen };
 }
 
-async function fakeExplorer(txs: Record<string, string>) {
+async function fakeExplorer(txs: Record<string, string>, blocks: Record<number, string[]> = {}) {
   const seen: string[] = [];
   const server = http.createServer((req, res) => {
     seen.push(req.url ?? "");
+    const blk = /^\/api\/block\/(\d+)$/.exec(req.url ?? "");
+    if (blk) {
+      const ids = blocks[Number(blk[1])];
+      res.writeHead(ids ? 200 : 404, { "content-type": "application/json" });
+      // The same hash the fake light server sends (32 bytes of 7), in display order.
+      res.end(JSON.stringify(ids ? { height: blk[1], hash: "07".repeat(32), transactions: ids.map((txid) => ({ txid })) } : { error: "Block not found" }));
+      return;
+    }
     const m = /^\/api\/tx\/([0-9a-f]{64})\/raw$/.exec(req.url ?? "");
     const hex = m ? txs[m[1]] : undefined;
     res.writeHead(hex ? 200 : 404, { "content-type": "application/json" });
@@ -271,6 +279,20 @@ test("explorer route works as the second source", async () => {
   const r = await fetchTransactions({ network: "test", txids: [C.txid], servers: [s1.url, ex.url] });
   assert.deepEqual(r.transactions[0].confirmedBy, [s1.url, ex.url]);
   assert.deepEqual(ex.seen, [`/api/tx/${C.txid}/raw`]);
+});
+
+test("an explorer can be the second source for a block, but never the only one", async () => {
+  const blocks = { [HEIGHT]: [A.txid, B.txid, C.txid] };
+  const s1 = await fakeLightServer({ txs: all, blocks });
+  const ex = await fakeExplorer(all, blocks);
+  const r = await fetchTransactions({ network: "test", heights: [HEIGHT], servers: [s1.url, ex.url] });
+  assert.deepEqual(r.transactions.map((t) => t.txid), [A.txid, B.txid, C.txid]);
+  assert.ok(ex.seen.includes(`/api/block/${HEIGHT}`));
+  const bad = await fakeExplorer(all, { [HEIGHT]: [A.txid, B.txid] });
+  await assert.rejects(fetchTransactions({ network: "test", heights: [HEIGHT], servers: [s1.url, bad.url] }), /disagree about block/);
+  const alone = await fakeExplorer(all, blocks);
+  await assert.rejects(fetchTransactions({ network: "test", heights: [HEIGHT], servers: [alone.url] }), /could not get block/);
+  assert.equal(alone.seen.filter((u) => u.startsWith("/api/block/")).length, 0);
 });
 
 test("all connections can go through a SOCKS5 proxy, with host names resolved by the proxy", async () => {
