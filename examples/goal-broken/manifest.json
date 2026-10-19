@@ -1,0 +1,50 @@
+{
+  "about": "Broken copies of the goal rounds (examples/goal-reached for 01 to 03, examples/goal-missed for 04). Each copy is a different cheat and fails on the checks listed.",
+  "copies": [
+    {
+      "name": "01-refund-to-a-contributor",
+      "changed": "result.json",
+      "expectedFailingCheck": "refund-total",
+      "expectedFailingChecks": [
+        "refund-total",
+        "result-consistent"
+      ],
+      "story": "The goal was reached, so every payment is kept. The seller still lists a 500,000 refund for Alice that never happened."
+    },
+    {
+      "name": "02-says-goal-missed-when-reached",
+      "changed": "result.json",
+      "expectedFailingCheck": "goal-reached",
+      "expectedFailingChecks": [
+        "goal-reached",
+        "reserve",
+        "winners-and-price"
+      ],
+      "story": "The 6,500,000 collected beats the 6,000,000 goal. The seller says the goal was missed and lists everyone as refunded."
+    },
+    {
+      "name": "03-goal-raised-after-the-fact",
+      "changed": "disclosure.json",
+      "expectedFailingCheck": "goal-reached",
+      "expectedFailingChecks": [
+        "goal-reached",
+        "refunds-paid",
+        "reserve",
+        "result-consistent",
+        "winners-and-price"
+      ],
+      "story": "The disclosure now shows a goal of 7,000,000, higher than the 6,000,000 the result was built on, so the goal looks missed while the seller keeps the money."
+    },
+    {
+      "name": "04-says-goal-reached-when-missed",
+      "changed": "result.json",
+      "expectedFailingCheck": "goal-reached",
+      "expectedFailingChecks": [
+        "goal-reached",
+        "reserve",
+        "winners-and-price"
+      ],
+      "story": "Only 1,500,000 came in against a goal of 2,000,000. The seller says the goal was reached and keeps Carol's money, though her refund went out on the chain."
+    }
+  ]
+}

@@ -25,7 +25,7 @@ function hiddenLosingBid(): [Disclosure, SellerResult] {
   r.bidCount = r.bids.length;
   r.refunds = r.refunds.filter((x) => x.bidTxid !== LOSER);
   // With the third bid gone, the seller says the price falls to the reserve.
-  r.clearingPriceZat = r.rules.reserveZat;
+  r.clearingPriceZat = (r.rules as { reserveZat: number }).reserveZat;
   return [d, r];
 }
 

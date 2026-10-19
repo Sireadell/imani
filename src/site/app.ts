@@ -1,7 +1,7 @@
 // Screen code for the checker page. All the checking is in engine.ts (the same checks as the
 // command line tool). Nothing here talks to a network, and nothing is stored in the browser.
-import { examples, blobs, type ExampleEntry } from "imani-examples";
-import { decoderBytes, decoderInfo, fileKind, initReader, parseJsonText, runPage, scanSourceLine, serversLine, type PageOutcome, type Verdict } from "./engine.ts";
+import { examples, externals, blobs, type ExampleEntry } from "imani-examples";
+import { decoderBytes, decoderInfo, fileKind, initReader, parseJsonText, runExternalPage, runPage, scanSourceLine, serversLine, type PageOutcome, type Verdict } from "./engine.ts";
 import { sha256Hex } from "./crypto-shim.ts";
 import type { Check } from "../check.ts";
 import { lookupBid } from "../mine.ts";
@@ -144,6 +144,40 @@ function renderVerdict(v: Verdict, entry?: ExampleEntry): HTMLElement {
   return root;
 }
 
+function renderExternal(parsed: unknown, name: string): void {
+  const out = $("external-out");
+  out.replaceChildren();
+  const o = runExternalPage(parsed);
+  if (!o.ok) {
+    out.appendChild(renderProblem({ ok: false, kind: "input", message: `${name}: ${o.message}` }));
+    return;
+  }
+  const rep = o.report;
+  const pass = rep.result === "PASS";
+  const failed = rep.lines.filter((l) => l.status === "FAIL");
+  const b = el("div", `banner ${pass ? "pass" : "fail"}`);
+  b.setAttribute("role", "status");
+  b.appendChild(el("div", "big", pass ? `PASS: ${rep.lines.length} of ${rep.lines.length} checks passed` : `FAIL: ${failed.length} of ${rep.lines.length} checks failed`));
+  b.appendChild(el("p", undefined, `${name}: ${rep.kind} file for lot ${rep.lot}.`));
+  out.appendChild(b);
+  out.appendChild(el("p", "meta", "Servers contacted: none."));
+  for (const l of rep.lines) {
+    const d = el("details", `check ${l.status.toLowerCase()}`);
+    if (l.status === "FAIL") d.open = true;
+    const s = el("summary");
+    s.appendChild(el("span", "badge", l.status));
+    s.appendChild(el("span", "title", l.title));
+    s.appendChild(el("span", "reason", l.detail));
+    d.appendChild(s);
+    out.appendChild(d);
+  }
+  for (const n of rep.notes) out.appendChild(el("p", "note", n));
+  const lim = el("div", "limits");
+  for (const t of rep.limits) lim.appendChild(el("p", "small", t));
+  out.appendChild(lim);
+  out.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
 function renderProblem(o: Extract<PageOutcome, { ok: false }>): HTMLElement {
   const b = el("div", `banner ${o.kind === "refused" ? "refused" : "error"}`);
   b.setAttribute("role", "alert");
@@ -278,7 +312,12 @@ async function takeFiles(files: FileList | File[]): Promise<void> {
       const parsed = parseJsonText(await f.text(), f.name);
       const kind = fileKind(parsed);
       if (!kind) {
-        problems.push(`${f.name}: not an Imani file (no known "format" field).`);
+        problems.push(`${f.name}: not a file this page knows (no known "format" field).`);
+        continue;
+      }
+      if (kind === "external") {
+        renderExternal(parsed, f.name);
+        problems.push(`${f.name}: read as a published round (see the section above).`);
         continue;
       }
       if (kind === "chain") { own.chain = parsed; own.chainName = f.name; } else own[kind] = parsed;
@@ -291,6 +330,7 @@ async function takeFiles(files: FileList | File[]): Promise<void> {
   if (own.result !== undefined && own.disclosure === undefined) problems.push("Now add the seller's disclosure file.");
   const have = [own.disclosure !== undefined && "disclosure", own.result !== undefined && "result", own.chain !== undefined && "chain (scan)", own.bidderKeys !== undefined && "bidder keys"].filter(Boolean);
   status.textContent = `Loaded: ${have.length ? have.join(", ") : "nothing yet"}.${problems.length ? " " + problems.join(" ") : ""}`;
+  if (own.disclosure === undefined && own.result === undefined && own.chain === undefined && own.bidderKeys === undefined) return;
   selection = { kind: "own" };
   syncChips();
   $("results").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -300,10 +340,17 @@ async function takeFiles(files: FileList | File[]): Promise<void> {
 async function start(): Promise<void> {
   for (const e of [...byGroup("real-honest"), ...byGroup("real-tampered")]) $("chips-real").appendChild(chip(e));
   renderExplorer();
+  for (const x of externals) {
+    const b = el("button", "chip", x.title);
+    b.type = "button";
+    b.addEventListener("click", () => renderExternal(parseJsonText(blobs[x.blob], x.title), x.title));
+    $("chips-external").appendChild(b);
+  }
   for (const e of [...byGroup("honest"), ...byGroup("tampered")]) $("chips-tampered").appendChild(chip(e));
   for (const e of [...byGroup("scan-honest"), ...byGroup("scan-tampered")]) $("chips-scan").appendChild(chip(e));
   for (const e of [...byGroup("receivers-honest"), ...byGroup("receivers-tampered")]) $("chips-receivers").appendChild(chip(e));
   for (const e of [...byGroup("memo-honest"), ...byGroup("memo-tampered")]) $("chips-memo").appendChild(chip(e));
+  for (const e of [...byGroup("goal-honest"), ...byGroup("goal-tampered")]) $("chips-goal").appendChild(chip(e));
   $("mine-go").addEventListener("click", findMine);
   $("mine-id").addEventListener("keydown", (ev) => { if ((ev as KeyboardEvent).key === "Enter") findMine(); });
   $("discreet").addEventListener("change", () => void checkWithNotice());

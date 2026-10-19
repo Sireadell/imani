@@ -19,7 +19,7 @@ export interface Disclosure {
   openHeight?: number;
   /** Last block height by which every refund is paid. Needed only for the scan level. */
   refundByHeight?: number;
-  rules: AuctionRules;
+  rules: Rules;
   /** One-time read-only key for this lot (uview1... or uviewtest1...). Optional: without it only the basic level runs. */
   ufvk?: string;
   transactions: DisclosedTx[];
@@ -36,7 +36,22 @@ export interface RefundAddress {
   address: string;
 }
 
+/** The rule a lot runs under: the uniform price auction (the default) or an all-or-nothing goal. */
+export type Rules = AuctionRules | GoalRules;
+
+/**
+ * All-or-nothing collection (fundraiser, group buy). If the on-time payments add up to the goal,
+ * every one of them is kept and nobody is refunded. If they fall short, every payment is refunded
+ * in full. Payments after the close are always refunded in full.
+ */
+export interface GoalRules {
+  kind: "goal";
+  /** Total the on-time payments must reach, in zatoshis. */
+  goalZat: number;
+}
+
 export interface AuctionRules {
+  kind?: "auction";
   /** Number of identical items sold in the lot. */
   itemCount: number;
   /** Lowest price the seller accepts, in zatoshis (1 ZEC = 100,000,000 zatoshis). */
@@ -57,7 +72,7 @@ export interface SellerRefund {
 export interface SellerResult {
   format: "imani-lot-result/1";
   lotId: string;
-  rules: AuctionRules;
+  rules: Rules;
   bidCount: number;
   bids: { txid: string; amountZat: number }[];
   winners: string[];

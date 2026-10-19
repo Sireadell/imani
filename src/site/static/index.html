@@ -46,6 +46,9 @@
     <h3>With the refund address written by the bidder</h3>
     <p class="muted small">Each bidder writes their own refund address at the end of their bid memo, so the seller cannot choose it. The check reads it from the chain and compares it with where each refund went.</p>
     <div class="chips" id="chips-memo" role="group" aria-label="Bid memo address examples"></div>
+    <h3>Beyond auctions: a fundraiser or group buy</h3>
+    <p class="muted small">The same check works on any collection where the amounts stay hidden. Here the rule is a goal: if the payments reach it they are all kept, and if not every payment is refunded in full.</p>
+    <div class="chips" id="chips-goal" role="group" aria-label="Fundraiser examples"></div>
   </section>
 
   <section aria-labelledby="own-h">
@@ -74,6 +77,13 @@
       <button type="button" class="btn primary" id="mine-go">Find my bid</button>
     </div>
     <div id="mine-out" aria-live="polite"></div>
+  </section>
+
+  <section aria-labelledby="ext-h" id="external-box">
+    <h2 id="ext-h">A round someone else published</h2>
+    <p class="muted">Drop a round file published by another sealed-bid auction project on Zcash, or try one of the three below. The page works the numbers out again under that file's own rules. It reads only what is in the file and does not look at the chain.</p>
+    <div class="chips" id="chips-external" role="group" aria-label="Published round files"></div>
+    <div id="external-out" aria-live="polite"></div>
   </section>
 
   <section aria-labelledby="src-h">
