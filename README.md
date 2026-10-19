@@ -2,7 +2,9 @@
 
 *Imani means "trust" in Swahili.*
 
-**Try it in your browser: https://imani-check.vercel.app** opens on a real auction from the Zcash test network and checks it on your own computer. After it loads, the page makes no network requests.
+After a sealed-bid auction on Zcash closes, the seller shares a one-time read-only viewing key for that lot. Imani reads the lot's private payments with that key, works out the bids, the winner, the clearing price and the refunds again, and compares them to the seller's published result: PASS or FAIL, with the failed check named.
+
+**Try it in your browser: https://imani-check.vercel.app** opens on a real auction from the Zcash test network and checks it on your own computer. You can also drop a seller's disclosure file and result file onto the page and get the verdict in the browser. After it loads, the page makes no network requests.
 
 ## Try it in one minute
 
@@ -52,10 +54,9 @@ The checker works the result out again from the chain numbers and compares it wi
 
 ## What it is
 
-Two small tools for private Zcash apps.
+A checker for sealed-bid auctions on Zcash. The seller shares a one-time read-only key for the lot after the close, imani reads the lot's private payments with that key, works out the bid count, amounts, winners, price and refunds again, and compares them to the seller's published result: PASS or FAIL.
 
-1. **Check a sealed-bid auction.** After an auction closes, the seller shares a one-time read-only key for that lot. imani reads the lot's private payments with that key, works out the bid count, amounts, winners, price and refunds again, and compares them to the seller's published result: PASS or FAIL.
-2. **Sign in with a private Zcash wallet.** A login button any website can add. Your account is tied to a login key, so it survives a change of wallet address.
+It also ships a small second tool, a login button any website can add ([see below](#also-sign-in-with-a-private-zcash-wallet)).
 
 The file formats, price rule, every check and the known limits are in [SPEC.md](SPEC.md).
 
@@ -69,7 +70,11 @@ The checker only accepts a read-only viewing key (starts with `uview1` or `uview
 - Block heights are checked against the chain only with `--scan`. A saved chain file is only as trustworthy as where you got it. With `--fetch`, two independent operators must agree (on the test network, a light server and the CipherScan explorer).
 - It reads only what the seller shares. A bid paid before the open height is not seen.
 
-## Honest limits: sign in with a private wallet
+## Also: sign in with a private Zcash wallet
+
+A login button any website can add. Your account is tied to a login key, so it survives a change of wallet address. The kit is `src/login` (exported as `imani/login`), the format is in [LOGIN_SPEC.md](LOGIN_SPEC.md), and `npm run demo:app` runs a small auction shop that uses it (it picks a free port if 8787 is taken, or use `--port <n>` or `IMANI_PORT`).
+
+Honest limits:
 
 - Seeing someone's sign-in payment link or QR does not let you log in as them. The site also needs a proof that only their login key can make, and it is never in the link.
 - If a sign-in code is not reserved for the user's key, anyone who sees the code can pay it first with their own key and use it up. They get their own account, not the victim's, but the real user must ask for a new code. Reserving the code for the user's key stops this.
