@@ -68,3 +68,7 @@ cp offline-vectors.json auction-round.json /path/to/imani/test/vectors/
 A debug build creates the proofs slowly (several minutes). With `--release` the auction
 round takes about 2 minutes on a 2-core machine including the compile. Two runs on
 2026-10-07 gave byte-identical files (auction-round.json sha256 `f5fb9e20...d020`).
+
+## Sealed mode
+
+`gen_vectors sealed <file>` makes the fake sealed lot used by `examples/sealed-01` (see `docs/SELLER_BLIND_PLAN.md` and the "Sealed lots" section of `SPEC.md`). Same lot `LOT-01`: 2 items, reserve 1,000,000, deposit 5,000,000, penalty 500,000, close 4,200,100, openings until 4,200,200. Seven seals (three opened honestly, one never opened, one opened with a price that does not match its seal, one with a deposit 1 zatoshi short, one late), the openings, the refunds worked out by the plan's rules, and one refund without the penalty share for a broken copy. `node tools/make-sealed-examples.ts` (or `npm run examples:sealed`) turns the file into `examples/sealed-01` and `examples/sealed-broken`.
