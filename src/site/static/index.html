@@ -79,6 +79,23 @@
     <div id="mine-out" aria-live="polite"></div>
   </section>
 
+  <section aria-labelledby="bid-h" id="bid-box">
+    <h2 id="bid-h">Bid from your wallet</h2>
+    <p class="muted">Fill in the lot's details and get a payment request: a link and a QR code. Scan it or open it in a Zcash wallet that reads payment requests, and the wallet fills in the lot address, the amount and the bid memo for you. This page only builds the request. It sends nothing and holds no money.</p>
+    <div class="grid2">
+      <div><label for="bid-lot">Lot name</label><input id="bid-lot" class="field" autocomplete="off" spellcheck="false" placeholder="LOT-01"></div>
+      <div><label for="bid-amount">Your bid, in ZEC</label><input id="bid-amount" class="field" inputmode="decimal" autocomplete="off" placeholder="0.03"></div>
+    </div>
+    <label for="bid-address">Lot address (from the seller)</label>
+    <input id="bid-address" class="field" autocomplete="off" spellcheck="false" placeholder="u1... or utest1...">
+    <div class="grid2">
+      <div><label for="bid-word">Your bid code (optional)</label><input id="bid-word" class="field" autocomplete="off" spellcheck="false" placeholder="made at random if empty"></div>
+      <div><label for="bid-refund">Refund address (optional)</label><input id="bid-refund" class="field" autocomplete="off" spellcheck="false" placeholder="written into the bid memo"></div>
+    </div>
+    <div class="row"><button type="button" class="btn primary" id="bid-go">Make my bid link</button></div>
+    <div id="bid-out" aria-live="polite"></div>
+  </section>
+
   <section aria-labelledby="ext-h" id="external-box">
     <h2 id="ext-h">A round someone else published</h2>
     <p class="muted">Drop a round file published by another sealed-bid auction project on Zcash, or try one of the three below. The page works the numbers out again under that file's own rules. It reads only what is in the file and does not look at the chain.</p>

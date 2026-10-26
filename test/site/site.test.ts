@@ -186,7 +186,8 @@ test("the built page makes no network calls and has no external hosts", () => {
   for (const re of banned) assert.doesNotMatch(js, re, String(re));
   // The only addresses allowed are the real round's explorer links. They are plain links that
   // load nothing unless the reader clicks one, and they open in a new tab with no referrer.
-  const urls = js.match(/https?:\/\/[^\s"'`)]+/g) ?? [];
+  // The SVG namespace name is an identifier the bid link's QR picture needs, not an address anything loads.
+  const urls = (js.match(/https?:\/\/[^\s"'`)]+/g) ?? []).filter((u) => u !== "http://www.w3.org/2000/svg");
   const explorer = JSON.parse(rd("examples/testnet-01/explorer.json"));
   assert.deepEqual(urls.sort(), explorer.payments.map((p: { txid: string }) => `${explorer.explorer}${p.txid}`).sort(), "no URLs in the code except the explorer links");
   for (const u of urls) assert.match(u, /^https:\/\/testnet\.zecblock\.com\/tx\/[0-9a-f]{64}$/);

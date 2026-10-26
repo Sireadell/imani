@@ -5,6 +5,7 @@ import { decoderBytes, decoderInfo, fileKind, initReader, parseJsonText, runExte
 import { sha256Hex } from "./crypto-shim.ts";
 import type { Check } from "../check.ts";
 import { lookupBid } from "../mine.ts";
+import { BidLinkError, makeBidLink, qrSvg, zecToZat } from "../bidlink.ts";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -25,6 +26,54 @@ const byGroup = (g: ExampleEntry["group"]) => examples.filter((e) => e.group ===
 const find = (id: string) => examples.find((e) => e.id === id)!;
 
 let last: { verdict: Verdict; result: unknown } | null = null;
+
+/** Build the payment request for a bid. Nothing is sent anywhere. */
+function makeLink() {
+  const out = $("bid-out");
+  out.replaceChildren();
+  const value = (id: string) => $<HTMLInputElement>(id).value.trim();
+  const amountZat = zecToZat(value("bid-amount"));
+  if (amountZat === null) {
+    out.appendChild(el("p", "banner fail", "The bid must be an amount in ZEC above 0, such as 0.03, with at most 8 digits after the period."));
+    return;
+  }
+  if (!ready) {
+    out.appendChild(el("p", "banner fail", "The reader is still starting. Try again in a moment."));
+    return;
+  }
+  try {
+    const link = makeBidLink({
+      lotId: value("bid-lot"),
+      address: value("bid-address"),
+      amountZat,
+      word: value("bid-word") || undefined,
+      refundAddress: value("bid-refund") || undefined,
+    });
+    out.appendChild(el("p", undefined, `Bid link for ${link.amountZec} ZEC on the ${link.network === "main" ? "main" : "test"} network. Check the amount and the address in your wallet before you send.`));
+    const text = el("textarea", "field");
+    text.readOnly = true;
+    text.rows = 4;
+    text.value = link.uri;
+    text.setAttribute("aria-label", "Bid link");
+    out.appendChild(text);
+    const row = el("div", "row");
+    const copy = el("button", "btn", "Copy link");
+    copy.type = "button";
+    copy.addEventListener("click", () => {
+      text.select();
+      void navigator.clipboard?.writeText(link.uri).then(() => (copy.textContent = "Copied"), () => (copy.textContent = "Press Ctrl+C to copy"));
+    });
+    row.appendChild(copy);
+    out.appendChild(row);
+    const picture = el("div", "qr");
+    picture.appendChild(document.importNode(new DOMParser().parseFromString(qrSvg(link.uri, 5), "image/svg+xml").documentElement, true));
+    out.appendChild(picture);
+    out.appendChild(el("p", "meta", `Memo the wallet will send: ${link.memo}. To raise your bid before the close, when the lot allows it, pay again with exactly this memo.`));
+  } catch (e) {
+    if (e instanceof BidLinkError) out.appendChild(el("p", "banner fail", e.message));
+    else throw e;
+  }
+}
 
 function outcomeFor(sel: Selection, discreet: boolean): { outcome: PageOutcome; entry?: ExampleEntry; result: unknown } {
   if (sel.kind === "example") {
@@ -353,6 +402,7 @@ async function start(): Promise<void> {
   for (const e of [...byGroup("memo-honest"), ...byGroup("memo-tampered")]) $("chips-memo").appendChild(chip(e));
   for (const e of [...byGroup("goal-honest"), ...byGroup("goal-tampered")]) $("chips-goal").appendChild(chip(e));
   $("mine-go").addEventListener("click", findMine);
+  $("bid-go").addEventListener("click", makeLink);
   $("mine-id").addEventListener("keydown", (ev) => { if ((ev as KeyboardEvent).key === "Enter") findMine(); });
   $("discreet").addEventListener("change", () => void checkWithNotice());
 

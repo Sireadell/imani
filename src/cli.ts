@@ -12,6 +12,7 @@ import { EXPLORER_PREFIX } from "./fetch/explorer.ts";
 import { ZEBRA_PREFIX, isZebra, loadZebraAuth } from "./fetch/zebra.ts";
 import { bidderCheck, bidderRange, bidderText, validateFacts, type BidClaim, type PublishedResult } from "./bidder.ts";
 import { runOpen, runSeal } from "./seal-cli.ts";
+import { runBidLink } from "./bidlink-cli.ts";
 import { LinkingInputError, linkingFromLots, linkingText, lotRefunds } from "./privacy/linking.ts";
 
 const USAGE = `Usage: imani check --disclosure <lot disclosure.json> --result <seller result.json> [options]
@@ -43,6 +44,9 @@ Exit code: 0 PASS, 1 FAIL, 2 refused or bad input.
 
        imani seal --lot <lot id> --amount <zat> [--address <addr>]   (sealed lots: make your seal memo)
        imani open --file seal-<word>.json                            (after the close: make your opening memo)
+
+       imani bid-link --lot <lot id> --address <lot address> --amount-zat <zat> [--refund-address <addr>] [--svg <file>]
+                                                             (make a payment request link and QR code for your bid)
 
        imani bidder-check --facts <lot facts.json> --key-file <your viewing key file> [options]
 
@@ -233,6 +237,7 @@ export function run(argv: string[]): CliResult {
   if (argv[0] === "linking") return runLinking(argv.slice(1));
   if (argv[0] === "bidder-check") return runBidder(argv.slice(1));
   if (argv[0] === "seal") return runSeal(argv.slice(1));
+  if (argv[0] === "bid-link") return runBidLink(argv.slice(1));
   if (argv[0] === "open") return runOpen(argv.slice(1));
   const opts = parse(argv);
   if (isResult(opts)) return opts;
