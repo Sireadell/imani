@@ -7,6 +7,8 @@ import * as lib from "../src/index.ts";
 const doc = readFileSync("docs/LIBRARY.md", "utf8");
 const documented = new Set([...doc.matchAll(/^\|\s*`([A-Za-z0-9_]+)`\s*\|/gm)].map((m) => m[1]));
 const source = readFileSync("src/index.ts", "utf8");
+// Types are exported either as `type Name` inside a list, or in an `export type { A, B }` line.
+const typeLines = new Set([...source.matchAll(/export type \{([^}]*)\}/g)].flatMap((m) => m[1].split(",").map((x) => x.trim())));
 
 test("every name the package exports at run time is documented in docs/LIBRARY.md", () => {
   const missing = Object.keys(lib).filter((n) => !documented.has(n));
@@ -15,7 +17,7 @@ test("every name the package exports at run time is documented in docs/LIBRARY.m
 
 test("every name documented in docs/LIBRARY.md is exported (as a value or a type)", () => {
   const runtime = new Set(Object.keys(lib));
-  const stale = [...documented].filter((n) => !runtime.has(n) && !new RegExp("\\btype " + n + "\\b").test(source));
+  const stale = [...documented].filter((n) => !runtime.has(n) && !typeLines.has(n) && !new RegExp("\\btype " + n + "\\b").test(source));
   assert.deepEqual(stale, [], `docs/LIBRARY.md names something src/index.ts does not export: ${stale.join(", ")}`);
 });
 
