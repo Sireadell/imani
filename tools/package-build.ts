@@ -1,7 +1,7 @@
 // Builds dist/ for the npm package. Run: npm run build (npm pack and npm publish run it first).
 //
 // Why: Node refuses to run .ts files that sit inside node_modules, so an installed copy of this
-// package cannot run src/ directly. dist/cli.js and dist/login.js are the same code as src/,
+// package cannot run src/ directly. dist/cli.js, dist/login.js and dist/index.js are the same code as src/,
 // bundled into plain JavaScript. The WebAssembly decoder stays in vendor/decoder (checked
 // against SHA256SUMS first) and is loaded from there at run time.
 import { build, type Plugin } from "esbuild";
@@ -32,7 +32,7 @@ export async function buildPackage(outDir = p("dist")): Promise<void> {
   verifyVendor();
   rmSync(outDir, { recursive: true, force: true });
   await build({
-    entryPoints: { cli: p("src/cli.ts"), login: p("src/login/index.ts") },
+    entryPoints: { cli: p("src/cli.ts"), login: p("src/login/index.ts"), index: p("src/index.ts") },
     outdir: outDir,
     bundle: true,
     platform: "node",
@@ -43,7 +43,7 @@ export async function buildPackage(outDir = p("dist")): Promise<void> {
     plugins: [vendorPath],
     logLevel: "warning",
   });
-  // Type definitions for imani/login, so TypeScript users get types from the installed package.
+  // Type definitions for imani and imani/login, so TypeScript users get types from the installed package.
   const tsc = join(dirname(createRequire(import.meta.url).resolve("typescript/package.json")), "bin", "tsc");
   execFileSync(process.execPath, [tsc, "-p", p("tsconfig.types.json"), "--outDir", join(outDir, "types")], { cwd: root, stdio: "inherit" });
   // The sources import each other with .ts endings. In the shipped definitions, point them at .js.
@@ -59,5 +59,5 @@ export async function buildPackage(outDir = p("dist")): Promise<void> {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   await buildPackage();
-  console.log("Built dist/cli.js, dist/login.js and dist/types/");
+  console.log("Built dist/cli.js, dist/login.js, dist/index.js and dist/types/");
 }

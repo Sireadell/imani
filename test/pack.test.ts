@@ -40,6 +40,19 @@ test("the packed tarball installs in an empty folder and checks a lot, within 12
     writeFileSync(join(app, "login-check.mjs"), 'import { LoginKit } from "imani/login"; console.log(typeof LoginKit);');
     const login = sh("node", ["login-check.mjs"], app);
     assert.match(login, /function/);
+    // The checker is importable by package name, and a broken copy fails through the same call.
+    const lib = [
+      'import { readFileSync } from "node:fs";',
+      'import { checkLot, makeBidLink, decide } from "imani";',
+      'const read = (p) => JSON.parse(readFileSync(p, "utf8"));',
+      `const dir = ${JSON.stringify(ex("round-01"))};`,
+      'const v = checkLot(read(dir + "/disclosure.json"), read(dir + "/result.json"));',
+      `const bad = checkLot(read(${JSON.stringify(ex("broken/04-short-refund/disclosure.json"))}), read(${JSON.stringify(ex("broken/04-short-refund/result.json"))}));`,
+      'console.log(v.result, v.checks.length, bad.result, bad.failed.join(","), typeof makeBidLink, typeof decide);',
+    ].join(String.fromCharCode(10));
+    writeFileSync(join(app, "lib-check.mjs"), lib);
+    assert.equal(sh("node", ["lib-check.mjs"], app).trim(), "PASS 15 FAIL refunds-paid function function");
+    assert.ok(readdirSync(join(app, "node_modules", "imani", "dist", "types")).includes("index.d.ts"));
     // TypeScript users get types for imani/login from the installed package.
     assert.ok(readdirSync(join(app, "node_modules", "imani", "dist", "types", "login")).includes("index.d.ts"));
   } finally {

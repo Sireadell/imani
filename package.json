@@ -17,7 +17,13 @@
     "THIRD_PARTY.md",
     "LICENSE"
   ],
+  "main": "./dist/index.js",
+  "types": "./dist/types/index.d.ts",
   "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/index.js"
+    },
     "./login": {
       "types": "./dist/types/login/index.d.ts",
       "default": "./dist/login.js"
