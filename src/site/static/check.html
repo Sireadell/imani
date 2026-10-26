@@ -39,6 +39,8 @@
         <div><label for="f-to">Last block</label><input id="f-to" class="field" inputmode="numeric"></div>
         <div><label for="f-items">Items for sale</label><input id="f-items" class="field" inputmode="numeric"></div>
         <div><label for="f-reserve">Reserve, in zatoshis</label><input id="f-reserve" class="field" inputmode="numeric"></div>
+        <div><label for="f-pricing">What winners pay</label><select id="f-pricing" class="field"><option value="highest-losing">The highest bid that lost</option><option value="lowest-winning">The lowest bid that won</option></select></div>
+        <div><label for="f-topups">Raising a bid</label><select id="f-topups" class="field"><option value="no">A second payment with the same memo is a replay</option><option value="yes">A second payment with the same memo adds to the bid</option></select></div>
         <div><label for="f-close">Last block a bid counts (optional)</label><input id="f-close" class="field" inputmode="numeric"></div>
         <div><label for="f-lot">Lot name (optional)</label><input id="f-lot" class="field"></div>
       </div>

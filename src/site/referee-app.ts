@@ -171,7 +171,7 @@ function renderChecks(out: HTMLElement, o: Extract<RefereeOutcome, { ok: true }>
   out.appendChild(el("h3", undefined, "What this check does not prove"));
   const ul = el("ul");
   ul.appendChild(el("li", undefined, "There is no seller list here to compare with. So 'the seller left out a bid' cannot be tested. A bid is missed only if it never reached this lot's address, which the key would show."));
-  ul.appendChild(el("li", undefined, "The rules used are the ones you typed (items and reserve) and Imani's price rule: the highest bid that did not win sets the price, never below the reserve."));
+  ul.appendChild(el("li", undefined, `The rules used are the ones you chose above: the items and reserve you typed, and the price rule ${o.round.pricing === "lowest-winning" ? "where the lowest bid that won sets the price" : "where the highest bid that did not win sets the price, never below the reserve"}. ${o.round.topUps ? "Several payments with the same memo before the close were added up as one bid." : "A second payment with the same memo counted as a replay, not as a higher bid."}`));
   if (o.closeAssumed) ul.appendChild(el("li", undefined, "No close block was given, so every bid in the range counted as on time."));
   ul.appendChild(el("li", undefined, "Who a refund was sent to is not shown by the lot key alone, unless bidders wrote their refund address in the bid memo."));
   out.appendChild(ul);
@@ -203,6 +203,8 @@ function readFields(): RoundFields | null {
     to,
     itemCount: num("f-items"),
     reserveZat: num("f-reserve"),
+    pricing: $<HTMLSelectElement>("f-pricing").value === "lowest-winning" ? "lowest-winning" : "highest-losing",
+    topUps: $<HTMLSelectElement>("f-topups").value === "yes",
     closeHeight: closeText === "" ? undefined : Number(closeText.replace(/[,\s]/g, "")),
     lotId: lotText === "" ? undefined : lotText,
   };
@@ -321,6 +323,8 @@ function fillExample() {
   $<HTMLInputElement>("f-reserve").value = EXAMPLE.reserve;
   $<HTMLInputElement>("f-close").value = EXAMPLE.close;
   $<HTMLInputElement>("f-lot").value = EXAMPLE.lot;
+  $<HTMLSelectElement>("f-pricing").value = "highest-losing";
+  $<HTMLSelectElement>("f-topups").value = "no";
 }
 
 fillExample();

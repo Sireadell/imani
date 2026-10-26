@@ -19,6 +19,14 @@ This is how a seller publishes a sealed-bid auction so anyone can check it, and 
 
 Example (round-01): 2 items, reserve 1,000,000. Bids of 3,000,000, 2,000,000 and 1,500,000 arrive on time, 1,200,000 arrives late. The two highest win, the price is 1,500,000, Alice gets 1,500,000 back, Bob 500,000, Carol 1,500,000 and Dave 1,200,000.
 
+### Choosing the price rule
+
+The rules may carry `"pricing"`. Without it, or with `"highest-losing"`, step 3 is as written above. With `"lowest-winning"`, every winner pays the lowest bid that won (never below the reserve, since every winner is at or above it), so the last bidder in pays exactly what they bid. Everything else, the ranking, the reserve, the change and the refunds, is the same. The result file must repeat the same `pricing` or `result-consistent` fails, and at the basic level `clearing-range` requires the price to equal the lowest listed winning bid. Example: `examples/pricing-01` (3 items, bids 3,000,000, 2,000,000 and 1,500,000, price 1,500,000) with five broken copies in `examples/pricing-broken/`. Sealed lots use the default rule.
+
+### Raising a bid (top-ups)
+
+The rules may carry `"topUps": true`. Then a bidder can pay again, before the close, with the same bid memo. All on-time payments under one memo are added up and count as one bid: it is identified by its first payment, its amount is the sum, and for ranking it sits at the block of its last counted payment (so a bidder who tops up to a tie ranks behind the earlier equal bid). A payment after the close never joins a bid: it stands alone as a late bid and is returned in full. One refund per bid, paid under the first payment's id, covers the whole amount owed. Without `"topUps": true`, a second payment under a used memo is a replay, as before. The result file must repeat `topUps` or `result-consistent` fails. Because the memo is the bidder code, a bidder who wants to raise their bid must reuse the exact same memo, including any refund address written in it.
+
 ## Disclosure file
 
 | Field | Meaning |
@@ -30,7 +38,7 @@ Example (round-01): 2 items, reserve 1,000,000. Bids of 3,000,000, 2,000,000 and
 | `openHeight` | First block height at which a bid counts. Needed only for the scan level |
 | `refundByHeight` | Last block height by which every refund is paid. Needed only for the scan level |
 | `openByHeight` | Sealed lots only: last block height at which a seal can be opened (see "Sealed lots") |
-| `rules` | `{ "itemCount": 2, "reserveZat": 1000000 }` |
+| `rules` | `{ "itemCount": 2, "reserveZat": 1000000 }`, optionally with `"pricing": "lowest-winning"` and `"topUps": true` (see "Choosing the price rule" and "Raising a bid") |
 | `ufvk` | The lot's read-only viewing key, starting `uview1` (main) or `uviewtest1` (test). Optional: without it only the basic level runs |
 | `transactions` | Every bid and refund transaction of the lot: `{ "txid", "height", "txHex" }` |
 | `refundAddresses` | Optional. The address each bid's refund must go to: `[{ "bidTxid", "address" }]`, one per bid. A unified (`u1...`, `utest1...`) or Sapling address. When present, the key level adds the check `refund-receivers`. Not needed when the bidders wrote their address in their bid memo (see "Refund address in the bid memo"). Files without either check exactly as before |

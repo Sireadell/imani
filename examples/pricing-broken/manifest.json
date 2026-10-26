@@ -1,0 +1,56 @@
+{
+  "about": "Broken copies of examples/pricing-01, a lot where winners pay the lowest winning bid. Each copy is a different cheat and fails on the checks listed.",
+  "copies": [
+    {
+      "name": "01-uses-the-other-price-rule",
+      "changed": "result.json",
+      "expectedFailingCheck": "clearing-range",
+      "expectedFailingChecks": [
+        "clearing-range",
+        "refund-total",
+        "winners-and-price"
+      ],
+      "story": "The lot says winners pay the lowest winning bid, 1,500,000. The seller's result charges 1,000,000, the price the default rule would give for these bids."
+    },
+    {
+      "name": "02-rule-changed-in-the-result",
+      "changed": "result.json",
+      "expectedFailingCheck": "result-consistent",
+      "expectedFailingChecks": [
+        "result-consistent"
+      ],
+      "story": "The disclosure says the lowest winning bid sets the price. The seller's result file quotes the other rule, the highest losing bid."
+    },
+    {
+      "name": "03-rule-dropped-from-the-disclosure",
+      "changed": "disclosure.json",
+      "expectedFailingCheck": "refunds-paid",
+      "expectedFailingChecks": [
+        "refunds-paid",
+        "result-consistent",
+        "winners-and-price"
+      ],
+      "story": "The seller's disclosure no longer says which price rule the lot ran under, so the checker applies the default rule while the result was built on the lowest winning bid."
+    },
+    {
+      "name": "04-leaves-out-the-lowest-winner",
+      "changed": "result.json",
+      "expectedFailingCheck": "bid-count",
+      "expectedFailingChecks": [
+        "bid-count",
+        "refund-total",
+        "winners-and-price"
+      ],
+      "story": "Carol's 1,500,000 is on the chain but the seller's list leaves it out and raises the price to Bob's bid, 2,000,000."
+    },
+    {
+      "name": "05-lists-a-smaller-refund-for-a-winner",
+      "changed": "result.json",
+      "expectedFailingCheck": "refund-total",
+      "expectedFailingChecks": [
+        "refund-total"
+      ],
+      "story": "Alice's change on the chain is 1,500,000. The seller's books list 1,000,000, as if the price were 2,000,000 for her."
+    }
+  ]
+}

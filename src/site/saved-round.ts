@@ -10,6 +10,8 @@ export interface RoundFields {
   to: number;
   itemCount: number;
   reserveZat: number;
+  pricing?: "highest-losing" | "lowest-winning";
+  topUps?: boolean;
   closeHeight?: number;
   lotId?: string;
 }

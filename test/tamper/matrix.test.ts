@@ -36,6 +36,7 @@ const ROUNDS: Record<string, Files> = {
   "scan-01": { d: ex("scan-01/disclosure.json"), r: ex("scan-01/result.json"), chain: ex("scan-01/chain.json") },
   "testnet-01": { d: ex("testnet-01/disclosure.json"), r: ex("testnet-01/result.json"), chain: ex("testnet-01/chain.json") },
   "sealed-01": { d: ex("sealed-01/disclosure.json"), r: ex("sealed-01/result.json") },
+  "pricing-01": { d: ex("pricing-01/disclosure.json"), r: ex("pricing-01/result.json") },
 };
 
 function scanOf(d: any, chain: any): ScanInput | undefined {

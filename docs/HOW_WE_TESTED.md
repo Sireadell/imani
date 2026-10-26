@@ -9,25 +9,25 @@ npm ci
 npm run test:all
 ```
 
-<!--count:total-->1218<!--/count--> tests in <!--count:groups-->9<!--/count--> groups. On a normal run <!--count:pass-->1215<!--/count--> pass and <!--count:skipped-->3<!--/count--> are skipped: the two live tests below, which read from public servers only when you ask. Expect about six minutes on a laptop. GitHub runs the same suite on every push, on Windows and on Linux (`.github/workflows/ci.yml`), after a type check and both leak scans.
+<!--count:total-->1347<!--/count--> tests in <!--count:groups-->9<!--/count--> groups. On a normal run <!--count:pass-->1344<!--/count--> pass and <!--count:skipped-->3<!--/count--> are skipped: the two live tests below, which read from public servers only when you ask. Expect about six minutes on a laptop. GitHub runs the same suite on every push, on Windows and on Linux (`.github/workflows/ci.yml`), after a type check and both leak scans.
 
 <!-- test-groups:start -->
 | Command | What it covers | Tests | Skipped |
 |---|---|---|---|
-| `npm run test` | The checker: reading payments with a viewing key, the auction rules, each check level, the bidder's own check, refusing spending keys, the packed package, the leak scanner | 131 | 0 |
+| `npm run test` | The checker: reading payments with a viewing key, the auction rules, each check level, the bidder's own check, refusing spending keys, the packed package, the leak scanner | 147 | 0 |
 | `npm run test:login` | Sign-in with a private wallet: one-time codes, expiry, replays, copied links, wrong sites, the receipt, a real test-network payment | 76 | 0 |
 | `npm run test:fetch` | Downloading blocks from two public servers and checking they agree | 35 | 2 (live, needs `LIVE=1`) |
 | `npm run test:demo` | The auction shop demo, from sign-in to the checked result | 11 | 0 |
 | `npm run test:scan` | The scan that reads every block of an auction to find bids the seller left out | 32 | 1 (live, needs `LIVE=1`) |
-| `npm run test:site` | The browser page and the page that checks any round: same answers as the command line, no network call until the reader says yes, and a saved-file check with none | 58 | 0 |
-| `npm run test:tamper` | Change one fact at a time in every example round; none of the changed copies may pass | 856 | 0 |
+| `npm run test:site` | The browser page and the page that checks any round: same answers as the command line, no network call until the reader says yes, and a saved-file check with none | 60 | 0 |
+| `npm run test:tamper` | Change one fact at a time in every example round; none of the changed copies may pass | 967 | 0 |
 | `npm run test:external` | Rounds another auction project published, read from their own files | 8 | 0 |
 | `npm run test:privacy` | Refund linking, the who-learns-what table, keys never printed or saved | 11 | 0 |
 <!-- test-groups:end -->
 
 ## Changing one fact at a time
 
-`npm run test:tamper` runs <!--count:test:tamper-->856<!--/count--> tests. It takes every honest example round and changes one thing a seller could change in the published files (a bid amount off by one zatoshi, the price, a winner, a refund, a payment left out or listed twice, a bid moved past the close, another lot's key, two refund addresses swapped), one at a time. None of the changed copies may pass. The expected answers were written at the top of `test/tamper/matrix.test.ts` before the first run. That run found one real gap: a refund for a late bid, left out of the seller's files, passed at the key level. It is fixed in `src/check.ts` and the test now guards it.
+`npm run test:tamper` runs <!--count:test:tamper-->967<!--/count--> tests. It takes every honest example round and changes one thing a seller could change in the published files (a bid amount off by one zatoshi, the price, a winner, a refund, a payment left out or listed twice, a bid moved past the close, another lot's key, two refund addresses swapped), one at a time. None of the changed copies may pass. The expected answers were written at the top of `test/tamper/matrix.test.ts` before the first run. That run found one real gap: a refund for a late bid, left out of the seller's files, passed at the key level. It is fixed in `src/check.ts` and the test now guards it.
 
 It also checks the opposite: reordering lists or fields changes nothing, and the same round checked twice gives the same verdict word for word.
 

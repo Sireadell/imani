@@ -60,7 +60,19 @@ export interface AuctionRules {
   itemCount: number;
   /** Lowest price the seller accepts, in zatoshis (1 ZEC = 100,000,000 zatoshis). */
   reserveZat: number;
+  /**
+   * What every winner pays. "highest-losing" (the default): the highest bid that did not win, never below the reserve.
+   * "lowest-winning": the lowest bid that won, so the last bidder in pays exactly what they bid.
+   */
+  pricing?: PricingRule;
+  /**
+   * When true, a bidder may pay again before the close with the same bid memo to raise their bid. All their on-time
+   * payments under that memo are added up and count as one bid. When false or missing, a repeated memo is a replay.
+   */
+  topUps?: boolean;
 }
+
+export type PricingRule = "highest-losing" | "lowest-winning";
 
 /**
  * Sealed lot: every bidder pays the same fixed deposit with only a hash of the price in the memo,

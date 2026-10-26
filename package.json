@@ -50,6 +50,7 @@
     "relay:build": "node --disable-warning=ExperimentalWarning tools/relay-build.ts",
     "site:serve": "node --disable-warning=ExperimentalWarning tools/site-serve.ts",
     "examples:memo": "node --disable-warning=ExperimentalWarning tools/make-memo-examples.ts",
+    "examples:pricing": "node --disable-warning=ExperimentalWarning tools/make-pricing-examples.ts",
     "examples:sealed": "node --disable-warning=ExperimentalWarning tools/make-sealed-examples.ts",
     "examples:receivers": "node --disable-warning=ExperimentalWarning tools/make-receiver-examples.ts",
     "test:tamper": "tsx --test test/tamper/*.test.ts",
