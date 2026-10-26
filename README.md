@@ -2,7 +2,15 @@
 
 *Imani means "trust" in Swahili.*
 
-Imani checks that a sealed-bid auction on Zcash was run fairly. When bidding closes, the seller publishes a read-only viewing key for that one lot: it can show the lot's private payments but can never spend them. Imani reads the bids and refunds with that key and public chain data, works out the winners, the price and every refund again, and compares them with the seller's published result. You get PASS or FAIL, with the failed check named. It's built for bidders who want to know their bid was counted and their refund was right, and for sellers who want to show a clean round. Since the key and the blocks are public, anyone else can run it too.
+Imani is a Zcash tool: a TypeScript library and a command line that read shielded Zcash payments with a read-only viewing key and check them against what someone published about them.
+
+| Part | What it is |
+|---|---|
+| Payment reader | librustzcash, Zcash's own Rust code, compiled to WebAssembly (a format that runs the same code in Node and in a web browser). It reads Orchard and Ironwood payments, their amounts and memos, with a ZIP 316 viewing key, and refuses spending keys and seed phrases. Source in [tools/decoder](tools/decoder) |
+| Checker library | `checkLot` in [src/check.ts](src/check.ts): give it a round's files and it returns PASS or FAIL with every check named. The browser page runs the same code |
+| Command line | `imani check` checks a whole round from one read-only viewing key plus public chain data. With `--fetch` it downloads every block from two block servers run by different people and passes only when both agree. Or point it at your own lightwalletd server or Zebra node |
+
+The job it does today is checking sealed-bid auctions on Zcash. When bidding closes, the seller publishes a read-only viewing key for that one lot: it can show the lot's private payments but can never spend them. Imani reads the bids and refunds with that key and public chain data, works out the winners, the price and every refund again, and compares them with the seller's published result. You get PASS or FAIL, with the failed check named. It's built for bidders who want to know their bid was counted and their refund was right, and for sellers who want to show a clean round. Since the key and the blocks are public, anyone else can run it too.
 
 There's a smaller second tool in the box: a sign-in button any website can add, where you log in by sending a tiny private payment from a shielded Zcash wallet. [More below](#also-sign-in-by-paying-from-a-private-zcash-wallet).
 
@@ -25,10 +33,10 @@ It checks one small auction three ways in about two seconds, with no internet. T
 |---|---|---|
 | Privacy | `npx imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --offline --discreet` | `Servers contacted: none`, `RESULT: PASS (16 of 16 checks passed)`, and no amount, memo or address anywhere in the output. The key is accepted as read-only and is never printed or saved. Then `npx imani linking examples/testnet-01/disclosure.json` prints `RESULT: NO LINKS OUTSIDE THE ROUND`: no refund can be followed past the bid it pays back. Who can learn what: [docs/WHO_LEARNS_WHAT.md](docs/WHO_LEARNS_WHAT.md) |
 | Usefulness | `npx imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --mine 2f5e8f4f37` | One bidder's answer from the real round: `Your bid: counted, 1,500,000 zat.`, it did not win, the whole bid is owed back, and the refund went to the address that bidder wrote in their bid memo. For any round, open https://imani-check.vercel.app/check.html, paste its viewing key and blocks, and get PASS or FAIL from the chain alone |
-| Execution | `npx imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --fetch` | Downloads the real round's 34 blocks from two public test-network servers run by different people, which must agree on every block, then `RESULT: PASS (21 of 21 checks passed)` in about 40 seconds. Use `--chain examples/testnet-01/chain.json` instead of `--fetch` to read the saved copy offline in about 3 seconds |
-| Originality | `git log --reverse --format="%ad %s" --date=short` | The first commit, dated 2026-10-07. The build window opened on 2026-09-28 |
+| Execution | `npx imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --fetch` | Downloads the real round's 34 blocks from two public test-network servers run by different people, which must agree on every block, then `RESULT: PASS (21 of 21 checks passed)` in about a minute. Use `--chain examples/testnet-01/chain.json` instead of `--fetch` to read the saved copy offline in about 3 seconds |
+| Originality | [examples/testnet-01/README.md](examples/testnet-01/README.md), no git needed | The real round was paid on the public Zcash test network on 2026-10-11, and each payment's explorer link shows its block and date on the chain, which nobody can backdate. The build window opened on 2026-09-28. In a git clone, `git log --reverse --format="%ad %s" --date=short` also shows the first commit, dated 2026-10-07 (this needs the clone, a ZIP download has no history) |
 
-The whole test suite is `npm run test:all` (about six minutes). `npm test` runs the checker's own tests in about a minute.
+The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs the checker's own tests in about a minute.
 
 ## Real counts
 
@@ -38,9 +46,9 @@ The whole test suite is `npm run test:all` (about six minutes). `npm test` runs 
 | Tests that change one fact at a time and must never pass | <!--count:test:tamper-->1127<!--/count--> | `npm run test:tamper` |
 | Example rounds | 10 that pass: 1 real, 9 made up offline with throwaway keys | `examples/` |
 | Broken copies | 42 in 9 folders, each named for what the seller changed, and all 42 fail | `examples/*broken*/manifest.json` |
-| Real round on the Zcash test network | `testnet-01`: 3 bids and 3 refunds, all paid into the Ironwood pool, 34 blocks holding 80 transactions, 21 of 21 checks pass | [examples/testnet-01/README.md](examples/testnet-01/README.md), with an explorer link for each payment |
+| Real round on the Zcash test network | `testnet-01`, lot name `DRY-01` (DRY for dry run: a real round paid with test coins before any real money). 3 bids and 3 refunds, all paid into the Ironwood pool, 34 blocks holding 80 transactions, 21 of 21 checks pass | [examples/testnet-01/README.md](examples/testnet-01/README.md), with an explorer link for each payment |
 
-## New this week
+## What else it checks and makes
 
 | Feature | What it does | Try it |
 |---|---|---|

@@ -14,7 +14,8 @@
   <div class="wrap">
     <nav class="nav" aria-label="Pages"><a href="check.html">Check any round</a> <a href="rounds.html">Checked rounds</a></nav>
     <h1>Imani auction check</h1>
-    <p class="lead">Was this sealed-bid auction on Zcash run fairly? This page works it out again from the seller's own files. It runs in your browser and uploads nothing.</p>
+    <p class="lead">Imani is a Zcash library and command line. It reads shielded payments with librustzcash, Zcash's own code, built to WebAssembly so it runs right here in your browser. It checks a whole round from one read-only viewing key plus public chain data, and its command line can download every block from two independent block servers that must agree.</p>
+    <p class="lead">This page puts it to work on one question: was this sealed-bid auction on Zcash run fairly? It works the result out again from the seller's own files. It runs in your browser and uploads nothing.</p>
     <ul class="adds">
       <li><strong>Finds bids the seller left out.</strong> It reads every block of the auction, not only the payments the seller lists.</li>
       <li><strong>The bidder picks the refund address.</strong> It is written in the bid memo on the chain, so the seller cannot swap it.</li>
@@ -30,7 +31,7 @@
 <main class="wrap">
   <section aria-labelledby="pick-h">
     <h2 id="pick-h">1. Pick something to check</h2>
-    <p class="muted">The page opens on a real auction: a real Zcash wallet paid these bids and refunds on the public Zcash test network. Test coins have no value.</p>
+    <p class="muted">The page opens on a real auction: a real Zcash wallet paid these bids and refunds on the public Zcash test network. Test coins have no value. Its lot name, DRY-01, stands for dry run: a real round paid with test coins before any real money.</p>
     <div class="chips" id="chips-real" role="group" aria-label="Real round and its tampered copies"></div>
     <div id="explorer-box"></div>
     <h3>Made-up rounds, one cheat at a time</h3>

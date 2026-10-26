@@ -1,6 +1,6 @@
 # How big a round can it check?
 
-A big Zcash auction this year had 16,971 sealed bids. This page says what Imani does at that size, what was measured, and what was not.
+There was a 16,971-bid sealed auction on Zcash this year. This page says what Imani does at that size, what was measured, and what was not.
 
 ## What was run
 
