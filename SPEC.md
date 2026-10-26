@@ -1,5 +1,7 @@
 # imani lot check: file formats and rules (version 1)
 
+Publishing these files from your own project? The field-by-field format, examples and conformance kit are in [docs/FORMAT.md](docs/FORMAT.md).
+
 This is how a seller publishes a sealed-bid auction so anyone can check it, and what the checker does with it. Amounts are in zatoshis (1 ZEC = 100,000,000 zatoshis).
 
 ## How a lot works
