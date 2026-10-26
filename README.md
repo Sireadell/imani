@@ -7,8 +7,16 @@ Imani is a Zcash tool: a TypeScript library and a command line that read shielde
 | Part | What it is |
 |---|---|
 | Payment reader | librustzcash, Zcash's own Rust code, compiled to WebAssembly (a format that runs the same code in Node and in a web browser). It reads Orchard and Ironwood payments, their amounts and memos, with a ZIP 316 viewing key, and refuses spending keys and seed phrases. Source in [tools/decoder](tools/decoder) |
-| Checker library | `checkLot` in [src/check.ts](src/check.ts): give it a round's files and it returns PASS or FAIL with every check named. The browser page runs the same code |
+| Library | `import { checkLot } from "imani"`, plus the reader, the bid-link maker and the rest. The command line and the browser page run the same code |
 | Command line | `imani check` checks a whole round from one read-only viewing key plus public chain data. With `--fetch` it downloads every block from two block servers run by different people and passes only when both agree. Or point it at your own lightwalletd server or Zebra node |
+
+```js
+import { checkLot } from "imani";
+const verdict = checkLot(disclosure, result); // the seller's two published files, as parsed JSON
+console.log(verdict.result, verdict.failed);   // PASS [], or FAIL [ 'refunds-paid' ] for a short refund
+```
+
+Every function and type, what it takes, and whether it uses the network: [docs/LIBRARY.md](docs/LIBRARY.md). To run a worked example: `npm run build`, then `node examples/library/check-a-round.mjs`.
 
 The job it does today is checking sealed-bid auctions on Zcash. When bidding closes, the seller publishes a read-only viewing key for that one lot: it can show the lot's private payments but can never spend them. Imani reads the bids and refunds with that key and public chain data, works out the winners, the price and every refund again, and compares them with the seller's published result. You get PASS or FAIL, with the failed check named. It's built for bidders who want to know their bid was counted and their refund was right, and for sellers who want to show a clean round. Since the key and the blocks are public, anyone else can run it too.
 
@@ -38,6 +46,15 @@ It checks one small auction three ways in about two seconds, with no internet. T
 
 The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs the checker's own tests in about a minute.
 
+## Core & Tooling, line by line
+
+| Line | What Imani has | File | Command |
+|---|---|---|---|
+| Zebra | A `zebra+http://` source that reads blocks straight from your own Zebra node, with Zebra's cookie password read from its `.cookie` file and never printed. Tested against a fake node that answers like Zebra's own code, filled with real test-network blocks. It has not been run against a real Zebra node yet | [src/fetch/zebra.ts](src/fetch/zebra.ts), tests in [test/fetch/zebra.test.ts](test/fetch/zebra.test.ts) | `npx tsx --test test/fetch/zebra.test.ts`. With a node of your own: `LIVE=1 IMANI_ZEBRA_URL=zebra+http://127.0.0.1:18232 npm run test:fetch` |
+| librustzcash | The payment reader is librustzcash compiled to WebAssembly: zcash_client_backend 0.25.0-pre.1, zcash_primitives 0.31.0-pre.1, zcash_keys 0.17.0-pre.1, zcash_protocol 0.11.0-pre.0, orchard 0.16.0, sapling-crypto 0.9.0. It reads up to NU7. The SHA-256 of every built file is checked by a test | [tools/decoder/Cargo.toml](tools/decoder/Cargo.toml), built files and [SHA256SUMS](vendor/decoder/SHA256SUMS) in `vendor/decoder` | `bash tools/decoder/build.sh` rebuilds it, `npx tsx --test test/vendor.test.ts` checks the hashes |
+| Indexers | A small lightwalletd client written by hand (no extra packages), which also talks to Zaino. Every block and transaction must come back the same from two servers run by different people, and every transaction id is worked out again from the bytes | [src/fetch/grpc.ts](src/fetch/grpc.ts), [src/scan/fetch-blocks.ts](src/scan/fetch-blocks.ts), [docs/fetch/DESIGN.md](docs/fetch/DESIGN.md) | `npm run test:fetch` (fake servers, no network). Live: `npx imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --fetch` |
+| Wallet SDKs | A library other wallets and apps can import. It accepts only ZIP 316 read-only viewing keys and refuses spending keys and seed phrases. It makes ZIP 321 `zcash:` bid links with QR codes, which a test scans back with a separate QR reader | [src/index.ts](src/index.ts), [docs/LIBRARY.md](docs/LIBRARY.md), [src/bidlink.ts](src/bidlink.ts) | `node examples/library/check-a-round.mjs` after `npm run build`, `npx tsx --test test/check.test.ts test/bidlink.test.ts` |
+
 ## Real counts
 
 | What | Count | Where it comes from |
@@ -59,7 +76,7 @@ The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs
 | Bid links with QR codes | `imani bid-link` turns a bid into a ZIP 321 `zcash:` payment link and QR code, so a wallet fills in the address, amount and memo | [docs/BID_LINK.md](docs/BID_LINK.md) |
 | Seller kit | `imani lot-new` sets up a lot and `imani settle` works out every refund owed and writes the two files to publish | [docs/SELLER_KIT.md](docs/SELLER_KIT.md) |
 | Checked rounds list | One page with every round we ship or have checked, each with a button to re-check it in your browser | https://imani-check.vercel.app/rounds.html |
-| Scale test | 17,000 generated payments, the size of a 16,971-bid sealed auction on Zcash this year: the seller-file checks take well under a second (about 50 ms in the scale notes, 143 ms on our last run). Reading real transactions with a key measured 16.8 ms each, so about 5 minutes for 17,000. That second figure is an estimate, not a run | `npx tsx --test test/scale.test.ts`, notes in [docs/SCALE.md](docs/SCALE.md) |
+| Scale test | 17,000 generated payments, the size of a 16,971-bid sealed auction on Zcash this year, as reported in the press: the seller-file checks take well under a second (about 50 ms in the scale notes, 143 ms on our last run). Reading real transactions with a key measured 16.8 ms each, so about 5 minutes for 17,000. That second figure is an estimate, not a run | `npx tsx --test test/scale.test.ts`, notes in [docs/SCALE.md](docs/SCALE.md) |
 
 The 17,000 payments are made-up amounts built from a fixed seed. Imani has not been run on that real auction's data.
 
