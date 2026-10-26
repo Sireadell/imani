@@ -2,53 +2,82 @@
 
 *Imani means "trust" in Swahili.*
 
-After a sealed-bid auction on Zcash closes, the seller shares a one-time read-only viewing key for that lot. Imani reads the lot's private payments with that key, works out the bids, the winner, the clearing price and the refunds again, and compares them to the seller's published result: PASS or FAIL, with the failed check named.
+Imani checks that a sealed-bid auction on Zcash was run fairly. When bidding closes, the seller publishes a read-only viewing key for that one lot: it can show the lot's private payments but can never spend them. Imani reads the bids and refunds with that key and public chain data, works out the winners, the price and every refund again, and compares them with the seller's published result. You get PASS or FAIL, with the failed check named. It's built for bidders who want to know their bid was counted and their refund was right, and for sellers who want to show a clean round. Since the key and the blocks are public, anyone else can run it too.
 
-**Try it in your browser: https://imani-check.vercel.app** opens on a real auction from the Zcash test network and checks it on your own computer. You can also drop a seller's disclosure file and result file onto the page and get the verdict in the browser. After it loads, that page makes no network requests. The separate "Check any round" page (`check.html`) is different: it asks first, and only after you press its button does it fetch blocks through our site from two public Zcash servers, which see the block numbers you asked for. Your viewing key stays in your browser.
+There's a smaller second tool in the box: a sign-in button any website can add, where you log in by sending a tiny private payment from a shielded Zcash wallet. [More below](#also-sign-in-by-paying-from-a-private-zcash-wallet).
 
-## Try it in one minute
+## Try it in under a minute
 
-You need Node 22.18 or newer. In this folder:
+In your browser: **https://imani-check.vercel.app** opens on a real auction from the Zcash test network and checks it on your own computer. After it loads, that page makes no network requests.
+
+On your computer, with Node 22.18 or newer, in this folder:
 
 ```sh
 npm install
 npm run demo
 ```
 
-You will see three checks of the same small auction. The first is the honest round and ends with `RESULT: PASS`. The second is a copy where the seller paid a losing bidder 100,000 zatoshis too little, and it ends with `RESULT: FAIL (1 of 15 checks failed: refunds-paid)`. In the third, the seller left a 3,000,000 bid out of their files entirely. The normal check cannot see it, because it only reads what the seller lists. The scan reads every block of the auction and ends with `RESULT: FAIL (1 of 20 checks failed: scan-hidden-bids)`. It takes about two seconds and needs no internet.
+It checks one small auction three ways in about two seconds, with no internet. The honest round ends `RESULT: PASS`. A copy where the seller refunded a losing bidder 100,000 zatoshis short ends `RESULT: FAIL (1 of 15 checks failed: refunds-paid)`. In the third copy the seller left a 3,000,000 bid out of their files, and reading every block of the auction finds it: `RESULT: FAIL (1 of 20 checks failed: scan-hidden-bids)`.
 
-To check a real round, paid by a real wallet on the Zcash test network: `npx imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --chain examples/testnet-01/chain.json` ends with `RESULT: PASS (21 of 21 checks passed)`.
+## What to run for each judging line
 
-To check a lot yourself:
-
-```sh
-npx imani check --disclosure examples/round-01/disclosure.json --result examples/round-01/result.json --out report
-```
-
-This prints every check and writes `report/verdict.json` and `report/report.html` (open it in any browser, it works offline). Add `--discreet` to hide amounts, memos and addresses, `--offline` to make sure no connection is ever opened, or `--basic` to run only the checks that need no key. Nothing shaped like a key or seed phrase can be printed or written. `npm run leak-scan` checks every tracked file for keys, seed phrases and `.env` files (public test keys are listed with a reason in `tools/leak-scan.allow.json`). `npm run leak-scan:history` does the same for every file in every commit, so a key that was committed and later deleted is still found. CI runs both. Try the six broken copies in `examples/broken/`: each one fails on exactly one named check, listed in `examples/broken/manifest.json`.
-
-Bidders can add `--mine <your bid's transaction id>` (the first 10 characters are enough) to any check. It prints whether your bid was counted, whether it won, what should come back to you, and what the checks found about it. With `--scan` it also tells you if the seller left your bid out.
-
-To see how far a refund can be followed, run `npx imani linking examples/testnet-01/disclosure.json`. Inside a round each refund names its bid on purpose, so anyone can check it. The command counts the links that reach further: one receiver paid for two bids, or the same receiver paid in two rounds (give it several disclosures to compare rounds). A bidder who writes a fresh address in each bid memo leaves no such link.
-
-To also read every block of the auction, so a bid the seller left out still shows up:
-
-```sh
-npx imani check --disclosure examples/scan-01/disclosure.json --result examples/scan-01/result.json --scan --chain examples/scan-01/chain.json
-```
-
-This reads the blocks from a saved file. Use `--fetch` instead of `--chain` to download them from public Zcash servers (slower: about an hour for a day-long auction, see SPEC.md). `examples/scan-broken/` has three copies that only the scan catches: a hidden bid, a listed payment that is not on the chain in time, and a wrong block height.
-
-To also check where each refund went, the bidder can write their refund address at the end of their bid memo (`bid:<lot>:<word>:<address>`), so the seller cannot choose it. `examples/memo-01` passes and `examples/memo-broken/` has two copies that fail `refund-receivers`. Or the seller can list the address each bid's refund must go to (`refundAddresses` in the disclosure). `examples/receivers-01` passes, and `examples/receivers-broken/` has two copies that fail `refund-receivers`: a refund that went to a different address than the one listed, and a bid with no address listed. `npm run examples:receivers` rebuilds them.
-
-## More ways to use it
-
-| You are | Run | What you get |
+| Line | Run or open | What you will see |
 |---|---|---|
-| A bidder with no help from the seller | `npx imani bidder-check --facts lot-public.json --key-file my-viewing-key.txt --fetch --bid <txid>:<amount>` | Whether your bid landed on the chain inside the auction and whether your refund came back in full, from your own read-only key and public blocks only. On its own it cannot say whether you won or what the price was, and the report says NOT PROVEN there. Details: [docs/BIDDER_CHECK.md](docs/BIDDER_CHECK.md) |
-| Anyone with a round's viewing key | `node tools/referee-serve.ts`, then open http://localhost:8789/check.html | Paste the key and the blocks the auction ran in. The page counts the bids, finds the winners and the price, and checks every refund. Your key never leaves the browser: the page asks the small local program only for block numbers, and it gets each block from two public servers run by different operators that must agree |
-| Someone checking another project's round | Drop their round file on the checker page, or `npm run check:external -- <file>` | Their published result worked out again under their own rules. It reads only the numbers in the file. Details: [docs/EXTERNAL_ROUNDS.md](docs/EXTERNAL_ROUNDS.md) |
-| Running a fundraiser or group buy | Put `"kind": "goal"` and `"goalZat"` in the rules | The all-or-nothing rule: if the on-time payments reach the goal, all are kept, and if not, every one is refunded in full. Same files, same checks, plus `goal-reached`. Try `examples/goal-reached`, `examples/goal-missed` and the four broken copies in `examples/goal-broken/` |
+| Privacy | `npx imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --offline --discreet` | `Servers contacted: none`, `RESULT: PASS (16 of 16 checks passed)`, and no amount, memo or address anywhere in the output. The key is accepted as read-only and is never printed or saved. Then `npx imani linking examples/testnet-01/disclosure.json` prints `RESULT: NO LINKS OUTSIDE THE ROUND`: no refund can be followed past the bid it pays back. Who can learn what: [docs/WHO_LEARNS_WHAT.md](docs/WHO_LEARNS_WHAT.md) |
+| Usefulness | `npx imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --mine 2f5e8f4f37` | One bidder's answer from the real round: `Your bid: counted, 1,500,000 zat.`, it did not win, the whole bid is owed back, and the refund went to the address that bidder wrote in their bid memo. For any round, open https://imani-check.vercel.app/check.html, paste its viewing key and blocks, and get PASS or FAIL from the chain alone |
+| Execution | `npx imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --fetch` | Downloads the real round's 34 blocks from two public test-network servers run by different people, which must agree on every block, then `RESULT: PASS (21 of 21 checks passed)` in about 40 seconds. Use `--chain examples/testnet-01/chain.json` instead of `--fetch` to read the saved copy offline in about 3 seconds |
+| Originality | `git log --reverse --format="%ad %s" --date=short` | The first commit, dated 2026-10-07. The build window opened on 2026-09-28 |
+
+The whole test suite is `npm run test:all` (about six minutes). `npm test` runs the checker's own tests in about a minute.
+
+## Real counts
+
+| What | Count | Where it comes from |
+|---|---|---|
+| Tests | 1,534 in 9 groups, 1,531 pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
+| Tests that change one fact at a time and must never pass | 1,127 | `npm run test:tamper` |
+| Example rounds | 10 that pass: 1 real, 9 made up offline with throwaway keys | `examples/` |
+| Broken copies | 42 in 9 folders, each named for what the seller changed, and all 42 fail | `examples/*broken*/manifest.json` |
+| Real round on the Zcash test network | `testnet-01`: 3 bids and 3 refunds, all paid into the Ironwood pool, 34 blocks holding 80 transactions, 21 of 21 checks pass | [examples/testnet-01/README.md](examples/testnet-01/README.md), with an explorer link for each payment |
+
+## New this week
+
+| Feature | What it does | Try it |
+|---|---|---|
+| Sealed lots | Every bidder pays the same deposit and the memo holds only a sealed fingerprint of their price, so the seller can't read prices before the close. Bidders open their seal afterwards | `examples/sealed-01` passes, 8 broken copies in `examples/sealed-broken`. Plan: [docs/SELLER_BLIND_PLAN.md](docs/SELLER_BLIND_PLAN.md) |
+| Fundraisers and group buys | All or nothing: if on-time payments reach the goal they're all kept, and if not every one is refunded in full | `examples/goal-reached`, `examples/goal-missed`, 4 broken copies in `examples/goal-broken` |
+| Two price rules, and top-ups | Price at the highest losing bid or the lowest winning bid. With top-ups a bidder can raise their bid by paying again under the same memo before the close | `examples/pricing-01`, 5 broken copies in `examples/pricing-broken`. Top-ups are covered in `test/pricing.test.ts` |
+| Published totals | Payments, received, kept and refunded must add up and match the chain | `examples/totals-01`, 4 broken copies in `examples/totals-broken` |
+| Bid links with QR codes | `imani bid-link` turns a bid into a ZIP 321 `zcash:` payment link and QR code, so a wallet fills in the address, amount and memo | [docs/BID_LINK.md](docs/BID_LINK.md) |
+| Seller kit | `imani lot-new` sets up a lot and `imani settle` works out every refund owed and writes the two files to publish | [docs/SELLER_KIT.md](docs/SELLER_KIT.md) |
+| Checked rounds list | One page with every round we ship or have checked, each with a button to re-check it in your browser | https://imani-check.vercel.app/rounds.html |
+| Scale test | 17,000 generated payments, the size of a 16,971-bid sealed auction on Zcash this year: the seller-file checks take well under a second (about 50 ms in the scale notes, 143 ms on our last run). Reading real transactions with a key measured 16.8 ms each, so about 5 minutes for 17,000. That second figure is an estimate, not a run | `npx tsx --test test/scale.test.ts`, notes in [docs/SCALE.md](docs/SCALE.md) |
+
+The 17,000 payments are made-up amounts built from a fixed seed. Imani has not been run on that real auction's data.
+
+## Zcash pieces it uses
+
+| Piece | How |
+|---|---|
+| Viewing keys (ZIP 316 unified full viewing keys) | The only key the checker accepts (`uview1` or `uviewtest1`). Spending keys and seed phrases are refused |
+| Memos | Bids, refunds and seals are read from memos, and a bidder can put their own refund address at the end of their bid memo |
+| Orchard and Ironwood pools | Both are read. The real test-network round was paid entirely in Ironwood |
+| librustzcash | Our transaction reader is a thin wrapper around it, built to WebAssembly so the same code runs in Node and the browser. SHA-256 of each file is in [vendor/decoder/SHA256SUMS](vendor/decoder/SHA256SUMS), source in [tools/decoder](tools/decoder) |
+| lightwalletd and Zebra | `--fetch` reads blocks from two independent public sources that must agree. Or use your own lightwalletd server or Zebra node (see [Safety](#safety)) |
+| ZIP 321 payment requests | The `zcash:` links and QR codes made by `imani bid-link` |
+
+## What this is not
+
+- In a plain lot it doesn't prove the seller never looked at bids as they came in. It proves the counting, price and refunds are right. Sealed lots close that gap.
+- It needs the seller to publish the lot's viewing key. A seller who never does can't be checked past the basic level.
+- It isn't a zero-knowledge proof. You work the result out yourself from data the seller chose to share.
+- A payment sent through a NEAR Intents route carries no memo, so it can't be a bid and can't name a refund address. We haven't tested that route.
+- No PCZT and no FROST.
+- The bid link QR code has not yet been tested with a wallet. The link format and the QR are checked in tests, not by paying from one.
+- The 17,000-payment scale round is generated, not real.
+- <!-- MAINNET-LINE -->Our real round ran on the Zcash test network with test coins. We haven't run a round on mainnet.<!-- /MAINNET-LINE -->
+
+Every check and every known limit is in [SPEC.md](SPEC.md).
 
 ## Where every number comes from
 
@@ -59,21 +88,13 @@ To also check where each refund went, the bidder can write their refund address 
 | The seller's disclosure file | Close height, block height of each transaction, item count, reserve and, if listed, the refund address of each bid |
 | Every block of the auction, with `--scan` | Any payment the seller left out, and the real block height of each listed one |
 
-The checker works the result out again from the chain numbers and compares it with the seller's file. The report shows each check with PASS or FAIL, a one-line reason, and which numbers came from where.
-
-## What it is
-
-A checker for sealed-bid auctions on Zcash. The seller shares a one-time read-only key for the lot after the close, imani reads the lot's private payments with that key, works out the bid count, amounts, winners, price and refunds again, and compares them to the seller's published result: PASS or FAIL.
-
-It also ships a small second tool, a login button any website can add ([see below](#also-sign-in-with-a-private-zcash-wallet)).
-
-The file formats, price rule, every check and the known limits are in [SPEC.md](SPEC.md).
+The report shows each check with PASS or FAIL, a one-line reason, and which numbers came from where. Add `--out report` to also write `report/verdict.json` and `report/report.html`, which opens offline in any browser. A bidder with no help from the seller can run `imani bidder-check` with only their own viewing key ([docs/BIDDER_CHECK.md](docs/BIDDER_CHECK.md)). Rounds published by another Zcash auction project can be worked out again from their own files ([docs/EXTERNAL_ROUNDS.md](docs/EXTERNAL_ROUNDS.md)).
 
 ## Safety
 
-The checker only accepts a read-only viewing key (starts with `uview1` or `uviewtest1`). It refuses seed phrases and spending keys, never prints the key and never saves it. If the key shows payments that are not bids for the lot, the check fails and tells the seller to use a fresh key for every lot. By default it contacts no server and prints `Servers contacted: none`. Only `--scan --fetch` goes online. It asks for blocks by number, never sends a key, and prints every server it used. It reads each block from two public sources run by different people, and only passes when they agree on every block.
+The checker contacts no server unless you add `--fetch`, and every run prints the servers it used. With `--fetch` it asks for blocks by number, never sends a key, and only passes when two sources run by different people agree on every block. `npm run leak-scan` and `npm run leak-scan:history` look for anything shaped like a key or seed phrase in every tracked file and in every past commit. CI runs both.
 
-If you'd rather not depend on anyone else's server, point it at your own:
+To skip other people's servers, point it at your own:
 
 | You run | Add |
 |---|---|
@@ -83,35 +104,14 @@ If you'd rather not depend on anyone else's server, point it at your own:
 
 Your node's password is read from that file, never printed, and never sent unencrypted to a machine that isn't yours.
 
-## Honest limits: the auction check
-
-- A refund is proven to have left the lot with the right amount and memo. Where it went is compared with the refund address the seller lists for each bid. That list is the seller's word, so a seller could list their own address. Each bidder should check the address next to their bid is theirs, or give their own viewing key, which proves their refund arrived.
-- Block heights are checked against the chain only with `--scan`. A saved chain file is only as trustworthy as where you got it. With `--fetch`, two independent operators must agree (on the test network, a light server and the CipherScan explorer).
-- It reads only what the seller shares. A bid paid before the open height is not seen.
-
 ## Also: sign in by paying from a private Zcash wallet
 
-A login button any website can add. You sign in by sending a tiny private payment from any shielded Zcash wallet. Your account is a random login key kept on your device, not a Zcash key, so it survives a change of wallet address. The kit is `src/login` (exported as `imani/login`), the format is in [LOGIN_SPEC.md](LOGIN_SPEC.md), and `npm run demo:app` runs a small auction shop that uses it (it picks a free port if 8787 is taken, or use `--port <n>` or `IMANI_PORT`).
+You sign in by sending a tiny private payment from any shielded Zcash wallet. Your account is a random login key kept on your device, not a Zcash key, so it survives a change of wallet address. The kit is `src/login` (exported as `imani/login`), the format is in [LOGIN_SPEC.md](LOGIN_SPEC.md), and `npm run demo:app` runs a small auction shop that uses it. Seeing someone's sign-in link or QR doesn't let you log in as them, because the site also needs a proof only their login key can make. Its limits are in LOGIN_SPEC.md, section 9.
 
-Honest limits:
+## More
 
-- Seeing someone's sign-in payment link or QR does not let you log in as them. The site also needs a proof that only their login key can make, and it is never in the link.
-- If a sign-in code is not reserved for the user's key, anyone who sees the code can pay it first with their own key and use it up. They get their own account, not the victim's, but the real user must ask for a new code. Reserving the code for the user's key stops this.
-- Anyone who controls the user's device or page can make the proof. It protects against people who only see the screen.
+A step-by-step guide for judges: [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md). How every test group was run: [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md).
 
-Full list: LOGIN_SPEC.md, section 9.
+Built for Zecathon, Core & Tooling track. All code was written in the build window: the first commit is dated 2026-10-07.
 
-## Tests
-
-```sh
-npm run test:all
-npm run typecheck
-```
-
-Most examples are made-up test-network transactions built offline with throwaway keys (see `tools/gen-vectors/README.md`), and `npm run examples` rebuilds them. `examples/testnet-01` is different: a real wallet paid its 3 bids and 3 refunds on the public Zcash test network, and `--scan --fetch` reads it again live from two independent servers.
-
-How every test group was run, with counts and a command for each claim: [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md).
-
-Built for Zecathon, Core & Tooling track.
-
-Licence: MIT. See THIRD_PARTY.md for the libraries used.
+Licence: MIT. [THIRD_PARTY.md](THIRD_PARTY.md) lists the libraries used.
