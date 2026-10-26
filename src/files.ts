@@ -98,6 +98,19 @@ export interface SellerRefund {
   memo: string;
 }
 
+/**
+ * The headline numbers a seller publishes next to a round, so anyone can add them up.
+ * `payments` is every bid payment that reached the lot (late and repeated ones too, seals for a sealed lot),
+ * `receivedZat` their sum, `keptZat` what the seller keeps (winners' payments), `refundedZat` what was paid back.
+ * The money rule: received = kept + refunded, with no fees taken from bidders.
+ */
+export interface PublishedTotals {
+  payments: number;
+  receivedZat: number;
+  keptZat: number;
+  refundedZat: number;
+}
+
 /** Seller result file: what the seller says happened. */
 export interface SellerResult {
   format: "imani-lot-result/1";
@@ -111,6 +124,8 @@ export interface SellerResult {
   refunds: SellerRefund[];
   /** Sealed lots only: seals never opened or opened wrongly (they paid the penalty). */
   unopened?: string[];
+  /** Optional headline numbers. When present, the checker adds them up and compares them with the chain. */
+  totals?: PublishedTotals;
 }
 
 export const bidMemoPrefix = (lotId: string) => `bid:${lotId}:`;

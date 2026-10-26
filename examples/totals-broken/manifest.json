@@ -1,0 +1,45 @@
+{
+  "about": "Broken copies of examples/totals-01, a round whose seller published headline totals. Each copy changes the totals or the refund list and fails on the checks listed.",
+  "copies": [
+    {
+      "name": "01-keeps-more-than-the-winners-paid",
+      "changed": "result.json",
+      "expectedFailingCheck": "published-totals",
+      "expectedFailingChecks": [
+        "published-totals",
+        "published-totals-chain"
+      ],
+      "story": "The seller publishes that 3,500,000 was kept and 4,200,000 refunded. Both add up to the 7,700,000 received, but two winners at 1,500,000 pay 3,000,000, and 4,700,000 was refunded."
+    },
+    {
+      "name": "02-hides-a-payment",
+      "changed": "result.json",
+      "expectedFailingCheck": "published-totals",
+      "expectedFailingChecks": [
+        "published-totals",
+        "published-totals-chain"
+      ],
+      "story": "Four payments reached the lot, one of them late. The seller publishes three, fewer than the three bids and the one late payment its own lists show."
+    },
+    {
+      "name": "03-totals-do-not-balance",
+      "changed": "result.json",
+      "expectedFailingCheck": "published-totals",
+      "expectedFailingChecks": [
+        "published-totals",
+        "published-totals-chain"
+      ],
+      "story": "The seller publishes 7,800,000 received, 100,000 more than came in, so received no longer equals kept plus refunded."
+    },
+    {
+      "name": "04-refund-list-is-shorter-than-the-total",
+      "changed": "result.json",
+      "expectedFailingCheck": "published-totals",
+      "expectedFailingChecks": [
+        "published-totals",
+        "refund-total"
+      ],
+      "story": "The seller publishes the true total refunded, 4,700,000, but the refund list leaves out the 1,200,000 owed to the late bidder, so the books do not balance."
+    }
+  ]
+}

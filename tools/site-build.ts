@@ -88,7 +88,7 @@ export function exampleData(): { entries: any[]; externals: { id: string; title:
     return t[0].toUpperCase() + t.slice(1);
   };
   const entries: any[] = [];
-  const honest = (id: string, dir: string, title: string, story: string, scan: boolean, groupName?: "real-honest" | "receivers-honest" | "memo-honest" | "goal-honest" | "pricing-honest") =>
+  const honest = (id: string, dir: string, title: string, story: string, scan: boolean, groupName?: "real-honest" | "receivers-honest" | "memo-honest" | "goal-honest" | "pricing-honest" | "totals-honest") =>
     entries.push({
       id,
       group: groupName ?? (scan ? "scan-honest" : "honest"),
@@ -99,7 +99,7 @@ export function exampleData(): { entries: any[]; externals: { id: string; title:
       result: store(p("examples", dir, "result.json")),
       chain: scan ? store(p("examples", dir, "chain.json")) : null,
     });
-  const group = (base: string, baseDir: string, groupName: "real-tampered" | "tampered" | "scan-tampered" | "receivers-tampered" | "memo-tampered" | "goal-tampered" | "pricing-tampered") => {
+  const group = (base: string, baseDir: string, groupName: "real-tampered" | "tampered" | "scan-tampered" | "receivers-tampered" | "memo-tampered" | "goal-tampered" | "pricing-tampered" | "totals-tampered") => {
     const manifest = JSON.parse(readText(p("examples", base, "manifest.json")));
     for (const c of manifest.copies) {
       const dir = join(base, c.name);
@@ -192,6 +192,15 @@ export function exampleData(): { entries: any[]; externals: { id: string; title:
     "pricing-honest",
   );
   group("pricing-broken", "pricing-01", "pricing-tampered");
+  honest(
+    "totals-01",
+    "totals-01",
+    "Published totals that add up",
+    "The seller publishes the headline numbers next to the result: 4 payments, 7,700,000 received, 3,000,000 kept and 4,700,000 refunded. The check adds them up, compares them with the winners and the refund list, and with what the key reads from the chain.",
+    false,
+    "totals-honest",
+  );
+  group("totals-broken", "totals-01", "totals-tampered");
   const externals = [
     ["external-settlement", "demo01-settlement", "Published settlement file"],
     ["external-reveal", "reveal", "Published reveal file"],

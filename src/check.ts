@@ -167,6 +167,10 @@ export function validateFiles(d: any, r: any): asserts d is Disclosure {
   if (!r || typeof r !== "object") bad("the result file is not a JSON object.");
   if (r.format !== "imani-lot-result/1") bad('the result file must have "format": "imani-lot-result/1".');
   if (!Array.isArray(r.bids) || !Array.isArray(r.winners) || !Array.isArray(r.refunds)) bad("the result file needs bids, winners and refunds lists.");
+  if (r.totals !== undefined) {
+    const t = r.totals as unknown as Record<string, unknown>;
+    if (!t || typeof t !== "object" || !(["payments", "receivedZat", "keptZat", "refundedZat"] as const).every((k) => isCount(t[k]))) bad("totals in the result file needs payments, receivedZat, keptZat and refundedZat, each a whole number from 0 up.");
+  }
   if (r.unopened !== undefined && (!Array.isArray(r.unopened) || !r.unopened.every(isTxid))) bad("unopened in the result file must be a list of 64 hex character transaction ids.");
 }
 
@@ -342,6 +346,28 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
     fromDisclosure: [goalRules ? "no price in a goal round" : `reserve ${zat(ar.reserveZat)}`],
   });
 
+  if (r.totals) {
+    const t = r.totals;
+    const listedRefunds = r.refunds.reduce((s, f) => s + (f.amountZat || 0), 0);
+    const keptByRule = goalRules ? r.winners.reduce((s, w) => s + (listedAmount.get(w) ?? 0), 0) : r.clearingPriceZat * r.winners.length;
+    const problems: string[] = [];
+    if (t.receivedZat !== t.keptZat + t.refundedZat) problems.push(`received ${zat(t.receivedZat)} is not kept ${zat(t.keptZat)} plus refunded ${zat(t.refundedZat)}`);
+    if (!sealedBasic && t.keptZat !== keptByRule) problems.push(`kept is ${zat(t.keptZat)} but the winners pay ${zat(keptByRule)} in all`);
+    if (t.refundedZat !== listedRefunds) problems.push(`refunded is ${zat(t.refundedZat)} but the listed refunds add up to ${zat(listedRefunds)}`);
+    const lateListed = r.refunds.filter((f) => f.reason === "late").length;
+    if (t.payments < r.bids.length + lateListed) problems.push(`${t.payments} payments is fewer than the ${r.bids.length} bids plus ${lateListed} late payments the seller lists`);
+    add({
+      id: "published-totals",
+      level: 1,
+      title: "Published totals add up",
+      status: problems.length ? "FAIL" : "PASS",
+      reason: problems.length
+        ? `The published totals do not add up: ${problems.join("; ")}.`
+        : `Received ${zat(t.receivedZat)} = kept ${zat(t.keptZat)} + refunded ${zat(t.refundedZat)}, and the kept and refunded figures match the winners and the listed refunds.`,
+      fromSeller: [`${t.payments} payments`, `received ${zat(t.receivedZat)}`, `kept ${zat(t.keptZat)}`, `refunded ${zat(t.refundedZat)}`],
+    });
+  }
+
   const basicLevel: Status = checks.every((c) => c.status === "PASS") ? "PASS" : "FAIL";
 
   // ---------------- Key level: read the lot's payments with the lot key ----------------
@@ -492,6 +518,7 @@ function keyChecks(
   const replays: ChainBid[] = grouped.replays;
   const topUpPayments = topUps ? [...bids.values()].filter((b) => b.height <= d.closeHeight).length - grouped.bids.filter((b) => b.height <= d.closeHeight).length : 0;
   let allBids = grouped.bids;
+  const mergedAmount = new Map(grouped.bids.map((b) => [b.txid, b.amountZat]));
   let onTime = allBids.filter((b) => b.height <= d.closeHeight);
   let late = allBids.filter((b) => b.height > d.closeHeight);
   let lateIds = new Set(late.map((b) => b.txid));
@@ -499,7 +526,7 @@ function keyChecks(
   // sealed checks, the way it leaves late bids to the late-bid check.
   let sealedOut: ReturnType<typeof openSeals> | null = null;
   let skipIds = lateIds;
-  let sealedAmount: (txid: string) => number | undefined = (txid) => (topUps ? allBids.find((b) => b.txid === txid)?.amountZat : bids.get(txid)?.amountZat);
+  let sealedAmount: (txid: string) => number | undefined = (txid) => (topUps ? mergedAmount.get(txid) : bids.get(txid)?.amountZat);
   if (sealedRules) {
     const sealFacts: SealFact[] = [...sealTxs.values()].map((t) => {
       const m = parseSealMemo(d.lotId, t.memo);
@@ -543,7 +570,8 @@ function keyChecks(
   const sellerIds = r.bids.map((b) => b.txid).filter((t) => !skipIds.has(t));
   const onTimeIds = new Set(onTime.map((b) => b.txid));
   const notOnChain = sellerIds.filter((t) => !onTimeIds.has(t));
-  const notListed = [...onTimeIds].filter((t) => !sellerIds.includes(t));
+  const sellerIdSet = new Set(sellerIds);
+  const notListed = [...onTimeIds].filter((t) => !sellerIdSet.has(t));
   const countOk = notOnChain.length === 0 && notListed.length === 0 && sellerIds.length === onTime.length;
   add({
     id: "bid-count",
@@ -629,8 +657,9 @@ function keyChecks(
   });
 
   const outcome = sealedOut ? sealedOut.outcome : decide(onTime, d.rules);
+  const sellerWinnerSet = new Set(r.winners);
   const sameWinners =
-    outcome.winners.length === r.winners.length && outcome.winners.every((w) => r.winners.includes(w));
+    outcome.winners.length === r.winners.length && outcome.winners.every((w) => sellerWinnerSet.has(w));
   const samePrice = outcome.clearingPriceZat === r.clearingPriceZat;
   add({
     id: "winners-and-price",
@@ -791,6 +820,28 @@ function keyChecks(
     fromChain: [`received ${zat(received)}`],
     fromSeller: [`refunds listed ${zat(sellerRefunds)}`, `winners' payments ${zat(kept)}`],
   });
+
+  if (r.totals) {
+    const t = r.totals;
+    const chainPayments = sealedRules ? sealTxs.size : bids.size;
+    const chainRefunded = refunds.reduce((s, f) => s + f.amountZat, 0);
+    const problems: string[] = [];
+    if (t.payments !== chainPayments) problems.push(`the totals say ${t.payments} payments, the key shows ${chainPayments}`);
+    if (t.receivedZat !== received) problems.push(`the totals say ${zat(t.receivedZat)} was received, the key shows ${zat(received)}`);
+    if (t.refundedZat !== chainRefunded) problems.push(`the totals say ${zat(t.refundedZat)} was refunded, the chain shows ${zat(chainRefunded)}`);
+    if (t.keptZat !== received - chainRefunded) problems.push(`the totals say the seller keeps ${zat(t.keptZat)}, the chain shows ${zat(received - chainRefunded)} kept`);
+    add({
+      id: "published-totals-chain",
+      level: 2,
+      title: "Published totals match the chain",
+      status: problems.length ? "FAIL" : "PASS",
+      reason: problems.length
+        ? `The published totals differ from the chain: ${problems.join("; ")}.`
+        : `${chainPayments} payments, ${zat(received)} received, ${zat(chainRefunded)} refunded and ${zat(received - chainRefunded)} kept, exactly as published.`,
+      fromChain: [`${chainPayments} payments`, `received ${zat(received)}`, `refunded ${zat(chainRefunded)}`, `kept ${zat(received - chainRefunded)}`],
+      fromSeller: [`${t.payments} payments`, `received ${zat(t.receivedZat)}`, `refunded ${zat(t.refundedZat)}`, `kept ${zat(t.keptZat)}`],
+    });
+  }
 
   if (sealedRules && sealedOut) {
     const so = sealedOut;

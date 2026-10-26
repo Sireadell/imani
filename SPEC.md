@@ -54,6 +54,7 @@ The rules may carry `"topUps": true`. Then a bidder can pay again, before the cl
 | `winners` | Txids of the winning bids |
 | `clearingPriceZat` | Price each winner pays |
 | `reserveMet` | `true` if at least one bid reached the reserve |
+| `totals` | Optional headline numbers: `{ "payments", "receivedZat", "keptZat", "refundedZat" }`. Payments is every bid payment that reached the lot (late and repeated ones too; seals for a sealed lot). When present, `published-totals` (basic level) and `published-totals-chain` (key level) check them. See `docs/SCALE.md` |
 | `refunds` | `[{ "bidTxid", "amountZat", "reason", "memo" }]`, reason is `loser`, `change` or `late`, memo is `refund:<lotId>:<bidTxid>` |
 
 ## Checks

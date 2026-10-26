@@ -37,6 +37,7 @@ const ROUNDS: Record<string, Files> = {
   "testnet-01": { d: ex("testnet-01/disclosure.json"), r: ex("testnet-01/result.json"), chain: ex("testnet-01/chain.json") },
   "sealed-01": { d: ex("sealed-01/disclosure.json"), r: ex("sealed-01/result.json") },
   "pricing-01": { d: ex("pricing-01/disclosure.json"), r: ex("pricing-01/result.json") },
+  "totals-01": { d: ex("totals-01/disclosure.json"), r: ex("totals-01/result.json") },
 };
 
 function scanOf(d: any, chain: any): ScanInput | undefined {
@@ -104,6 +105,23 @@ function factChanges(f: Files): Change[] {
     add(`result: refund ${i + 1} listed twice`, (x) => { x.r.refunds.push(clone(x.r.refunds[i])); });
     add(`result: refund ${i + 1} credited to a made-up bid`, (x) => { x.r.refunds[i].bidTxid = OTHER_TXID; });
   });
+
+  // Published totals: every headline number moved by one zatoshi (or one payment) either way.
+  if (r.totals) {
+    for (const k of ["payments", "receivedZat", "keptZat", "refundedZat"] as const) {
+      add(`result: published ${k} one higher`, (x) => { x.r.totals[k] += 1; });
+      add(`result: published ${k} one lower`, (x) => { x.r.totals[k] -= 1; });
+    }
+    add("result: published totals zeroed except payments", (x) => { x.r.totals = { payments: x.r.totals.payments, receivedZat: 0, keptZat: 0, refundedZat: 0 }; });
+  }
+  // The price rule and the top-up setting are part of the published rules, in both files.
+  if (d.rules.kind === undefined || d.rules.kind === "auction") {
+    const other = (p?: string) => (p === "lowest-winning" ? "highest-losing" : "lowest-winning");
+    add("result: price rule switched to the other one", (x) => { x.r.rules.pricing = other(x.r.rules.pricing); });
+    add("disclosure: price rule switched to the other one", (x) => { x.d.rules.pricing = other(x.d.rules.pricing); });
+    add("result: top-ups switched on or off", (x) => { x.r.rules.topUps = !x.r.rules.topUps; });
+    add("disclosure: top-ups switched on or off", (x) => { x.d.rules.topUps = !x.d.rules.topUps; });
+  }
 
   // Seller's disclosure file.
   d.transactions.forEach((t: any, i: number) => {

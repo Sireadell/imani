@@ -402,6 +402,7 @@ async function start(): Promise<void> {
   for (const e of [...byGroup("memo-honest"), ...byGroup("memo-tampered")]) $("chips-memo").appendChild(chip(e));
   for (const e of [...byGroup("goal-honest"), ...byGroup("goal-tampered")]) $("chips-goal").appendChild(chip(e));
   for (const e of [...byGroup("pricing-honest"), ...byGroup("pricing-tampered")]) $("chips-pricing").appendChild(chip(e));
+  for (const e of [...byGroup("totals-honest"), ...byGroup("totals-tampered")]) $("chips-totals").appendChild(chip(e));
   $("mine-go").addEventListener("click", findMine);
   $("bid-go").addEventListener("click", makeLink);
   $("mine-id").addEventListener("keydown", (ev) => { if ((ev as KeyboardEvent).key === "Enter") findMine(); });
