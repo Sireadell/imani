@@ -41,6 +41,15 @@ This reads the blocks from a saved file. Use `--fetch` instead of `--chain` to d
 
 To also check where each refund went, the bidder can write their refund address at the end of their bid memo (`bid:<lot>:<word>:<address>`), so the seller cannot choose it. `examples/memo-01` passes and `examples/memo-broken/` has two copies that fail `refund-receivers`. Or the seller can list the address each bid's refund must go to (`refundAddresses` in the disclosure). `examples/receivers-01` passes, and `examples/receivers-broken/` has two copies that fail `refund-receivers`: a refund that went to a different address than the one listed, and a bid with no address listed. `npm run examples:receivers` rebuilds them.
 
+## More ways to use it
+
+| You are | Run | What you get |
+|---|---|---|
+| A bidder with no help from the seller | `npx imani bidder-check --facts lot-public.json --key-file my-viewing-key.txt --fetch --bid <txid>:<amount>` | Whether your bid landed on the chain inside the auction and whether your refund came back in full, from your own read-only key and public blocks only. On its own it cannot say whether you won or what the price was, and the report says NOT PROVEN there. Details: [docs/BIDDER_CHECK.md](docs/BIDDER_CHECK.md) |
+| Anyone with a round's viewing key | `node tools/referee-serve.ts`, then open http://localhost:8789/check.html | Paste the key and the blocks the auction ran in. The page counts the bids, finds the winners and the price, and checks every refund. Your key never leaves the browser: the page asks the small local program only for block numbers, and it gets each block from two public servers run by different operators that must agree |
+| Someone checking another project's round | Drop their round file on the checker page, or `npm run check:external -- <file>` | Their published result worked out again under their own rules. It reads only the numbers in the file. Details: [docs/EXTERNAL_ROUNDS.md](docs/EXTERNAL_ROUNDS.md) |
+| Running a fundraiser or group buy | Put `"kind": "goal"` and `"goalZat"` in the rules | The all-or-nothing rule: if the on-time payments reach the goal, all are kept, and if not, every one is refunded in full. Same files, same checks, plus `goal-reached`. Try `examples/goal-reached`, `examples/goal-missed` and the four broken copies in `examples/goal-broken/` |
+
 ## Where every number comes from
 
 | Source | What it gives |
@@ -101,6 +110,8 @@ npm run typecheck
 
 Most examples are made-up test-network transactions built offline with throwaway keys (see `tools/gen-vectors/README.md`), and `npm run examples` rebuilds them. `examples/testnet-01` is different: a real wallet paid its 3 bids and 3 refunds on the public Zcash test network, and `--scan --fetch` reads it again live from two independent servers.
 
-Status: early build for Zecathon, Core & Tooling track.
+How every test group was run, with counts and a command for each claim: [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md).
+
+Built for Zecathon, Core & Tooling track.
 
 Licence: MIT. See THIRD_PARTY.md for the libraries used.

@@ -261,8 +261,12 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
     status: problems.length ? "FAIL" : "PASS",
     reason: problems.length
       ? `The result file contradicts itself: ${problems.join("; ")}.`
-      : "Bid count, winners, reserve and refunds in the result file agree with each other and with the published rules.",
-    fromSeller: [`${r.bidCount} bids`, `${r.winners.length} winners`, `${r.refunds.length} refunds`],
+      : goalRules
+        ? "Payment count, counted payments, goal outcome and refunds in the result file agree with each other and with the published goal."
+        : "Bid count, winners, reserve and refunds in the result file agree with each other and with the published rules.",
+    fromSeller: goalRules
+      ? [`${r.bidCount} payments`, `${r.winners.length} counted`, `${r.refunds.length} refunds`]
+      : [`${r.bidCount} bids`, `${r.winners.length} winners`, `${r.refunds.length} refunds`],
     fromDisclosure: [goalRules ? `rules: goal ${zat(goalRules.goalZat)}` : sealedBasic ? `rules: sealed lot, ${ar.itemCount} items, reserve ${zat(ar.reserveZat)}, deposit ${zat(sealedBasic.depositZat)}, penalty ${zat(sealedBasic.forfeitZat)}` : `rules: ${ar.itemCount} items, reserve ${zat(ar.reserveZat)}`],
   });
 
@@ -287,7 +291,7 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
   add({
     id: "winner-count",
     level: 1,
-    title: "Winner count fits the lot",
+    title: goalRules ? "Either every payment counts or none does" : "Winner count fits the lot",
     status: winnerCountOk ? "PASS" : "FAIL",
     reason: goalRules
       ? winnerCountOk
@@ -296,7 +300,7 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
       : winnerCountOk
         ? `${r.winners.length} winners, no more than the ${ar.itemCount} items and the ${r.bids.length} bids.`
         : `${r.winners.length} winners is more than the ${ar.itemCount} items or the ${r.bids.length} bids.`,
-    fromSeller: [`${r.winners.length} winners`, `${r.bids.length} bids`],
+    fromSeller: goalRules ? [`${r.winners.length} counted`, `${r.bids.length} payments`] : [`${r.winners.length} winners`, `${r.bids.length} bids`],
     fromDisclosure: goalRules ? [`goal ${zat(goalRules.goalZat)}`] : [`${ar.itemCount} items`],
   });
 
@@ -309,12 +313,12 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
   add({
     id: "clearing-range",
     level: 1,
-    title: "Clearing price is between the reserve and the highest bid",
+    title: goalRules ? "No price is set in a goal round" : "Clearing price is between the reserve and the highest bid",
     status: priceOk ? "PASS" : "FAIL",
     reason: goalRules
       ? priceOk
-        ? "A goal round has no price, and the clearing price is 0."
-        : "A goal round has no price, but the clearing price is not 0."
+        ? "Payments are kept at their own amount, so no price is set (0 in the file)."
+        : `Payments are kept at their own amount, so no price should be set, but the file sets ${zat(r.clearingPriceZat)}.`
       : priceOk
         ? r.winners.length
           ? `Clearing price ${zat(r.clearingPriceZat)} is not below the reserve ${zat(ar.reserveZat)} and not above the highest listed bid ${zat(highest)}.`
@@ -322,7 +326,7 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
         : r.winners.length
           ? `Clearing price ${zat(r.clearingPriceZat)} is outside the range from the reserve ${zat(ar.reserveZat)} to the highest listed bid ${zat(highest)}.`
           : "There are no winners but the clearing price is not 0.",
-    fromSeller: [`clearing price ${zat(r.clearingPriceZat)}`, `highest listed bid ${zat(highest)}`],
+    fromSeller: goalRules ? [`price ${zat(r.clearingPriceZat)}`] : [`clearing price ${zat(r.clearingPriceZat)}`, `highest listed bid ${zat(highest)}`],
     fromDisclosure: [goalRules ? "no price in a goal round" : `reserve ${zat(ar.reserveZat)}`],
   });
 
@@ -616,31 +620,37 @@ function keyChecks(
   add({
     id: "winners-and-price",
     level: 2,
-    title: "Winners and clearing price recomputed from the chain",
+    title: goalRules ? "Counted payments recomputed from the chain" : "Winners and clearing price recomputed from the chain",
     status: sameWinners && samePrice ? "PASS" : "FAIL",
-    reason:
-      sameWinners && samePrice
+    reason: goalRules
+      ? sameWinners && samePrice
+        ? `Recomputed from the on-time payments: ${outcome.winners.length ? `all ${outcome.winners.length} count towards the goal` : "none count, the goal was missed"}. Same as the seller.`
+        : `From the on-time payments, the counted payments should be ${outcome.winners.map(short).join(", ") || "none"}; the seller says ${r.winners.map(short).join(", ") || "none"}.`
+      : sameWinners && samePrice
         ? `Recomputed from the on-time bids: winners ${outcome.winners.map(short).join(", ") || "none"}, clearing price ${zat(outcome.clearingPriceZat)}. Same as the seller.`
         : [
             !sameWinners ? `Winners should be ${outcome.winners.map(short).join(", ") || "none"}, the seller says ${r.winners.map(short).join(", ") || "none"}.` : "",
             !samePrice ? `Clearing price should be ${zat(outcome.clearingPriceZat)}, the seller says ${zat(r.clearingPriceZat)}.` : "",
           ].filter(Boolean).join(" "),
-    fromChain: [`winners ${outcome.winners.map(short).join(", ") || "none"}`, `clearing price ${zat(outcome.clearingPriceZat)}`],
-    fromSeller: [`winners ${r.winners.map(short).join(", ") || "none"}`, `clearing price ${zat(r.clearingPriceZat)}`],
+    fromChain: goalRules ? [`counted ${outcome.winners.map(short).join(", ") || "none"}`] : [`winners ${outcome.winners.map(short).join(", ") || "none"}`, `clearing price ${zat(outcome.clearingPriceZat)}`],
+    fromSeller: goalRules ? [`counted ${r.winners.map(short).join(", ") || "none"}`] : [`winners ${r.winners.map(short).join(", ") || "none"}`, `clearing price ${zat(r.clearingPriceZat)}`],
     fromDisclosure: [goalRules ? `goal ${zat(goalRules.goalZat)}` : `${ar.itemCount} items, reserve ${zat(ar.reserveZat)}`],
   });
 
   add({
     id: "reserve",
     level: 2,
-    title: "Reserve outcome",
+    title: goalRules ? "Goal outcome from the chain" : "Reserve outcome",
     status: outcome.reserveMet === r.reserveMet ? "PASS" : "FAIL",
-    reason:
-      outcome.reserveMet === r.reserveMet
+    reason: goalRules
+      ? outcome.reserveMet === r.reserveMet
+        ? `The on-time payments ${outcome.reserveMet ? "reach" : "fall short of"} the goal, as the seller says.`
+        : `The seller says the goal was ${r.reserveMet ? "" : "not "}reached, but the on-time payments on the chain ${outcome.reserveMet ? "reach" : "fall short of"} it.`
+      : outcome.reserveMet === r.reserveMet
         ? `The reserve was ${outcome.reserveMet ? "" : "not "}met, as the seller says.`
         : `The seller says the reserve was ${r.reserveMet ? "" : "not "}met, the chain says it was ${outcome.reserveMet ? "" : "not "}met.`,
-    fromChain: [`reserve met: ${outcome.reserveMet}`],
-    fromSeller: [`reserve met: ${r.reserveMet}`],
+    fromChain: [goalRules ? `goal reached: ${outcome.reserveMet}` : `reserve met: ${outcome.reserveMet}`],
+    fromSeller: [goalRules ? `goal reached: ${r.reserveMet}` : `reserve met: ${r.reserveMet}`],
   });
 
   // Refunds owed, all worked out from the chain: on-time bids by the rule, late bids in full.
