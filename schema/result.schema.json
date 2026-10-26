@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://imani-check.vercel.app/schema/result.schema.json",
+  "title": "imani-lot-result/1",
+  "description": "The file a seller publishes next to the disclosure: what the seller says happened. The checker recomputes every number. See docs/FORMAT.md.",
+  "type": "object",
+  "required": ["format", "bids", "winners", "refunds"],
+  "properties": {
+    "format": { "const": "imani-lot-result/1" },
+    "lotId": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,40}$" },
+    "rules": { "type": "object" },
+    "bidCount": { "type": "integer", "minimum": 0 },
+    "bids": { "type": "array", "items": { "$ref": "#/$defs/bid" } },
+    "winners": { "type": "array", "items": { "type": "string", "pattern": "^[0-9a-f]{64}$" } },
+    "clearingPriceZat": { "type": "integer", "minimum": 0 },
+    "reserveMet": { "type": "boolean" },
+    "refunds": { "type": "array", "items": { "$ref": "#/$defs/refund" } },
+    "unopened": { "type": "array", "items": { "type": "string", "pattern": "^[0-9a-f]{64}$" } },
+    "totals": { "$ref": "#/$defs/totals" }
+  },
+  "$defs": {
+    "bid": {
+      "type": "object",
+      "required": ["txid", "amountZat"],
+      "properties": {
+        "txid": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "amountZat": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "refund": {
+      "type": "object",
+      "required": ["bidTxid", "amountZat", "reason", "memo"],
+      "properties": {
+        "bidTxid": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "amountZat": { "type": "integer", "minimum": 0 },
+        "reason": { "enum": ["loser", "change", "late", "unopened", "bad-opening", "opening"] },
+        "memo": { "type": "string", "pattern": "^refund:" }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "required": ["payments", "receivedZat", "keptZat", "refundedZat"],
+      "properties": {
+        "payments": { "type": "integer", "minimum": 0 },
+        "receivedZat": { "type": "integer", "minimum": 0 },
+        "keptZat": { "type": "integer", "minimum": 0 },
+        "refundedZat": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

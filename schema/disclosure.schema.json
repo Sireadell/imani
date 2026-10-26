@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://imani-check.vercel.app/schema/disclosure.schema.json",
+  "title": "imani-lot-disclosure/1",
+  "description": "The file a seller publishes after the close: the lot's rules, its block heights, and every transaction of the round. See docs/FORMAT.md.",
+  "type": "object",
+  "required": ["format", "lotId", "network", "rules", "transactions"],
+  "properties": {
+    "format": { "const": "imani-lot-disclosure/1" },
+    "lotId": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,40}$" },
+    "network": { "enum": ["main", "test"] },
+    "closeHeight": { "type": "integer", "minimum": 1 },
+    "openHeight": { "type": "integer", "minimum": 1 },
+    "refundByHeight": { "type": "integer", "minimum": 1 },
+    "openByHeight": { "type": "integer", "minimum": 1 },
+    "rules": { "$ref": "#/$defs/rules" },
+    "ufvk": { "type": "string", "pattern": "^uview(test)?1[02-9ac-hj-np-z]+$" },
+    "transactions": { "type": "array", "items": { "$ref": "#/$defs/transaction" } },
+    "refundAddresses": { "type": "array", "items": { "$ref": "#/$defs/refundAddress" } }
+  },
+  "$defs": {
+    "transaction": {
+      "type": "object",
+      "required": ["txHex"],
+      "properties": {
+        "txid": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "height": { "type": "integer", "minimum": 1 },
+        "txHex": { "type": "string", "pattern": "^([0-9a-fA-F]{2})+$" }
+      }
+    },
+    "refundAddress": {
+      "type": "object",
+      "required": ["bidTxid", "address"],
+      "properties": {
+        "bidTxid": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "address": { "type": "string", "pattern": "\\S" }
+      }
+    },
+    "rules": {
+      "anyOf": [
+        {
+          "title": "auction (the default kind)",
+          "type": "object",
+          "required": ["itemCount", "reserveZat"],
+          "properties": {
+            "kind": { "const": "auction" },
+            "itemCount": { "type": "integer", "minimum": 1 },
+            "reserveZat": { "type": "integer", "minimum": 0 },
+            "pricing": { "enum": ["highest-losing", "lowest-winning"] },
+            "topUps": { "type": "boolean" }
+          }
+        },
+        {
+          "title": "goal (all-or-nothing collection)",
+          "type": "object",
+          "required": ["kind", "goalZat"],
+          "properties": {
+            "kind": { "const": "goal" },
+            "goalZat": { "type": "integer", "minimum": 1 }
+          }
+        },
+        {
+          "title": "sealed (fixed deposit, price opened after the close)",
+          "type": "object",
+          "required": ["kind", "itemCount", "reserveZat", "depositZat", "forfeitZat"],
+          "properties": {
+            "kind": { "const": "sealed" },
+            "itemCount": { "type": "integer", "minimum": 1 },
+            "reserveZat": { "type": "integer", "minimum": 0 },
+            "depositZat": { "type": "integer", "minimum": 1 },
+            "forfeitZat": { "type": "integer", "minimum": 0 }
+          }
+        }
+      ]
+    }
+  }
+}
