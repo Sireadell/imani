@@ -7,5 +7,6 @@
   { "path": "tools/measure-scan.ts", "reason": "A throwaway main-network viewing key that matches no real wallet, used to time the scan the way a stranger's key would behave." },
   { "path": "test/site/site.test.ts", "reason": "Holds the well-known public test phrase (abandon ability able...) only to prove the checker page refuses a seed phrase. It controls no money." },
   { "path": "src/site/referee-app.ts", "reason": "The published test-network viewing key of the real round, filled in as the page's example. It is read-only, holds nothing and is public on purpose so anyone can re-run the check." },
-  { "path": "test/bidder.test.ts", "reason": "A dummy spending-key shape and the well-known public test phrase (abandon ability able...), written only to prove the bidder check refuses them. They control no money." }
+  { "path": "test/bidder.test.ts", "reason": "A dummy spending-key shape and the well-known public test phrase (abandon ability able...), written only to prove the bidder check refuses them. They control no money." },
+  { "path": "test/seller-kit.test.ts", "reason": "A dummy spending-key shape and the well-known public test phrase (abandon abandon ... about), written only to prove lot-new refuses them. They control no money." }
 ]

@@ -88,7 +88,7 @@ export function exampleData(): { entries: any[]; externals: { id: string; title:
     return t[0].toUpperCase() + t.slice(1);
   };
   const entries: any[] = [];
-  const honest = (id: string, dir: string, title: string, story: string, scan: boolean, groupName?: "real-honest" | "receivers-honest" | "memo-honest" | "goal-honest" | "pricing-honest" | "totals-honest") =>
+  const honest = (id: string, dir: string, title: string, story: string, scan: boolean, groupName?: "real-honest" | "receivers-honest" | "memo-honest" | "goal-honest" | "pricing-honest" | "totals-honest" | "sealed-honest") =>
     entries.push({
       id,
       group: groupName ?? (scan ? "scan-honest" : "honest"),
@@ -99,7 +99,7 @@ export function exampleData(): { entries: any[]; externals: { id: string; title:
       result: store(p("examples", dir, "result.json")),
       chain: scan ? store(p("examples", dir, "chain.json")) : null,
     });
-  const group = (base: string, baseDir: string, groupName: "real-tampered" | "tampered" | "scan-tampered" | "receivers-tampered" | "memo-tampered" | "goal-tampered" | "pricing-tampered" | "totals-tampered") => {
+  const group = (base: string, baseDir: string, groupName: "real-tampered" | "tampered" | "scan-tampered" | "receivers-tampered" | "memo-tampered" | "goal-tampered" | "pricing-tampered" | "totals-tampered" | "sealed-tampered") => {
     const manifest = JSON.parse(readText(p("examples", base, "manifest.json")));
     for (const c of manifest.copies) {
       const dir = join(base, c.name);
@@ -183,6 +183,15 @@ export function exampleData(): { entries: any[]; externals: { id: string; title:
     "goal-honest",
   );
   group("goal-broken", "goal-reached", "goal-tampered");
+  honest(
+    "sealed-01",
+    "sealed-01",
+    "Sealed lot: the seller could not read the prices",
+    "Every bidder paid the same fixed deposit of 5,000,000 zatoshis, with only a hash of their price in the memo. After the close each bidder sent a second small payment that opened the price. Of 7 seals, 3 were opened correctly and count (prices 3,000,000, 2,000,000 and 1,500,000), 1 was never opened, 1 was opened with a price that does not match its seal, 1 paid the wrong deposit and 1 arrived late. The unopened and wrongly opened seals pay a penalty of 500,000, shared to the bidders who opened.",
+    false,
+    "sealed-honest",
+  );
+  group("sealed-broken", "sealed-01", "sealed-tampered");
   honest(
     "pricing-01",
     "pricing-01",

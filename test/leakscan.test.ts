@@ -59,6 +59,21 @@ test("scanRepo reads only tracked files", () => {
   }
 });
 
+test("a copy with no git history (a ZIP download) is scanned file by file, skipping node_modules", () => {
+  const dir = mkdtempSync(join(tmpdir(), "imani-zip-"));
+  try {
+    mkdirSync(join(dir, "src"));
+    mkdirSync(join(dir, "node_modules"));
+    writeFileSync(join(dir, "src/ok.ts"), "export const a = 1;" + String.fromCharCode(10));
+    writeFileSync(join(dir, "node_modules/dep.js"), `const k = "${VIEW}";` + String.fromCharCode(10));
+    assert.deepEqual(scanRepo(dir, []), []);
+    writeFileSync(join(dir, "src/bad.ts"), `const k = "${VIEW}";` + String.fromCharCode(10));
+    assert.deepEqual(scanRepo(dir, []), [{ file: "src/bad.ts", problem: "line 1 holds something shaped like a viewing key" }]);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 // History scan. Answers locked 2026-10-19 before the code was written: a key committed and then
 // deleted is clean in the current files but found in history, named by commit and path; an
 // allowlisted path stays allowed in history; a clean history gives no finding.

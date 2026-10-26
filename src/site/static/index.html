@@ -49,6 +49,9 @@
     <h3>Beyond auctions: a fundraiser or group buy</h3>
     <p class="muted small">The same check works on any collection where the amounts stay hidden. Here the rule is a goal: if the payments reach it they are all kept, and if not every payment is refunded in full.</p>
     <div class="chips" id="chips-goal" role="group" aria-label="Fundraiser examples"></div>
+    <h3>Sealed lots: the seller cannot read the prices</h3>
+    <p class="muted small">In a plain lot the seller holds the key and could read every bid as it arrives. In a sealed lot each bidder pays the same deposit with only a hash of their price in the memo, then opens it after the close. The check verifies every opened price against its seal, applies the same price rule, and refunds deposits, with a penalty for seals that were never opened.</p>
+    <div class="chips" id="chips-sealed" role="group" aria-label="Sealed lot examples"></div>
     <h3>Another price rule: the lowest winning bid</h3>
     <p class="muted small">A seller can choose what winners pay. By default it is the highest bid that lost. In this lot it is the lowest bid that won, so the last bidder in pays exactly what they bid. The lot's published rules say which one applies, and the check refuses a result that uses the other.</p>
     <div class="chips" id="chips-pricing" role="group" aria-label="Lowest winning price examples"></div>

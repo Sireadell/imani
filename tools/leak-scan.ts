@@ -2,7 +2,7 @@
 // spending key, a seed phrase, or is a .env file. Public test keys are listed, with a reason,
 // in tools/leak-scan.allow.json. Reads only; changes nothing.
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { findSecret } from "../src/guard.ts";
@@ -52,9 +52,28 @@ export function scanFiles(files: { file: string; text: string }[], list: AllowEn
   return files.flatMap((f) => scanFile(f.file, f.text, list));
 }
 
-/** Scan every file git tracks in `root`. Skips binary files. */
+/** The files to scan: what git tracks, or, in a copy with no git history (a ZIP download), every file outside node_modules, dist and .git. */
+function listFiles(root: string): string[] {
+  try {
+    return execFileSync("git", ["ls-files", "-z"], { cwd: root, encoding: "utf8", maxBuffer: 1 << 28, stdio: ["ignore", "pipe", "ignore"] }).split("\0").filter(Boolean);
+  } catch {
+    const out: string[] = [];
+    const walk = (dir: string) => {
+      for (const e of readdirSync(`${root}/${dir}`, { withFileTypes: true })) {
+        const rel = dir ? `${dir}/${e.name}` : e.name;
+        if (e.isDirectory()) {
+          if (!["node_modules", "dist", ".git"].includes(e.name)) walk(rel);
+        } else if (e.isFile()) out.push(rel);
+      }
+    };
+    walk("");
+    return out;
+  }
+}
+
+/** Scan every file git tracks in `root` (or every file, with no git history). Skips binary files. */
 export function scanRepo(root: string, list: AllowEntry[]): Finding[] {
-  const names = execFileSync("git", ["ls-files", "-z"], { cwd: root, encoding: "utf8", maxBuffer: 1 << 28 }).split("\0").filter(Boolean);
+  const names = listFiles(root);
   const files: { file: string; text: string }[] = [];
   const out: Finding[] = [];
   for (const file of names) {
