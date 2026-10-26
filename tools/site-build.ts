@@ -88,7 +88,7 @@ export function exampleData(): { entries: any[]; externals: { id: string; title:
     return t[0].toUpperCase() + t.slice(1);
   };
   const entries: any[] = [];
-  const honest = (id: string, dir: string, title: string, story: string, scan: boolean, groupName?: "real-honest" | "receivers-honest" | "memo-honest" | "goal-honest") =>
+  const honest = (id: string, dir: string, title: string, story: string, scan: boolean, groupName?: "real-honest" | "receivers-honest" | "memo-honest" | "goal-honest" | "pricing-honest") =>
     entries.push({
       id,
       group: groupName ?? (scan ? "scan-honest" : "honest"),
@@ -99,7 +99,7 @@ export function exampleData(): { entries: any[]; externals: { id: string; title:
       result: store(p("examples", dir, "result.json")),
       chain: scan ? store(p("examples", dir, "chain.json")) : null,
     });
-  const group = (base: string, baseDir: string, groupName: "real-tampered" | "tampered" | "scan-tampered" | "receivers-tampered" | "memo-tampered" | "goal-tampered") => {
+  const group = (base: string, baseDir: string, groupName: "real-tampered" | "tampered" | "scan-tampered" | "receivers-tampered" | "memo-tampered" | "goal-tampered" | "pricing-tampered") => {
     const manifest = JSON.parse(readText(p("examples", base, "manifest.json")));
     for (const c of manifest.copies) {
       const dir = join(base, c.name);
@@ -183,6 +183,15 @@ export function exampleData(): { entries: any[]; externals: { id: string; title:
     "goal-honest",
   );
   group("goal-broken", "goal-reached", "goal-tampered");
+  honest(
+    "pricing-01",
+    "pricing-01",
+    "Lowest winning bid sets the price",
+    "A lot with 3 items where every winner pays the lowest bid that won, not the highest bid that lost. Bids of 3,000,000, 2,000,000 and 1,500,000 all win and each pays 1,500,000. Under the default rule the same bids would pay 1,000,000 each. The refunds on the chain match the lowest-winning price to the zatoshi.",
+    false,
+    "pricing-honest",
+  );
+  group("pricing-broken", "pricing-01", "pricing-tampered");
   const externals = [
     ["external-settlement", "demo01-settlement", "Published settlement file"],
     ["external-reveal", "reveal", "Published reveal file"],

@@ -1,0 +1,51 @@
+{
+  "format": "imani-lot-result/1",
+  "lotId": "LOT-01",
+  "rules": {
+    "itemCount": 3,
+    "reserveZat": 1000000,
+    "pricing": "highest-losing"
+  },
+  "bidCount": 3,
+  "bids": [
+    {
+      "txid": "d928588fc1669a6586057c852f7e2965cf49a081ef415324338953161d446ef8",
+      "amountZat": 3000000
+    },
+    {
+      "txid": "43e9e39e43aea9b01be1ca994eab7fbc17705853f62b131e2aede9fba4cae002",
+      "amountZat": 2000000
+    },
+    {
+      "txid": "e0656c882730bbc466afa80f0cd07c0caa8a5c2dc74132190c16ff965d8d426c",
+      "amountZat": 1500000
+    }
+  ],
+  "winners": [
+    "d928588fc1669a6586057c852f7e2965cf49a081ef415324338953161d446ef8",
+    "43e9e39e43aea9b01be1ca994eab7fbc17705853f62b131e2aede9fba4cae002",
+    "e0656c882730bbc466afa80f0cd07c0caa8a5c2dc74132190c16ff965d8d426c"
+  ],
+  "clearingPriceZat": 1500000,
+  "reserveMet": true,
+  "refunds": [
+    {
+      "bidTxid": "d928588fc1669a6586057c852f7e2965cf49a081ef415324338953161d446ef8",
+      "amountZat": 1500000,
+      "reason": "change",
+      "memo": "refund:LOT-01:d928588fc1669a6586057c852f7e2965cf49a081ef415324338953161d446ef8"
+    },
+    {
+      "bidTxid": "43e9e39e43aea9b01be1ca994eab7fbc17705853f62b131e2aede9fba4cae002",
+      "amountZat": 500000,
+      "reason": "change",
+      "memo": "refund:LOT-01:43e9e39e43aea9b01be1ca994eab7fbc17705853f62b131e2aede9fba4cae002"
+    },
+    {
+      "bidTxid": "ab867ef0972f6425bbc0f386d1e228683317134cfbb989542c592dd3e1668cdb",
+      "amountZat": 1200000,
+      "reason": "late",
+      "memo": "refund:LOT-01:ab867ef0972f6425bbc0f386d1e228683317134cfbb989542c592dd3e1668cdb"
+    }
+  ]
+}

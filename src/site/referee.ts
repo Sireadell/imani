@@ -8,7 +8,8 @@
 import { assertViewingKey, checkLot, InputError, KeyRefusedError, type Verdict } from "../check.ts";
 import { bidMemoPrefix, refundMemo, type Disclosure, type SellerRefund, type SellerResult } from "../files.ts";
 import { readTransactionWithId, type ReadOutput } from "../read.ts";
-import { decide } from "../rules.ts";
+import { decide, groupBidPayments, type BidPayment } from "../rules.ts";
+import type { PricingRule } from "../files.ts";
 import { ScanInputError, type BlockSource, type ChainBlock } from "../scan/chain.ts";
 
 export interface RefereeInput {
@@ -18,6 +19,10 @@ export interface RefereeInput {
   to: number;
   itemCount: number;
   reserveZat: number;
+  /** What winners pay. Default "highest-losing". */
+  pricing?: PricingRule;
+  /** True when bidders may raise a bid by paying again with the same memo before the close. */
+  topUps?: boolean;
   /** Last block at which a bid counts. Default: the last block of the range. */
   closeHeight?: number;
   /** Needed only when the key sees bids for more than one lot name. */
@@ -34,6 +39,9 @@ export interface RefereeRound {
   lateBids: number;
   winners: { txid: string; amountZat: number; paysZat: number; refundZat: number }[];
   clearingPriceZat: number;
+  /** The price rule and the top-up setting the round was checked under. */
+  pricing: PricingRule;
+  topUps: boolean;
   reserveMet: boolean;
   losers: { txid: string; amountZat: number }[];
   /** What the chain shows was refunded, per bid, next to what the rules owe. */
@@ -54,6 +62,7 @@ function validateInput(i: RefereeInput): void {
   if (i.to - i.from + 1 > MAX_RANGE) bad(`the range is more than ${MAX_RANGE} blocks. Check the open block and the last refund block of the round.`);
   if (!Number.isSafeInteger(i.itemCount) || i.itemCount < 1) bad("the number of items must be a whole number, 1 or more.");
   if (!Number.isSafeInteger(i.reserveZat) || i.reserveZat < 0) bad("the reserve must be a whole number of zatoshis (1 ZEC = 100,000,000), 0 or more.");
+  if (i.pricing !== undefined && i.pricing !== "highest-losing" && i.pricing !== "lowest-winning") bad('the price rule must be "highest-losing" or "lowest-winning".');
   if (i.closeHeight !== undefined && (!Number.isSafeInteger(i.closeHeight) || i.closeHeight < i.from || i.closeHeight > i.to)) bad("the close block must be inside the block range.");
   if (i.lotId !== undefined && !/^[A-Za-z0-9._-]{1,40}$/.test(i.lotId)) bad("the lot name must be 1 to 40 letters, digits, dots, dashes or underscores.");
 }
@@ -115,26 +124,29 @@ export function refereeRound(i: RefereeInput): RefereeOutcome {
 
     // Bids as checkLot counts them: first use of a memo, on time. Later uses are replays.
     const prefix = bidMemoPrefix(lotId);
-    const bidTx = new Map<string, { txid: string; amountZat: number; height: number; memo: string }>();
+    const bidTx = new Map<string, BidPayment>();
     for (const x of visible) {
       for (const o of x.outputs) {
         if (o.transferType !== "incoming" || !o.memo.startsWith(prefix)) continue;
         const prev = bidTx.get(x.txid);
-        if (prev) prev.amountZat += o.amountZat;
-        else bidTx.set(x.txid, { txid: x.txid, amountZat: o.amountZat, height: x.height, memo: o.memo });
+        if (prev) {
+          prev.amountZat += o.amountZat;
+          prev.outputs += 1;
+        } else bidTx.set(x.txid, { txid: x.txid, amountZat: o.amountZat, height: x.height, memo: o.memo, outputs: 1 });
       }
     }
-    const byMemo = new Map<string, { txid: string; amountZat: number; height: number; memo: string }>();
-    const replays: { txid: string; amountZat: number }[] = [];
-    for (const b of [...bidTx.values()].sort((a, c) => a.height - c.height || (a.txid < c.txid ? -1 : 1))) {
-      if (byMemo.has(b.memo)) replays.push(b);
-      else byMemo.set(b.memo, b);
-    }
-    const all = [...byMemo.values()];
+    const grouped = groupBidPayments([...bidTx.values()].sort((a, c) => a.height - c.height || (a.txid < c.txid ? -1 : 1)), i.topUps === true, closeHeight);
+    const replays = grouped.replays;
+    const all = grouped.bids;
     const onTime = all.filter((b) => b.height <= closeHeight);
     const late = all.filter((b) => b.height > closeHeight);
 
-    const rules = { itemCount: i.itemCount, reserveZat: i.reserveZat };
+    const rules = {
+      itemCount: i.itemCount,
+      reserveZat: i.reserveZat,
+      ...(i.pricing && i.pricing !== "highest-losing" ? { pricing: i.pricing } : {}),
+      ...(i.topUps ? { topUps: true } : {}),
+    };
     const outcome = decide(onTime, rules);
     const winnerSet = new Set(outcome.winners);
     const refunds: SellerRefund[] = [];
@@ -192,6 +204,8 @@ export function refereeRound(i: RefereeInput): RefereeOutcome {
         return { txid: t, amountZat: amountOf.get(t)!, paysZat: outcome.clearingPriceZat, refundZat: refund };
       }),
       clearingPriceZat: outcome.clearingPriceZat,
+      pricing: i.pricing ?? "highest-losing",
+      topUps: i.topUps === true,
       reserveMet: outcome.reserveMet,
       losers: onTime.filter((b) => !winnerSet.has(b.txid)).map((b) => ({ txid: b.txid, amountZat: b.amountZat })),
       refunds: refunds.map((r) => ({ bidTxid: r.bidTxid, owedZat: r.amountZat, paidZat: paid.get(r.bidTxid) ?? 0 })),

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { parseAddress, readTransactionWithId, type ParsedAddress, type ReadOutput } from "./read.ts";
-import { decide, type Bid } from "./rules.ts";
+import { decide, groupBidPayments, type Bid } from "./rules.ts";
 import {
   bidMemoAddress,
   bidMemoPrefix,
@@ -149,6 +149,10 @@ export function validateFiles(d: any, r: any): asserts d is Disclosure {
     if (isAmount(d.closeHeight) && d.openByHeight <= d.closeHeight) bad("openByHeight must be greater than closeHeight.");
     if (d.refundByHeight !== undefined && isAmount(d.refundByHeight) && d.openByHeight > d.refundByHeight) bad("openByHeight cannot be after refundByHeight.");
   }
+  if (d.rules.kind === undefined || d.rules.kind === "auction") {
+    if (d.rules.pricing !== undefined && d.rules.pricing !== "highest-losing" && d.rules.pricing !== "lowest-winning") bad('the pricing rule must be "highest-losing" or "lowest-winning".');
+    if (d.rules.topUps !== undefined && typeof d.rules.topUps !== "boolean") bad("topUps in the rules must be true or false.");
+  }
   if (d.rules.kind === "goal" && !isAmount(d.rules.goalZat)) bad("the goal in the rules (goalZat) must be a whole number above 0.");
   if (!Array.isArray(d.transactions)) bad("the disclosure file needs a transactions list.");
   for (const t of d.transactions) {
@@ -221,9 +225,10 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
       ? !!r.rules && r.rules.kind === "sealed" && r.rules.itemCount === sealedBasic.itemCount && r.rules.reserveZat === sealedBasic.reserveZat &&
         r.rules.depositZat === sealedBasic.depositZat && r.rules.forfeitZat === sealedBasic.forfeitZat
       : isAmount(ar.itemCount) && isCount(ar.reserveZat) && r.rules && r.rules.kind !== "goal" && r.rules.kind !== "sealed" &&
-      (r.rules as AuctionRules).itemCount === ar.itemCount && (r.rules as AuctionRules).reserveZat === ar.reserveZat;
+      (r.rules as AuctionRules).itemCount === ar.itemCount && (r.rules as AuctionRules).reserveZat === ar.reserveZat &&
+      (r.rules as AuctionRules).pricing === ar.pricing && (r.rules as AuctionRules).topUps === ar.topUps;
   if (r.lotId !== d.lotId) problems.push(`the result is for lot ${r.lotId}, the disclosure for lot ${d.lotId}`);
-  if (!rulesOk) problems.push(goalRules ? "the rules (goal) in the result differ from the disclosure" : sealedBasic ? "the rules (item count, reserve, deposit, penalty) in the result differ from the disclosure" : "the rules (item count, reserve) in the result differ from the disclosure");
+  if (!rulesOk) problems.push(goalRules ? "the rules (goal) in the result differ from the disclosure" : sealedBasic ? "the rules (item count, reserve, deposit, penalty) in the result differ from the disclosure" : "the rules (item count, reserve, pricing, top-ups) in the result differ from the disclosure");
   if (r.bidCount !== r.bids.length) problems.push(`bidCount says ${r.bidCount} but ${r.bids.length} bids are listed`);
   const listed = new Map<string, number>();
   for (const b of r.bids) {
@@ -305,10 +310,13 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
   });
 
   const highest = Math.max(0, ...r.bids.map((b) => b.amountZat || 0));
+  const lowestWinning = !goalRules && !sealedBasic && ar.pricing === "lowest-winning";
+  const listedAmount = new Map(r.bids.map((b) => [b.txid, b.amountZat]));
+  const lowestListedWinner = Math.min(...r.winners.map((w) => listedAmount.get(w) ?? Infinity));
   const priceOk = goalRules
     ? r.clearingPriceZat === 0
     : r.winners.length
-      ? r.clearingPriceZat >= ar.reserveZat && r.clearingPriceZat <= highest
+      ? r.clearingPriceZat >= ar.reserveZat && r.clearingPriceZat <= highest && (!lowestWinning || r.clearingPriceZat === Math.max(ar.reserveZat, lowestListedWinner))
       : r.clearingPriceZat === 0;
   add({
     id: "clearing-range",
@@ -321,10 +329,14 @@ export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}
         : `Payments are kept at their own amount, so no price should be set, but the file sets ${zat(r.clearingPriceZat)}.`
       : priceOk
         ? r.winners.length
-          ? `Clearing price ${zat(r.clearingPriceZat)} is not below the reserve ${zat(ar.reserveZat)} and not above the highest listed bid ${zat(highest)}.`
+          ? lowestWinning
+            ? `Clearing price ${zat(r.clearingPriceZat)} is the lowest listed winning bid, as the lowest-winning rule says.`
+            : `Clearing price ${zat(r.clearingPriceZat)} is not below the reserve ${zat(ar.reserveZat)} and not above the highest listed bid ${zat(highest)}.`
           : "No winners, and the clearing price is 0."
         : r.winners.length
-          ? `Clearing price ${zat(r.clearingPriceZat)} is outside the range from the reserve ${zat(ar.reserveZat)} to the highest listed bid ${zat(highest)}.`
+          ? lowestWinning && r.clearingPriceZat >= ar.reserveZat && r.clearingPriceZat <= highest
+            ? `Clearing price ${zat(r.clearingPriceZat)} is not the lowest listed winning bid ${zat(Math.max(ar.reserveZat, lowestListedWinner))}, which the lowest-winning rule requires.`
+            : `Clearing price ${zat(r.clearingPriceZat)} is outside the range from the reserve ${zat(ar.reserveZat)} to the highest listed bid ${zat(highest)}.`
           : "There are no winners but the clearing price is not 0.",
     fromSeller: goalRules ? [`price ${zat(r.clearingPriceZat)}`] : [`clearing price ${zat(r.clearingPriceZat)}`, `highest listed bid ${zat(highest)}`],
     fromDisclosure: [goalRules ? "no price in a goal round" : `reserve ${zat(ar.reserveZat)}`],
@@ -474,13 +486,12 @@ function keyChecks(
   }
   // A bid memo used again in a later transaction is a replay: it is not a new bid. It is
   // reported by the duplicate check and, like a late bid, owed back in full.
-  const firstByMemo = new Map<string, ChainBid>();
-  const replays: ChainBid[] = [];
-  for (const b of [...bids.values()].sort((a, b) => a.height - b.height || (a.txid < b.txid ? -1 : 1))) {
-    if (firstByMemo.has(b.memo)) replays.push(b);
-    else firstByMemo.set(b.memo, b);
-  }
-  let allBids = [...firstByMemo.values()];
+  // With top-ups on, a repeated memo before the close raises the bid instead of replaying it.
+  const topUps = !goalRules && !sealedRules && ar.topUps === true;
+  const grouped = groupBidPayments([...bids.values()].sort((a, b) => a.height - b.height || (a.txid < b.txid ? -1 : 1)), topUps, d.closeHeight);
+  const replays: ChainBid[] = grouped.replays;
+  const topUpPayments = topUps ? [...bids.values()].filter((b) => b.height <= d.closeHeight).length - grouped.bids.filter((b) => b.height <= d.closeHeight).length : 0;
+  let allBids = grouped.bids;
   let onTime = allBids.filter((b) => b.height <= d.closeHeight);
   let late = allBids.filter((b) => b.height > d.closeHeight);
   let lateIds = new Set(late.map((b) => b.txid));
@@ -488,7 +499,7 @@ function keyChecks(
   // sealed checks, the way it leaves late bids to the late-bid check.
   let sealedOut: ReturnType<typeof openSeals> | null = null;
   let skipIds = lateIds;
-  let sealedAmount: (txid: string) => number | undefined = (txid) => bids.get(txid)?.amountZat;
+  let sealedAmount: (txid: string) => number | undefined = (txid) => (topUps ? allBids.find((b) => b.txid === txid)?.amountZat : bids.get(txid)?.amountZat);
   if (sealedRules) {
     const sealFacts: SealFact[] = [...sealTxs.values()].map((t) => {
       const m = parseSealMemo(d.lotId, t.memo);
@@ -584,8 +595,8 @@ function keyChecks(
 
   const memoCount = new Map<string, string[]>();
   for (const b of [...allBids, ...replays]) memoCount.set(b.memo, [...(memoCount.get(b.memo) ?? []), b.txid]);
-  let dupMemos = [...memoCount.values()].filter((ids) => ids.length > 1);
-  let multi = allBids.filter((b) => b.outputs > 1);
+  let dupMemos = topUps ? [] : [...memoCount.values()].filter((ids) => ids.length > 1);
+  let multi = (topUps ? [...bids.values()] : allBids).filter((b) => b.outputs > 1);
   if (sealedOut) {
     // A word sealed twice, or opened twice, is a replay. A transaction holding several seals or openings is also reported.
     dupMemos = [...sealedOut.replayedSeals.map((s) => [s.txid]), ...sealedOut.replayedOpenings.map((o) => [o.txid])];
@@ -598,7 +609,11 @@ function keyChecks(
     title: "No duplicate or replayed bid",
     status: dupOk ? "PASS" : "FAIL",
     reason: dupOk
-      ? sealedOut ? "Every seal word and every opening word is used once, and every transaction holds one seal or one opening." : "Every bid memo is used once and every bid transaction holds one bid."
+      ? sealedOut
+        ? "Every seal word and every opening word is used once, and every transaction holds one seal or one opening."
+        : topUps
+          ? `Top-ups are allowed in this lot: ${topUpPayments} extra payment(s) under an existing bid memo were added to that bid, and every bid transaction holds one payment.`
+          : "Every bid memo is used once and every bid transaction holds one bid."
       : [
           ...(sealedOut
             ? [

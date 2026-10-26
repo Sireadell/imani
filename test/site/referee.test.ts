@@ -65,6 +65,25 @@ test("the numbers equal the ones in the seller's own files for the same round", 
   assert.deepEqual(o.round.winners.map((w) => w.txid).sort(), [...result.winners].sort());
 });
 
+test("choosing the lowest-winning price rule on the real round changes the price to 2,000,000 and the chain's refunds then fail", () => {
+  const o = refereeRound(input({ pricing: "lowest-winning" }));
+  assert.ok(o.ok);
+  if (!o.ok) return;
+  assert.equal(o.round.pricing, "lowest-winning");
+  assert.equal(o.round.clearingPriceZat, 2_000_000);
+  assert.equal(o.verdict.result, "FAIL");
+  assert.ok(failed(o).includes("refunds-paid"));
+});
+
+test("choosing top-ups on the real round changes nothing, because nobody paid twice", () => {
+  const o = refereeRound(input({ topUps: true }));
+  assert.ok(o.ok);
+  if (!o.ok) return;
+  assert.equal(o.round.topUps, true);
+  assert.equal(o.verdict.result, "PASS");
+  assert.equal(o.round.clearingPriceZat, 1_500_000);
+});
+
 test("a refund that was never paid fails, naming the check that caught it", () => {
   const o = refereeRound(input({ blocks: dropTx(LOSER_REFUND) }));
   assert.ok(o.ok);
