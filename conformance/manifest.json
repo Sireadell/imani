@@ -1,0 +1,572 @@
+{
+  "format": "imani-conformance/1",
+  "about": "Every passing round and every broken copy in examples/. A correct checker must say PASS for each honest case, and FAIL for each broken case, naming every check in `failing`.",
+  "honest": 10,
+  "broken": 42,
+  "cases": [
+    {
+      "id": "round-01",
+      "kind": "honest",
+      "disclosure": "examples/round-01/disclosure.json",
+      "result": "examples/round-01/result.json",
+      "expect": "PASS"
+    },
+    {
+      "id": "memo-01",
+      "kind": "honest",
+      "disclosure": "examples/memo-01/disclosure.json",
+      "result": "examples/memo-01/result.json",
+      "expect": "PASS"
+    },
+    {
+      "id": "receivers-01",
+      "kind": "honest",
+      "disclosure": "examples/receivers-01/disclosure.json",
+      "result": "examples/receivers-01/result.json",
+      "expect": "PASS"
+    },
+    {
+      "id": "scan-01",
+      "kind": "honest",
+      "disclosure": "examples/scan-01/disclosure.json",
+      "result": "examples/scan-01/result.json",
+      "chain": "examples/scan-01/chain.json",
+      "expect": "PASS"
+    },
+    {
+      "id": "goal-reached",
+      "kind": "honest",
+      "disclosure": "examples/goal-reached/disclosure.json",
+      "result": "examples/goal-reached/result.json",
+      "expect": "PASS"
+    },
+    {
+      "id": "goal-missed",
+      "kind": "honest",
+      "disclosure": "examples/goal-missed/disclosure.json",
+      "result": "examples/goal-missed/result.json",
+      "expect": "PASS"
+    },
+    {
+      "id": "pricing-01",
+      "kind": "honest",
+      "disclosure": "examples/pricing-01/disclosure.json",
+      "result": "examples/pricing-01/result.json",
+      "expect": "PASS"
+    },
+    {
+      "id": "totals-01",
+      "kind": "honest",
+      "disclosure": "examples/totals-01/disclosure.json",
+      "result": "examples/totals-01/result.json",
+      "expect": "PASS"
+    },
+    {
+      "id": "sealed-01",
+      "kind": "honest",
+      "disclosure": "examples/sealed-01/disclosure.json",
+      "result": "examples/sealed-01/result.json",
+      "expect": "PASS"
+    },
+    {
+      "id": "testnet-01",
+      "kind": "honest",
+      "disclosure": "examples/testnet-01/disclosure.json",
+      "result": "examples/testnet-01/result.json",
+      "chain": "examples/testnet-01/chain.json",
+      "expect": "PASS"
+    },
+    {
+      "id": "broken/01-extra-fake-bid",
+      "kind": "broken",
+      "disclosure": "examples/broken/01-extra-fake-bid/disclosure.json",
+      "result": "examples/broken/01-extra-fake-bid/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "bid-count"
+      ],
+      "story": "The seller adds a bid of 1,200,000 that was never paid, and lists a refund for it."
+    },
+    {
+      "id": "broken/02-wrong-bid-amount",
+      "kind": "broken",
+      "disclosure": "examples/broken/02-wrong-bid-amount/disclosure.json",
+      "result": "examples/broken/02-wrong-bid-amount/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "bid-amounts"
+      ],
+      "story": "The seller reports Alice's bid as 2,900,000. The chain shows 3,000,000."
+    },
+    {
+      "id": "broken/03-missing-refund",
+      "kind": "broken",
+      "disclosure": "examples/broken/03-missing-refund/disclosure.json",
+      "result": "examples/broken/03-missing-refund/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "refunds-paid"
+      ],
+      "story": "Carol lost but her refund was never sent. The seller's file still lists it."
+    },
+    {
+      "id": "broken/04-short-refund",
+      "kind": "broken",
+      "disclosure": "examples/broken/04-short-refund/disclosure.json",
+      "result": "examples/broken/04-short-refund/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "refunds-paid"
+      ],
+      "story": "Carol lost and was refunded 1,400,000 instead of her full 1,500,000. The seller's file says 1,500,000."
+    },
+    {
+      "id": "broken/05-wrong-clearing-price",
+      "kind": "broken",
+      "disclosure": "examples/broken/05-wrong-clearing-price/disclosure.json",
+      "result": "examples/broken/05-wrong-clearing-price/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "winners-and-price"
+      ],
+      "story": "The seller says winners pay 1,600,000 each instead of 1,500,000, and shrinks the winners' change to match."
+    },
+    {
+      "id": "broken/06-late-bid-counted",
+      "kind": "broken",
+      "disclosure": "examples/broken/06-late-bid-counted/disclosure.json",
+      "result": "examples/broken/06-late-bid-counted/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "no-late-bids"
+      ],
+      "story": "Dave's bid arrived 5 blocks after the close. The seller counts it as a losing bid anyway."
+    },
+    {
+      "id": "memo-broken/01-extra-fake-bid",
+      "kind": "broken",
+      "disclosure": "examples/memo-broken/01-extra-fake-bid/disclosure.json",
+      "result": "examples/memo-broken/01-extra-fake-bid/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "bid-count"
+      ],
+      "story": "The seller adds a bid of 1,200,000 that was never paid, and lists a refund for it."
+    },
+    {
+      "id": "memo-broken/02-wrong-bid-amount",
+      "kind": "broken",
+      "disclosure": "examples/memo-broken/02-wrong-bid-amount/disclosure.json",
+      "result": "examples/memo-broken/02-wrong-bid-amount/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "bid-amounts"
+      ],
+      "story": "The seller reports Alice's bid as 2,900,000. The chain shows 3,000,000."
+    },
+    {
+      "id": "memo-broken/03-missing-refund",
+      "kind": "broken",
+      "disclosure": "examples/memo-broken/03-missing-refund/disclosure.json",
+      "result": "examples/memo-broken/03-missing-refund/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "refunds-paid"
+      ],
+      "story": "Carol lost but her refund was never sent. The seller's file still lists it."
+    },
+    {
+      "id": "memo-broken/04-short-refund",
+      "kind": "broken",
+      "disclosure": "examples/memo-broken/04-short-refund/disclosure.json",
+      "result": "examples/memo-broken/04-short-refund/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "refunds-paid"
+      ],
+      "story": "Carol lost and was refunded 1,400,000 instead of her full 1,500,000. The seller's file says 1,500,000."
+    },
+    {
+      "id": "memo-broken/05-wrong-clearing-price",
+      "kind": "broken",
+      "disclosure": "examples/memo-broken/05-wrong-clearing-price/disclosure.json",
+      "result": "examples/memo-broken/05-wrong-clearing-price/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "winners-and-price"
+      ],
+      "story": "The seller says winners pay 1,600,000 each instead of 1,500,000, and shrinks the winners' change to match."
+    },
+    {
+      "id": "memo-broken/06-late-bid-counted",
+      "kind": "broken",
+      "disclosure": "examples/memo-broken/06-late-bid-counted/disclosure.json",
+      "result": "examples/memo-broken/06-late-bid-counted/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "no-late-bids"
+      ],
+      "story": "Dave's bid arrived 5 blocks after the close. The seller counts it as a losing bid anyway."
+    },
+    {
+      "id": "memo-broken/07-refund-to-other-address",
+      "kind": "broken",
+      "disclosure": "examples/memo-broken/07-refund-to-other-address/disclosure.json",
+      "result": "examples/memo-broken/07-refund-to-other-address/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "refund-receivers"
+      ],
+      "story": "Carol wrote her own address in her bid memo, but the refund the seller paid for her bid went to Dave's address. The amount and the memo naming the bid are right, so the older checks pass. Only the receiver check sees it."
+    },
+    {
+      "id": "memo-broken/08-list-contradicts-bid-memo",
+      "kind": "broken",
+      "disclosure": "examples/memo-broken/08-list-contradicts-bid-memo/disclosure.json",
+      "result": "examples/memo-broken/08-list-contradicts-bid-memo/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "refund-receivers"
+      ],
+      "story": "The refunds are honest, but the seller adds a refund address list that names Dave's address for Carol's bid. Carol's own bid memo says otherwise, and the memo wins, so the checker fails the seller's list."
+    },
+    {
+      "id": "receivers-broken/01-refund-to-other-address",
+      "kind": "broken",
+      "disclosure": "examples/receivers-broken/01-refund-to-other-address/disclosure.json",
+      "result": "examples/receivers-broken/01-refund-to-other-address/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "refund-receivers"
+      ],
+      "story": "Carol's bid names her own address, but the refund the seller paid for it went to a different address. The amount and the memo are right, so the older checks pass. Only the receiver check sees it."
+    },
+    {
+      "id": "receivers-broken/02-refund-address-not-listed",
+      "kind": "broken",
+      "disclosure": "examples/receivers-broken/02-refund-address-not-listed/disclosure.json",
+      "result": "examples/receivers-broken/02-refund-address-not-listed/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "refund-receivers"
+      ],
+      "story": "The seller lists a refund address for three of the four bids and leaves Carol's out. Once a seller lists refund addresses, every refunded bid needs one."
+    },
+    {
+      "id": "goal-broken/01-refund-to-a-contributor",
+      "kind": "broken",
+      "disclosure": "examples/goal-broken/01-refund-to-a-contributor/disclosure.json",
+      "result": "examples/goal-broken/01-refund-to-a-contributor/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "refund-total",
+        "result-consistent"
+      ],
+      "story": "The goal was reached, so every payment is kept. The seller still lists a 500,000 refund for Alice that never happened."
+    },
+    {
+      "id": "goal-broken/02-says-goal-missed-when-reached",
+      "kind": "broken",
+      "disclosure": "examples/goal-broken/02-says-goal-missed-when-reached/disclosure.json",
+      "result": "examples/goal-broken/02-says-goal-missed-when-reached/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "goal-reached",
+        "reserve",
+        "winners-and-price"
+      ],
+      "story": "The 6,500,000 collected beats the 6,000,000 goal. The seller says the goal was missed and lists everyone as refunded."
+    },
+    {
+      "id": "goal-broken/03-goal-raised-after-the-fact",
+      "kind": "broken",
+      "disclosure": "examples/goal-broken/03-goal-raised-after-the-fact/disclosure.json",
+      "result": "examples/goal-broken/03-goal-raised-after-the-fact/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "goal-reached",
+        "refunds-paid",
+        "reserve",
+        "result-consistent",
+        "winners-and-price"
+      ],
+      "story": "The disclosure now shows a goal of 7,000,000, higher than the 6,000,000 the result was built on, so the goal looks missed while the seller keeps the money."
+    },
+    {
+      "id": "goal-broken/04-says-goal-reached-when-missed",
+      "kind": "broken",
+      "disclosure": "examples/goal-broken/04-says-goal-reached-when-missed/disclosure.json",
+      "result": "examples/goal-broken/04-says-goal-reached-when-missed/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "goal-reached",
+        "reserve",
+        "winners-and-price"
+      ],
+      "story": "Only 1,500,000 came in against a goal of 2,000,000. The seller says the goal was reached and keeps Carol's money, though her refund went out on the chain."
+    },
+    {
+      "id": "pricing-broken/01-uses-the-other-price-rule",
+      "kind": "broken",
+      "disclosure": "examples/pricing-broken/01-uses-the-other-price-rule/disclosure.json",
+      "result": "examples/pricing-broken/01-uses-the-other-price-rule/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "clearing-range",
+        "refund-total",
+        "winners-and-price"
+      ],
+      "story": "The lot says winners pay the lowest winning bid, 1,500,000. The seller's result charges 1,000,000, the price the default rule would give for these bids."
+    },
+    {
+      "id": "pricing-broken/02-rule-changed-in-the-result",
+      "kind": "broken",
+      "disclosure": "examples/pricing-broken/02-rule-changed-in-the-result/disclosure.json",
+      "result": "examples/pricing-broken/02-rule-changed-in-the-result/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "result-consistent"
+      ],
+      "story": "The disclosure says the lowest winning bid sets the price. The seller's result file quotes the other rule, the highest losing bid."
+    },
+    {
+      "id": "pricing-broken/03-rule-dropped-from-the-disclosure",
+      "kind": "broken",
+      "disclosure": "examples/pricing-broken/03-rule-dropped-from-the-disclosure/disclosure.json",
+      "result": "examples/pricing-broken/03-rule-dropped-from-the-disclosure/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "refunds-paid",
+        "result-consistent",
+        "winners-and-price"
+      ],
+      "story": "The seller's disclosure no longer says which price rule the lot ran under, so the checker applies the default rule while the result was built on the lowest winning bid."
+    },
+    {
+      "id": "pricing-broken/04-leaves-out-the-lowest-winner",
+      "kind": "broken",
+      "disclosure": "examples/pricing-broken/04-leaves-out-the-lowest-winner/disclosure.json",
+      "result": "examples/pricing-broken/04-leaves-out-the-lowest-winner/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "bid-count",
+        "refund-total",
+        "winners-and-price"
+      ],
+      "story": "Carol's 1,500,000 is on the chain but the seller's list leaves it out and raises the price to Bob's bid, 2,000,000."
+    },
+    {
+      "id": "pricing-broken/05-lists-a-smaller-refund-for-a-winner",
+      "kind": "broken",
+      "disclosure": "examples/pricing-broken/05-lists-a-smaller-refund-for-a-winner/disclosure.json",
+      "result": "examples/pricing-broken/05-lists-a-smaller-refund-for-a-winner/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "refund-total"
+      ],
+      "story": "Alice's change on the chain is 1,500,000. The seller's books list 1,000,000, as if the price were 2,000,000 for her."
+    },
+    {
+      "id": "totals-broken/01-keeps-more-than-the-winners-paid",
+      "kind": "broken",
+      "disclosure": "examples/totals-broken/01-keeps-more-than-the-winners-paid/disclosure.json",
+      "result": "examples/totals-broken/01-keeps-more-than-the-winners-paid/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "published-totals",
+        "published-totals-chain"
+      ],
+      "story": "The seller publishes that 3,500,000 was kept and 4,200,000 refunded. Both add up to the 7,700,000 received, but two winners at 1,500,000 pay 3,000,000, and 4,700,000 was refunded."
+    },
+    {
+      "id": "totals-broken/02-hides-a-payment",
+      "kind": "broken",
+      "disclosure": "examples/totals-broken/02-hides-a-payment/disclosure.json",
+      "result": "examples/totals-broken/02-hides-a-payment/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "published-totals",
+        "published-totals-chain"
+      ],
+      "story": "Four payments reached the lot, one of them late. The seller publishes three, fewer than the three bids and the one late payment its own lists show."
+    },
+    {
+      "id": "totals-broken/03-totals-do-not-balance",
+      "kind": "broken",
+      "disclosure": "examples/totals-broken/03-totals-do-not-balance/disclosure.json",
+      "result": "examples/totals-broken/03-totals-do-not-balance/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "published-totals",
+        "published-totals-chain"
+      ],
+      "story": "The seller publishes 7,800,000 received, 100,000 more than came in, so received no longer equals kept plus refunded."
+    },
+    {
+      "id": "totals-broken/04-refund-list-is-shorter-than-the-total",
+      "kind": "broken",
+      "disclosure": "examples/totals-broken/04-refund-list-is-shorter-than-the-total/disclosure.json",
+      "result": "examples/totals-broken/04-refund-list-is-shorter-than-the-total/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "published-totals",
+        "refund-total"
+      ],
+      "story": "The seller publishes the true total refunded, 4,700,000, but the refund list leaves out the 1,200,000 owed to the late bidder, so the books do not balance."
+    },
+    {
+      "id": "sealed-broken/01-counts-unopened-seal",
+      "kind": "broken",
+      "disclosure": "examples/sealed-broken/01-counts-unopened-seal/disclosure.json",
+      "result": "examples/sealed-broken/01-counts-unopened-seal/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "seal-openings"
+      ],
+      "story": "Dave paid a deposit but never opened his seal. The seller counts it as a bid of 1,200,000 anyway."
+    },
+    {
+      "id": "sealed-broken/02-counts-wrong-opening",
+      "kind": "broken",
+      "disclosure": "examples/sealed-broken/02-counts-wrong-opening/disclosure.json",
+      "result": "examples/sealed-broken/02-counts-wrong-opening/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "seal-openings"
+      ],
+      "story": "Erin sealed 900,000 and then opened 800,000, which does not match her seal. The seller counts her at 800,000."
+    },
+    {
+      "id": "sealed-broken/03-hides-unopened-seal",
+      "kind": "broken",
+      "disclosure": "examples/sealed-broken/03-hides-unopened-seal/disclosure.json",
+      "result": "examples/sealed-broken/03-hides-unopened-seal/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "seal-forfeits"
+      ],
+      "story": "Erin's seal was opened wrongly, so she paid the penalty. The seller leaves her out of the list of seals that paid it."
+    },
+    {
+      "id": "sealed-broken/04-keeps-the-penalty",
+      "kind": "broken",
+      "disclosure": "examples/sealed-broken/04-keeps-the-penalty/disclosure.json",
+      "result": "examples/sealed-broken/04-keeps-the-penalty/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "refunds-paid",
+        "refund-total"
+      ],
+      "story": "The seller pays Alice her refund without her share of the two penalties, and keeps it."
+    },
+    {
+      "id": "sealed-broken/05-counts-wrong-deposit",
+      "kind": "broken",
+      "disclosure": "examples/sealed-broken/05-counts-wrong-deposit/disclosure.json",
+      "result": "examples/sealed-broken/05-counts-wrong-deposit/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "seal-deposits"
+      ],
+      "story": "Frank paid a deposit of 4,999,999 instead of 5,000,000. The seller counts his seal as a bid of 1,000,000."
+    },
+    {
+      "id": "sealed-broken/06-counts-late-seal",
+      "kind": "broken",
+      "disclosure": "examples/sealed-broken/06-counts-late-seal/disclosure.json",
+      "result": "examples/sealed-broken/06-counts-late-seal/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "no-late-bids",
+        "seal-deposits"
+      ],
+      "story": "Gina's seal arrived 5 blocks after the close. The seller counts it as a bid of 1,100,000."
+    },
+    {
+      "id": "sealed-broken/07-wrong-opened-price",
+      "kind": "broken",
+      "disclosure": "examples/sealed-broken/07-wrong-opened-price/disclosure.json",
+      "result": "examples/sealed-broken/07-wrong-opened-price/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "bid-amounts"
+      ],
+      "story": "The seller reports Alice's opened price as 2,900,000. She opened 3,000,000."
+    },
+    {
+      "id": "sealed-broken/08-missing-refund",
+      "kind": "broken",
+      "disclosure": "examples/sealed-broken/08-missing-refund/disclosure.json",
+      "result": "examples/sealed-broken/08-missing-refund/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "refunds-paid"
+      ],
+      "story": "Carol lost and her refund was never sent. The seller's file still lists it."
+    },
+    {
+      "id": "scan-broken/01-hidden-bid",
+      "kind": "broken",
+      "disclosure": "examples/scan-broken/01-hidden-bid/disclosure.json",
+      "result": "examples/scan-broken/01-hidden-bid/result.json",
+      "chain": "examples/scan-broken/01-hidden-bid/chain.json",
+      "expect": "FAIL",
+      "failing": [
+        "scan-hidden-bids"
+      ],
+      "story": "A bid of 3,000,000 was paid into the lot at block 4200060, before the close, which beats both winners. The seller left it out of the disclosure and the result and kept the money. The key level passes because it only reads what the seller lists; the scan finds the payment. (The offline test round has no spare bid with a new memo, so this payment reuses Alice's memo. The scan flags any unlisted bid payment, whatever its memo.)"
+    },
+    {
+      "id": "scan-broken/02-listed-not-in-range",
+      "kind": "broken",
+      "disclosure": "examples/scan-broken/02-listed-not-in-range/disclosure.json",
+      "result": "examples/scan-broken/02-listed-not-in-range/result.json",
+      "chain": "examples/scan-broken/02-listed-not-in-range/chain.json",
+      "expect": "FAIL",
+      "failing": [
+        "scan-listed-in-range"
+      ],
+      "story": "Carol's refund was paid at block 4200140, after the refund deadline at 4200125. The seller lists it at block 4200122. The scan does not find it in the lot's range."
+    },
+    {
+      "id": "scan-broken/03-wrong-height",
+      "kind": "broken",
+      "disclosure": "examples/scan-broken/03-wrong-height/disclosure.json",
+      "result": "examples/scan-broken/03-wrong-height/result.json",
+      "chain": "examples/scan-broken/03-wrong-height/chain.json",
+      "expect": "FAIL",
+      "failing": [
+        "scan-heights"
+      ],
+      "story": "Dave's bid arrived at block 4200105, five blocks after the close. The seller writes block 4200099 in the disclosure and counts Dave as an on-time losing bid. The key level is fooled, because it takes heights from the disclosure; the scan sees the bid in block 4200105."
+    },
+    {
+      "id": "testnet-broken/01-hidden-losing-bid",
+      "kind": "broken",
+      "disclosure": "examples/testnet-broken/01-hidden-losing-bid/disclosure.json",
+      "result": "examples/testnet-broken/01-hidden-losing-bid/result.json",
+      "chain": "examples/testnet-01/chain.json",
+      "expect": "FAIL",
+      "failing": [
+        "refunds-paid",
+        "refund-total",
+        "scan-hidden-bids",
+        "scan-unlisted-payments"
+      ],
+      "story": "The seller leaves the losing bid of 1,500,000 and its refund out of their files, then says that with only two bids the price falls to the reserve of 1,000,000. The refunds on the chain no longer add up, and the scan of the real blocks finds the bid and the refund the seller left out."
+    },
+    {
+      "id": "testnet-broken/02-short-refund-claim",
+      "kind": "broken",
+      "disclosure": "examples/testnet-01/disclosure.json",
+      "result": "examples/testnet-broken/02-short-refund-claim/result.json",
+      "chain": "examples/testnet-01/chain.json",
+      "expect": "FAIL",
+      "failing": [
+        "result-consistent",
+        "refund-total"
+      ],
+      "story": "The seller's result says the losing bidder got 1,400,000 back. The chain shows the real refund was 1,500,000, so the seller's sums are 100,000 out and the result contradicts itself."
+    }
+  ]
+}
