@@ -1,10 +1,10 @@
 # Judge guide
 
-Imani checks that a sealed-bid auction on Zcash was fair, and lets people sign in by paying from a private Zcash wallet. This page shows you how to try it in two minutes and how to test our privacy claim yourself.
+Imani checks that a sealed-bid auction on Zcash was run fairly, using only a read-only viewing key the seller publishes and public chain data. A smaller second tool lets people sign in to a website by paying from a private Zcash wallet. The short version, one command per judging line, is at the top of the [README](../README.md). This page shows you how to try it in two minutes and how to test our privacy claim yourself.
 
 If a seller of something on Zcash runs a sealed auction, the bidders have to take the seller's word that the winner and price are right. Imani lets anyone recompute the result from the chain, using a read-only key the seller shares after the close. It answers PASS or FAIL, and names the check that failed.
 
-The checker page opens on a real auction: a real wallet paid its bids and refunds on the public Zcash test network (test coins, no money). The other examples are made-up rounds built with throwaway keys.
+The checker page opens on a real auction: a real wallet paid its bids and refunds into the Ironwood pool on the public Zcash test network (test coins, no money). The other examples are made-up rounds built with throwaway keys.
 
 ## Try it in two minutes
 
