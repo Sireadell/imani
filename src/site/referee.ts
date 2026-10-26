@@ -48,8 +48,19 @@ export interface RefereeRound {
   refunds: { bidTxid: string; owedZat: number; paidZat: number }[];
 }
 
+/** The two files the round was checked from, and two facts the files do not hold, for the seller kit. */
+export interface RefereeFiles {
+  disclosure: Disclosure;
+  result: SellerResult;
+  /** Every bid payment that reached the lot, late and repeated ones included. */
+  payments: number;
+  receivedZat: number;
+  /** The bid memo of each bid payment, by transaction id (it may hold the bidder's refund address). */
+  bidMemos: Record<string, string>;
+}
+
 export type RefereeOutcome =
-  | { ok: true; verdict: Verdict; round: RefereeRound; closeAssumed: boolean }
+  | { ok: true; verdict: Verdict; round: RefereeRound; closeAssumed: boolean; files: RefereeFiles }
   | { ok: false; kind: "refused" | "input" | "error"; message: string };
 
 const MAX_RANGE = 5000;
@@ -210,7 +221,8 @@ export function refereeRound(i: RefereeInput): RefereeOutcome {
       losers: onTime.filter((b) => !winnerSet.has(b.txid)).map((b) => ({ txid: b.txid, amountZat: b.amountZat })),
       refunds: refunds.map((r) => ({ bidTxid: r.bidTxid, owedZat: r.amountZat, paidZat: paid.get(r.bidTxid) ?? 0 })),
     };
-    return { ok: true, verdict, round, closeAssumed };
+    const files: RefereeFiles = { disclosure, result, payments: bidTx.size, receivedZat: [...bidTx.values()].reduce((s, b) => s + b.amountZat, 0), bidMemos: Object.fromEntries([...bidTx.values()].map((b) => [b.txid, b.memo])) };
+    return { ok: true, verdict, round, closeAssumed, files };
   } catch (e) {
     if (e instanceof KeyRefusedError) return { ok: false, kind: "refused", message: e.message };
     if (e instanceof InputError || e instanceof ScanInputError) return { ok: false, kind: "input", message: e.message };

@@ -13,6 +13,8 @@ import { ZEBRA_PREFIX, isZebra, loadZebraAuth } from "./fetch/zebra.ts";
 import { bidderCheck, bidderRange, bidderText, validateFacts, type BidClaim, type PublishedResult } from "./bidder.ts";
 import { runOpen, runSeal } from "./seal-cli.ts";
 import { runBidLink } from "./bidlink-cli.ts";
+import { bidMemoAddress } from "./files.ts";
+import { planLot, settle, settleRange, writeLotFiles, LOT_PRIVATE, LOT_PUBLIC } from "./seller-kit.ts";
 import { LinkingInputError, linkingFromLots, linkingText, lotRefunds } from "./privacy/linking.ts";
 
 const USAGE = `Usage: imani check --disclosure <lot disclosure.json> --result <seller result.json> [options]
@@ -47,6 +49,12 @@ Exit code: 0 PASS, 1 FAIL, 2 refused or bad input.
 
        imani bid-link --lot <lot id> --address <lot address> --amount-zat <zat> [--refund-address <addr>] [--svg <file>]
                                                              (make a payment request link and QR code for your bid)
+
+       imani lot-new --lot <lot id> --address <lot address> --key-file <lot viewing key file> --items <n> --reserve-zat <zat>
+                     --open-height <n> --close-height <n> --refund-by-height <n> [--pricing lowest-winning] [--top-ups] [--out <folder>]
+         Sets up a lot: lot-public.json (publish it), lot-private.json (keep it until the close) and CHECKLIST.md.
+       imani settle --folder <lot folder> (--chain <file> | --fetch) [--server <url>] [--proxy <url>] [--concurrency <n>]
+         After the close: works out what each bidder is owed, writes disclosure.json and result.json into <folder>/settled and checks them.
 
        imani bidder-check --facts <lot facts.json> --key-file <your viewing key file> [options]
 
@@ -89,7 +97,7 @@ export function parseServerList(raw: string | undefined): string[] | undefined {
 }
 
 /** Fetch options for --server: the chosen servers, and no cross-check when there is only one. */
-function serverOpts(raw: string | undefined, authFile?: string): { servers?: string[]; crossCheck?: boolean; zebraAuth?: string } {
+export function serverOpts(raw: string | undefined, authFile?: string): { servers?: string[]; crossCheck?: boolean; zebraAuth?: string } {
   const servers = parseServerList(raw);
   if (!servers) return {};
   let zebraAuth: string | undefined;
@@ -238,6 +246,8 @@ export function run(argv: string[]): CliResult {
   if (argv[0] === "bidder-check") return runBidder(argv.slice(1));
   if (argv[0] === "seal") return runSeal(argv.slice(1));
   if (argv[0] === "bid-link") return runBidLink(argv.slice(1));
+  if (argv[0] === "lot-new") return runLotNew(argv.slice(1));
+  if (argv[0] === "settle") return runSettleChain(argv.slice(1));
   if (argv[0] === "open") return runOpen(argv.slice(1));
   const opts = parse(argv);
   if (isResult(opts)) return opts;
@@ -416,9 +426,143 @@ function runLinking(files: string[]): CliResult {
   }
 }
 
+/** Read `--name value` pairs and bare flags. Returns a message string for anything unknown. */
+function pairs(args: string[], values: string[], flags: string[]): Record<string, string | boolean> | string {
+  const o: Record<string, string | boolean> = {};
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (flags.includes(a)) o[a.slice(2)] = true;
+    else if (a === "--server" && values.includes(a) && args[i + 1] && !args[i + 1].startsWith("--")) {
+      o.server = typeof o.server === "string" ? `${o.server},${args[++i]}` : args[++i];
+    } else if (values.includes(a) && args[i + 1] !== undefined && !args[i + 1].startsWith("--")) o[a.slice(2)] = args[++i];
+    else return `Unknown or incomplete option: ${a}`;
+  }
+  return o;
+}
+
+function runLotNew(args: string[]): CliResult {
+  const none = "Servers contacted: none";
+  const o = pairs(args, ["--lot", "--address", "--key-file", "--items", "--reserve-zat", "--open-height", "--close-height", "--refund-by-height", "--pricing", "--out"], ["--top-ups"]);
+  if (typeof o === "string") return { code: 2, stdout: "", stderr: `${o}\n\n${USAGE}` };
+  for (const k of ["lot", "address", "key-file", "items", "reserve-zat", "open-height", "close-height", "refund-by-height"]) {
+    if (typeof o[k] !== "string") return { code: 2, stdout: "", stderr: `--${k} is needed.\n\n${USAGE}` };
+  }
+  const n = (k: string) => (/^[0-9]{1,16}$/.test(o[k] as string) ? Number(o[k]) : NaN);
+  try {
+    let keyText: string;
+    try {
+      keyText = readFileSync(o["key-file"] as string, "utf8").trim();
+    } catch {
+      throw new InputError(`Input error: cannot read the key file at ${o["key-file"]}.`);
+    }
+    const ufvk = keyText.startsWith("{") ? String(JSON.parse(keyText).ufvk ?? "") : keyText;
+    const plan = planLot({
+      lotId: o.lot as string,
+      address: o.address as string,
+      ufvk,
+      itemCount: n("items"),
+      reserveZat: n("reserve-zat"),
+      pricing: o.pricing as never,
+      topUps: o["top-ups"] === true,
+      openHeight: n("open-height"),
+      closeHeight: n("close-height"),
+      refundByHeight: n("refund-by-height"),
+    });
+    const folder = typeof o.out === "string" ? o.out : `lot-${o.lot}`;
+    const names = writeLotFiles(folder, plan);
+    return {
+      code: 0,
+      stdout: [
+        `Lot ${o.lot} is set up in ${folder}: ${names.join(", ")}.`,
+        `Publish ${LOT_PUBLIC} (it holds no key). Keep ${LOT_PRIVATE} private until the lot closes: it holds the lot's viewing key.`,
+        "Follow CHECKLIST.md. Nothing was sent anywhere.",
+        none,
+      ].join("\n"),
+      stderr: "",
+    };
+  } catch (e) {
+    if (e instanceof SyntaxError) return { code: 2, stdout: "", stderr: `Input error: the key file is not valid JSON.\n${none}` };
+    return failure(e, []);
+  }
+}
+
+function settleText(outDir: string, s: ReturnType<typeof settle>): string {
+  const lot = s.round.lotId;
+  const lines: string[] = [`Lot ${lot}: ${s.round.bidCount} bids counted, ${s.round.winners.length} winners, price ${s.round.clearingPriceZat} zatoshis each.`, ""];
+  lines.push(`Refunds owed (${s.result.refunds.length}), one payment each from the lot account:`);
+  for (const f of s.result.refunds) {
+    const addr = bidMemoAddress(lot, s.bidMemos[f.bidTxid] ?? "");
+    lines.push(`  ${f.amountZat} zatoshis (${f.reason}) to ${addr ?? "(no address in the bid memo: ask the bidder)"}, memo ${f.memo}`);
+  }
+  lines.push("", toText(s.verdict), "", `Wrote ${join(outDir, "disclosure.json")} and ${join(outDir, "result.json")}. Publish them once this says PASS after the refunds were paid.`);
+  return lines.join("\n");
+}
+
+function settleFinish(folder: string, blocks: any, missing: number[], source: BlockSource): CliResult {
+  const s = settle({ folder, blocks, missing, source });
+  const outDir = join(folder, "settled");
+  mkdirSync(outDir, { recursive: true });
+  writeFileSync(join(outDir, "disclosure.json"), JSON.stringify(s.disclosure, null, 2) + "\n");
+  writeFileSync(join(outDir, "result.json"), JSON.stringify(s.result, null, 2) + "\n");
+  return { code: s.verdict.result === "PASS" ? 0 : 1, stdout: settleText(outDir, s), stderr: "" };
+}
+
+const isCliResult = (x: unknown): x is CliResult => typeof (x as CliResult).code === "number" && typeof (x as CliResult).stdout === "string";
+
+function settleOpts(args: string[]): Record<string, string | boolean> | CliResult {
+  const o = pairs(args, ["--folder", "--chain", "--server", "--proxy", "--concurrency", "--zebra-auth-file"], ["--fetch"]);
+  const none = "\nServers contacted: none";
+  if (typeof o === "string") return { code: 2, stdout: "", stderr: `${o}\n\n${USAGE}${none}` };
+  if (typeof o.folder !== "string") return { code: 2, stdout: "", stderr: `--folder is needed: the folder made by imani lot-new.\n\n${USAGE}${none}` };
+  if (o.fetch && o.chain) return { code: 2, stdout: "", stderr: `Give either --chain (offline) or --fetch (online), not both.${none}` };
+  if (!o.fetch && !o.chain) return { code: 2, stdout: "", stderr: `settle needs blocks: give --chain <file> to read them offline, or --fetch to download them from public light servers.${none}` };
+  return o;
+}
+
+function runSettleChain(args: string[]): CliResult {
+  const o = settleOpts(args);
+  if (isCliResult(o)) return o;
+  if (o.fetch) return { code: 2, stdout: "", stderr: "--fetch downloads blocks and needs runAsync.\nServers contacted: none" };
+  try {
+    const range = settleRange(o.folder as string);
+    const chain = readJson(o.chain as string, "chain") as any;
+    validateChainFile(chain);
+    if (chain.network !== range.network) throw new ScanInputError(`Input error: the chain file is for the ${chain.network} network but the lot is on ${range.network}.`);
+    const started = Date.now();
+    const { blocks, missing } = blocksInRange(chain, range.from, range.to);
+    return settleFinish(o.folder as string, blocks, missing, { kind: "chain-file", label: `the chain file ${basename(o.chain as string)} (offline)`, serversContacted: [], bytes: 0, ms: Date.now() - started });
+  } catch (e) {
+    return failure(e, []);
+  }
+}
+
+async function runSettleAsync(args: string[], progress?: (line: string) => void): Promise<CliResult> {
+  const o = settleOpts(args);
+  if (isCliResult(o) || !o.fetch) return runSettleChain(args);
+  let servers: string[] = [];
+  try {
+    const range = settleRange(o.folder as string);
+    const concurrency = typeof o.concurrency === "string" ? Number(o.concurrency) : undefined;
+    if (concurrency !== undefined && (!Number.isSafeInteger(concurrency) || concurrency < 1 || concurrency > 32)) throw new InputError("Input error: --concurrency must be a whole number from 1 to 32.");
+    progress?.(`Downloading ${range.to - range.from + 1} blocks (${range.from} to ${range.to}) from ${o.server ? "your chosen server" : "public light servers"}. Your key is not sent.`);
+    let fetched;
+    try {
+      fetched = await fetchBlocks({ network: range.network, from: range.from, to: range.to, proxy: typeof o.proxy === "string" ? o.proxy : undefined, concurrency, ...serverOpts(typeof o.server === "string" ? o.server : undefined, typeof o["zebra-auth-file"] === "string" ? (o["zebra-auth-file"] as string) : undefined) });
+    } catch (e) {
+      if (e instanceof BlockFetchError) servers = e.serversContacted;
+      throw e;
+    }
+    servers = fetched.source.serversContacted;
+    return settleFinish(o.folder as string, fetched.blocks, [], fetched.source);
+  } catch (e) {
+    return failure(e, servers);
+  }
+}
+
 /** Same as run, and also handles --fetch. `progress` gets one line now and then while blocks download. */
 export async function runAsync(argv: string[], progress?: (line: string) => void): Promise<CliResult> {
   if (argv[0] === "bidder-check") return runBidderAsync(argv.slice(1), progress);
+  if (argv[0] === "settle") return runSettleAsync(argv.slice(1), progress);
   const opts = parse(argv);
   if (isResult(opts) || !opts.fetch) return run(argv);
   let servers: string[] = [];
