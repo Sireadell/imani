@@ -387,6 +387,17 @@ async function start(): Promise<void> {
     /* the line is optional */
   }
   ready = true;
+  // A link from the checked rounds list: #round=<example id> or #external=<published round id>.
+  const m = /^#(round|external)=(.+)$/.exec(location.hash);
+  if (m) {
+    const id = decodeURIComponent(m[2]);
+    if (m[1] === "round" && examples.some((e) => e.id === id)) {
+      await choose(id);
+      return;
+    }
+    const x = m[1] === "external" ? externals.find((e) => e.id === id) : undefined;
+    if (x) renderExternal(parseJsonText(blobs[x.blob], x.title), x.title);
+  }
   await checkWithNotice();
 }
 
