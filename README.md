@@ -34,8 +34,8 @@ The whole test suite is `npm run test:all` (about six minutes). `npm test` runs 
 
 | What | Count | Where it comes from |
 |---|---|---|
-| Tests | 1,534 in 9 groups, 1,531 pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
-| Tests that change one fact at a time and must never pass | 1,127 | `npm run test:tamper` |
+| Tests | <!--count:total-->1535<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1532<!--/count--> pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
+| Tests that change one fact at a time and must never pass | <!--count:test:tamper-->1127<!--/count--> | `npm run test:tamper` |
 | Example rounds | 10 that pass: 1 real, 9 made up offline with throwaway keys | `examples/` |
 | Broken copies | 42 in 9 folders, each named for what the seller changed, and all 42 fail | `examples/*broken*/manifest.json` |
 | Real round on the Zcash test network | `testnet-01`: 3 bids and 3 refunds, all paid into the Ironwood pool, 34 blocks holding 80 transactions, 21 of 21 checks pass | [examples/testnet-01/README.md](examples/testnet-01/README.md), with an explorer link for each payment |

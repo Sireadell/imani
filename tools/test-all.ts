@@ -19,7 +19,7 @@ export const groups = [
   { script: "test:privacy", what: "Refund linking, the who-learns-what table, keys never printed or saved" },
 ] as const;
 
-const docs = ["docs/JUDGE_GUIDE.md", "docs/HOW_WE_TESTED.md"];
+const docs = ["README.md", "docs/JUDGE_GUIDE.md", "docs/HOW_WE_TESTED.md"];
 const root = new URL("../", import.meta.url);
 const write = process.argv.includes("--write");
 
