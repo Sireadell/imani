@@ -2,7 +2,7 @@
 
 The full design, checks and limits are in [LOGIN_SPEC.md](../../LOGIN_SPEC.md). Servers contacted: none. In this version your server passes in the raw transaction; fetching it from a light server comes later.
 
-The package is not on npm yet. Until it is, import from `src/login/index.ts` in this repo where the examples say `"@sireadell/imani/login"`.
+Install the package with `npm install @sireadell/imani`, then import from `"@sireadell/imani/login"` as the examples do. Inside this repository you can import from `src/login/index.ts` instead.
 
 You need: a shielded or unified address used only for logins, and its read-only unified full viewing key (`uview1...`). Never give the kit a seed phrase or spending key; it refuses them.
 
