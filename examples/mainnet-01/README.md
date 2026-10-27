@@ -3,7 +3,7 @@
 This one used real ZEC. A real wallet paid 3 bids into a fresh lot account on Zcash mainnet on 2026-10-27, and the lot paid 3 refunds back. Lot id `IMANI-M1`, 2 items, reserve 100,000 zatoshis. The round is small on purpose: the bids add up to 0.013 ZEC. All six payments are in the Ironwood pool.
 
 ```sh
-npx imani check --disclosure examples/mainnet-01/disclosure.json --result examples/mainnet-01/result.json --scan --chain examples/mainnet-01/chain.json
+node bin/imani.js check --disclosure examples/mainnet-01/disclosure.json --result examples/mainnet-01/result.json --scan --chain examples/mainnet-01/chain.json
 ```
 
 Expected: `RESULT: PASS (23 of 23 checks passed)`. The scan reads all 61 blocks from 3,532,593 to 3,532,653 (482 transactions) and the lot key sees exactly the 6 below.
@@ -28,7 +28,7 @@ The two top bids win and both pay the clearing price of 0.003 ZEC (300,000 zatos
 `chain.json` is a saved copy of the blocks. To fetch the same blocks from two public mainnet servers run by different people instead of trusting the file:
 
 ```sh
-npx imani check --disclosure examples/mainnet-01/disclosure.json --result examples/mainnet-01/result.json --scan --fetch
+node bin/imani.js check --disclosure examples/mainnet-01/disclosure.json --result examples/mainnet-01/result.json --scan --fetch
 ```
 
 ## What is in the files

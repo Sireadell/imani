@@ -3,7 +3,7 @@
 Every other example here was built offline with throwaway keys. This one was not. A real wallet (zecd 0.9.0-rc1) paid 3 bids into a fresh lot account on the public Zcash test network on 2026-10-11, and the lot paid 3 refunds back. Lot id `DRY-01`, 2 items, reserve 1,000,000 zatoshis. Test coins came from a public faucet and have no value.
 
 ```sh
-npx @sireadell/imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --chain examples/testnet-01/chain.json
+node bin/imani.js check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --chain examples/testnet-01/chain.json
 ```
 
 Expected: `RESULT: PASS (21 of 21 checks passed)`. The scan reads all 34 blocks from 4,489,077 to 4,489,110 (80 transactions) and the lot key sees exactly the 6 below.
@@ -28,7 +28,7 @@ The two top bids win and both pay the clearing price of 1,500,000 (the highest l
 `chain.json` is a saved copy of the blocks. To fetch the same blocks from public test-network servers instead of trusting the file:
 
 ```sh
-npx @sireadell/imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --fetch
+node bin/imani.js check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --fetch
 ```
 
 ## What is in the files
