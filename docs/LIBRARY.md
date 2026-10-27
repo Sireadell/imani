@@ -2,7 +2,7 @@
 
 Everything the command line and the checker page do is also a plain function you can call from your own code. `import { ... } from "imani"` gives you the names below. Only three of them, `fetchTransactions`, `fetchBlocks` and `fetchScan`, open a network connection, and only when you call them. No function takes a spending key or a seed phrase.
 
-imani is not on the npm registry yet. To use it in another project, run `npm pack` in this folder, then `npm install <path to the .tgz file>` in yours. It needs Node 22.18 or newer and installs with no other packages. The package is about 6 MB because it carries every example round and broken copy, so the commands in the README and the examples below run straight from the installed folder.
+imani is not on the npm registry yet. To use it in another project, run `npm pack` in this folder, then `npm install <path to the .tgz file>` in yours. It needs Node 22.18 or newer and installs with no other packages. The package is about 6 MB because it carries every example round and broken copy, so the commands in the README and the examples below run straight from the installed folder. For example, `npx imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json` works right after install, and the honest rounds and broken copies the conformance kit grades against travel with it, so the proof ships inside the package.
 
 ## Check a round in 10 lines
 

@@ -1,6 +1,6 @@
 # How big a round can it check?
 
-A big public auction can draw thousands of bids. This page says what Imani does with a round of 19,000 bid payments, what was measured, and what was not.
+A big public auction can draw thousands of bids. This page says what Imani does with a round of 19,000 bid payments, what was measured, and what was not. That round is generated to the published size: made-up amounts built from a fixed seed, not real payments.
 
 ## What was run
 
@@ -8,7 +8,7 @@ A big public auction can draw thousands of bids. This page says what Imani does 
 |---|---|---|---|
 | The seller's two files: bids, winners, price, refunds, published totals, checked against each other and against the published rules (basic level) | 19,000 bid payments (18,971 counted, 29 late), 5,000 items, lowest-winning price | Passes in about 50 milliseconds. Any one of seven changes (a bid left out, one refund 1 zatoshi off, the price 1 zatoshi off, a total off by 1, a winner dropped and so on) makes it fail | Generated with a fixed seed. These are made-up amounts, not real payments |
 | Reading real transactions with a viewing key (key level) | 600 real test-network transactions, read one after another | 16.8 milliseconds each on a laptop, so 19,000 transactions would take about 5 minutes. This is an estimate from the per-transaction time, not a run of 19,000 | Real transactions, repeated |
-| Reading real blocks from a public server (scan level) | 500 real mainnet blocks | See `tools/measure-scan.ts`, which times the download and the reading. It runs only when you set `LIVE=1` | Real |
+| Reading real blocks from a public server (scan level) | 500 real mainnet blocks (3,509,100 to 3,509,599), holding 2,893 transactions | Measured on 2026-10-07 with a public test key that owns nothing, so nothing was decrypted. Download took 1,366 seconds with 12 blocks at a time, about 2.7 seconds per block, and 28.4 MB. Reading every transaction with the key took 27 seconds, and 0 transactions were unreadable. Mainnet makes one block every 75 seconds, so a day-long auction is about 1,150 blocks: at this rate about 52 minutes and about 65 MB. Full table in [SPEC.md](../SPEC.md), section "Speed and cost". Re-run with `tools/measure-scan.ts` (only when you set `LIVE=1`) | Real |
 
 Run the first row yourself: `npx tsx --test test/scale.test.ts` (it prints the time). Run the second on any machine with `npm run test` once you have a lot of your own.
 
