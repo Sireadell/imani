@@ -1,5 +1,5 @@
 // The offline way to check any round: the blocks come from a saved file (format imani-chain/1,
-// as written by `imani fetch` or shipped in examples/), not from a server. Same checker, same
+// in the imani-chain/1 format, as shipped in examples/), not from a server. Same checker, same
 // answers. Nothing is requested: the file is read in this tab.
 import { blocksInRange, ScanInputError, validateChainFile } from "../scan/chain.ts";
 import { refereeRound, networkOfKey, type RefereeOutcome } from "./referee.ts";
