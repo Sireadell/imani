@@ -111,6 +111,17 @@ The 19,000 payments are made-up amounts built from a fixed seed. Imani has not b
 
 Every check and every known limit is in [SPEC.md](SPEC.md).
 
+## Who could cheat, and what catches them
+
+| Who | Caught, by check id | Not caught (stated limits) |
+|---|---|---|
+| Dishonest seller | Fake bid `bid-count`, wrong amount `bid-amounts`, short or missing refund `refunds-paid`, wrong price `winners-and-price`, late bid counted `no-late-bids`, hidden bid `scan-hidden-bids`, false block number `scan-heights`, refund to the wrong address `refund-receivers`, books that do not add up `refund-total` | A shill bid paid from the seller's own second wallet. Peeking at bids in a plain lot. A refund paid to themselves when no refund address is in the memo or the list |
+| Dishonest bidder | Same memo sent twice `no-duplicate-bids`. A late bid or late top-up is never counted and is owed back in full | Showing someone else's bid proof as their own. A stray payment to the lot address makes an honest round fail `key-hygiene` |
+| Lying block server | With `--fetch`, two servers run by different people must agree on every block and every byte, or the run stops. A missing or altered block fails `scan-blocks-read` | Two servers working together to hide the same bid. A doctored saved chain file |
+| Lot-key holder | Cannot move money: the key only reads. A reused seller key `key-hygiene`. A refund address reused across rounds is reported by `imani linking` | Sees every bid and refund of the lot, including which refund went to which bid, so they can link a bidder's bid to the refund address written in its memo. `--discreet` only hides what Imani prints |
+
+The full table, with the example or test behind each row: [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md).
+
 ## Where every number comes from
 
 | Source | What it gives |
