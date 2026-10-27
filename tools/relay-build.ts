@@ -9,21 +9,20 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-export async function bundleRelay(outfile = join(root, "api", "block.mjs")): Promise<string> {
+export async function bundleRelay(outfile = join(root, "api", "block.mjs"), entry = "src/relay/vercel.ts", from = '"../../vendor/decoder/imani_decoder.js"'): Promise<string> {
   await build({
-    entryPoints: [join(root, "src/relay/vercel.ts")],
+    entryPoints: [join(root, entry)],
     outfile,
     bundle: true,
     platform: "node",
     format: "esm",
     target: "node20",
     legalComments: "none",
-    banner: { js: "// Built by npm run relay:build from src/relay/vercel.ts. Do not edit by hand." },
+    banner: { js: `// Built by npm run relay:build from ${entry}. Do not edit by hand.` },
     logLevel: "silent",
   });
   // The transaction id check loads the decoder from vendor/decoder by a path relative to its
   // source file. From api/ that folder is one level up; vercel.json ships it with the function.
-  const from = '"../../vendor/decoder/imani_decoder.js"';
   const text = readFileSync(outfile, "utf8");
   if (text.split(from).length !== 2) throw new Error("expected one decoder require in the relay bundle");
   const out = text.replace(from, '"../vendor/decoder/imani_decoder.js"');
@@ -34,4 +33,6 @@ export async function bundleRelay(outfile = join(root, "api", "block.mjs")): Pro
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const out = await bundleRelay();
   console.log(`Wrote api/block.mjs (${out.length.toLocaleString("en-US")} bytes).`);
+  const chk = await bundleRelay(join(root, "api", "check.mjs"), "src/relay/check-vercel.ts");
+  console.log(`Wrote api/check.mjs (${chk.length.toLocaleString("en-US")} bytes).`);
 }
