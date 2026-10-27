@@ -1,0 +1,25 @@
+{
+  "about": "Two broken copies of examples/sealed-01 that break the seller-locked-out promise. Each fails the named checks. They are not in the conformance kit.",
+  "copies": [
+    {
+      "name": "01-counts-early-opening",
+      "changed": "disclosure.json (the height of Alice's opening)",
+      "expectedFailingChecks": [
+        "winners-and-price",
+        "refunds-paid",
+        "seal-openings",
+        "seal-forfeits"
+      ],
+      "story": "Alice sent her opening at the close, while bidding was still open, so the seller could read her price early. An opening at the close never counts, but the seller counts her at 3,000,000 anyway."
+    },
+    {
+      "name": "02-tampered-commitment",
+      "changed": "result.json",
+      "expectedFailingChecks": [
+        "bid-amounts",
+        "seal-openings"
+      ],
+      "story": "Erin sealed 900,000 and then opened 800,000, which does not match her seal. The seller counts her at the 900,000 she sealed, a price she never opened."
+    }
+  ]
+}
