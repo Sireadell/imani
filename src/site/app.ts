@@ -406,6 +406,78 @@ async function takeFiles(files: FileList | File[]): Promise<void> {
   await checkWithNotice();
 }
 
+
+// ---- Top of the page: the real round, an honest or cheated switch, and a one-click check. ----
+const HOME_ROUND = "testnet-01";
+const HOME_CHEAT = "testnet-broken/01-hidden-losing-bid";
+const HOME_LINES: { text: string; ids: string[] }[] = [
+  { text: "Every bid on the chain is in the seller's list", ids: ["bid-count", "bid-amounts", "scan-hidden-bids"] },
+  { text: "No bid was added after the close", ids: ["no-late-bids"] },
+  { text: "The highest bids won, at the right price", ids: ["winners-and-price"] },
+  { text: "Every losing bid was paid back in full", ids: ["refunds-paid", "refund-total"] },
+  { text: "Each refund went where the bidder asked", ids: ["refund-receivers"] },
+];
+const nf = (n: number) => n.toLocaleString("en-US");
+
+function homeFacts(): void {
+  const entry = find(HOME_ROUND);
+  const r = parseJsonText(blobs[entry.result], "result") as { bidCount: number; winners: string[]; refunds: { reason: string }[] };
+  const d = parseJsonText(blobs[entry.disclosure], "disclosure") as { lotId: string; network: string; openHeight: number; closeHeight: number };
+  const heights = entry.chain ? (parseJsonText(blobs[entry.chain], "chain") as { blocks: { height: number }[] }).blocks.map((b) => b.height) : [d.openHeight, d.closeHeight];
+  const owed = r.bidCount - r.winners.length;
+  const paid = r.refunds.filter((x) => x.reason === "loser").length;
+  $("home-lot").textContent = "Lot " + d.lotId;
+  $("home-bids").textContent = r.bidCount + ", names never shown";
+  $("home-winners").textContent = String(r.winners.length);
+  $("home-refunds").textContent = paid + " of " + owed;
+  $("home-blocks").textContent = nf(Math.min(...heights)) + " to " + nf(Math.max(...heights));
+  $("home-network").textContent = d.network === "main" ? "Zcash mainnet" : "Zcash test network";
+}
+
+async function homeShow(which: "honest" | "cheat"): Promise<void> {
+  $("home-honest").setAttribute("aria-pressed", String(which === "honest"));
+  $("home-cheat").setAttribute("aria-pressed", String(which === "cheat"));
+  $("home-note").textContent = which === "honest"
+    ? "The seller's files, exactly as published. Every check agrees with the chain."
+    : "Same round, but the seller left one bid out of their files. The chain still has it.";
+  const verdictEl = $("home-verdict");
+  verdictEl.className = "hverdict";
+  verdictEl.textContent = "Checking...";
+  await new Promise<void>((done) => { requestAnimationFrame(() => setTimeout(done, 30)); setTimeout(done, 120); });
+  const res = outcomeFor({ kind: "example", id: which === "honest" ? HOME_ROUND : HOME_CHEAT }, false);
+  const list = $("home-checks");
+  list.replaceChildren();
+  if (!res.outcome.ok) { verdictEl.textContent = "Could not check this copy."; return; }
+  const v = res.outcome.verdict;
+  const status = (id: string) => v.checks.find((c) => c.id === id)?.status;
+  let shown = 0;
+  for (const line of HOME_LINES) {
+    const present = line.ids.filter((id) => status(id) !== undefined);
+    shown += present.length;
+    const ok = present.every((id) => status(id) === "PASS");
+    const li = el("li", ok ? "ok" : "bad");
+    li.appendChild(el("b", undefined, ok ? "✓" : "✗"));
+    li.appendChild(el("span", undefined, line.text));
+    list.appendChild(li);
+  }
+  const more = v.checks.length - shown;
+  if (more > 0) { const li = el("li", "dim"); li.appendChild(el("b")); li.appendChild(el("span", undefined, "+ " + more + " more checks")); list.appendChild(li); }
+  const passed = v.checks.filter((c) => c.status === "PASS").length;
+  const pass = v.result === "PASS";
+  verdictEl.className = "hverdict " + (pass ? "pass" : "fail");
+  verdictEl.textContent = pass
+    ? "FAIR · " + passed + " of " + v.checks.length + " checks passed"
+    : "NOT FAIR · " + v.failed.length + " of " + v.checks.length + " checks failed: " + v.failed.join(", ");
+}
+
+function homeStart(): void {
+  homeFacts();
+  $("home-honest").addEventListener("click", () => void homeShow("honest"));
+  $("home-cheat").addEventListener("click", () => void homeShow("cheat"));
+  $("home-check").addEventListener("click", () => void choose(HOME_ROUND));
+  void homeShow("honest");
+}
+
 async function start(): Promise<void> {
   for (const e of [...byGroup("real-honest"), ...byGroup("real-tampered")]) $("chips-real").appendChild(chip(e));
   renderExplorer();
@@ -459,6 +531,7 @@ async function start(): Promise<void> {
     /* the line is optional */
   }
   ready = true;
+  homeStart();
   // A link from the checked rounds list: #round=<example id> or #external=<published round id>.
   const m = parseShareTarget(location.search, location.hash);
   if (m) {
