@@ -44,6 +44,8 @@ It checks one small auction three ways in about two seconds, with no internet. T
 | Execution | `npx imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --fetch` | Downloads the real round's 34 blocks from two public test-network servers run by different people, which must agree on every block, then `RESULT: PASS (21 of 21 checks passed)` in about a minute. Use `--chain examples/testnet-01/chain.json` instead of `--fetch` to read the saved copy offline in about 3 seconds |
 | Originality | [examples/testnet-01/README.md](examples/testnet-01/README.md), no git needed | The real round was paid on the public Zcash test network on 2026-10-11, and each payment's explorer link shows its block and date on the chain, which nobody can backdate. The build window opened on 2026-09-28. In a git clone, `git log --reverse --format="%ad %s" --date=short` also shows the first commit, dated 2026-10-07 (this needs the clone, a ZIP download has no history) |
 
+About the "check any round" page: public block servers do not let a web page ask them for blocks, so a live check on that page downloads blocks through our own hosted address (`/api/block`). Only a network name and block numbers go through it, never a key, and the key stays in your tab (like any website, it also sees your IP address). To leave our server out, run `node tools/referee-serve.ts` and open the same page from your own computer, which then asks the two public servers itself. To use no network at all, pick a saved block file on the page, or run `npx imani check --disclosure <file> --result <file> --scan --chain <block file>`.
+
 The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs the checker's own tests in about a minute.
 
 ## Core & Tooling, line by line
@@ -82,7 +84,7 @@ The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs
 | Seller kit | `imani lot-new` sets up a lot and `imani settle` works out every refund owed and writes the two files to publish. A seller can run `imani settle --fetch` right after the close, before the refund deadline: it reads up to the newest block, lists the refunds to pay, and says plainly which blocks are still to come, so it never passes early | [docs/SELLER_KIT.md](docs/SELLER_KIT.md), `npx tsx --test test/settle-early.test.ts` |
 | Proof of one bid | `imani bid-proof` lets a bidder or the seller show one bid to someone else (a friend, an arbiter, a judge) without handing over a viewing key. The other person sees that bid's amount, memo and block, and nothing about the other bids | `npx imani bid-proof check --proof examples/bid-proof-01/proof.json --facts examples/bid-proof-01/lot-public.json --result examples/testnet-01/result.json --chain examples/testnet-01/chain.json`, more in [docs/BID_PROOF.md](docs/BID_PROOF.md) |
 | Checked rounds list | One page with every round we ship or have checked, each with a button to re-check it in your browser | https://imani-check.vercel.app/rounds.html |
-| Scale test | 19,000 generated payments, more than the 16,971 bids reported for a big public sealed auction on Zcash this year: the seller-file checks take well under a second (about 50 ms in the scale notes, 143 ms on our last run). Reading real transactions with a key measured 16.8 ms each, so about 5 minutes for 19,000. That second figure is an estimate, not a run | `npx tsx --test test/scale.test.ts`, notes in [docs/SCALE.md](docs/SCALE.md) |
+| Scale test | 19,000 payments generated to the published size (made-up amounts from a fixed seed), more than the 16,971 bids reported for a big public sealed auction on Zcash this year: the seller-file checks take well under a second (about 50 ms in the scale notes, 143 ms on our last run). Reading real transactions with a key measured 16.8 ms each, so about 5 minutes for 19,000. That second figure is an estimate, not a run | `npx tsx --test test/scale.test.ts`, notes in [docs/SCALE.md](docs/SCALE.md) |
 
 The 19,000 payments are made-up amounts built from a fixed seed. Imani has not been run on that real auction's data.
 
@@ -106,7 +108,8 @@ The 19,000 payments are made-up amounts built from a fixed seed. Imani has not b
 - No PCZT and no FROST.
 - A bid proof proves that a payment was made, not who made it: anyone holding the file can show it, like a receipt. Only the lot-owner way of making one has run on a real round. A bidder making one from their own wallet uses the same code but hasn't been tried on a real wallet. Sealed lots and Sapling payments aren't covered, and for a bid raised with top-ups it can't confirm the seller counted the full amount.
 - The bid link QR code has not yet been tested with a wallet. The link format and the QR are checked in tests, not by paying from one.
-- The 19,000-payment scale round is generated, not real.
+- The 19,000-payment scale round is generated to the published size, with made-up amounts from a fixed seed. It is not real.
+- The Zebra node route has been tested only against a fake node that answers in the shape of Zebra's own code, filled with real test-network blocks. It has not yet been run against a live Zebra node.
 - <!-- MAINNET-LINE -->Our real round ran on the Zcash test network with test coins. We haven't run a round on mainnet.<!-- /MAINNET-LINE -->
 
 Every check and every known limit is in [SPEC.md](SPEC.md).
