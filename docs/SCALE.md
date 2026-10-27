@@ -20,20 +20,20 @@ Run the first row yourself: `npx tsx --test test/scale.test.ts` (it prints the t
 
 ## A mainnet-sized check
 
-What a small real-money round and a day-long auction cover, using only saved timings. Sources: the "Speed and cost" table in [SPEC.md](../SPEC.md) (500 real mainnet blocks, measured 2026-10-07) and the mainnet round plan in the internal runbook `MAINNET_RUNBOOK_1027.md` (5 mainnet blocks in 13 seconds, measured 2026-10-27).
+What a small real-money round and a day-long auction cover. Sources: the small real round in [examples/mainnet-01](../examples/mainnet-01/README.md) (run on 2026-10-27, timed again on 2026-10-28) and the "Speed and cost" table in [SPEC.md](../SPEC.md) (500 real mainnet blocks, measured 2026-10-07).
 
 | What | Blocks | Bids | Check time | Where the number comes from |
 |---|---|---|---|---|
-| Small mainnet round (lot IMANI-M1): opens, closes 20 blocks later, refunds due 40 blocks after that | 60 | 3 bids, 3 refunds | About 3 minutes per download, at about 2.6 seconds per block. This is the per-block rate multiplied out, not a run of 60 blocks | `MAINNET_RUNBOOK_1027.md` (5 blocks in 13 seconds) |
+| Small mainnet round (lot IMANI-M1), run for real with real ZEC | 61 (3,532,593 to 3,532,653), holding 482 transactions | 3 bids, 3 refunds | 107 seconds to download every block from two public mainnet servers and check it, `RESULT: PASS (23 of 23 checks passed)`. About 6 seconds from the saved copy | [examples/mainnet-01](../examples/mainnet-01/README.md), one run on 2026-10-28 |
 | Measured real-block stretch | 500 | Not applicable (a stranger key, nothing decrypted) | 1,366 seconds to download (about 2.7 seconds per block), 27 seconds to read 2,893 transactions | SPEC.md, "Speed and cost" |
 | Day-long mainnet auction | About 1,150 (one block every 75 seconds) | Not measured | About 52 minutes and about 65 MB at the 500-block rate | SPEC.md, "Speed and cost" |
 | The basic level at 19,000 bid payments (generated) | Not applicable | 19,000 | About 50 milliseconds | The table above, `test/scale.test.ts` |
 
 ## What is still unmeasured
 
-- The small mainnet round has not been run end to end, so there is no measured check time for it. The 3 minute figure is the 5-block rate multiplied out.
+- The small mainnet round was run end to end, but it is small: 3 bids. Its 107 seconds is one run on one day.
 - No check has been timed on the bids of a real mainnet auction with thousands of bids. Bids per day-long auction: not measured.
-- The 5-block timing is from one short run on one day. The 500-block run is the longer measurement.
+- The 500-block run is the longer measurement. The 19,000-bid size was only run as a generated round, at the seller-file level. It was not run with real payments.
 - Download time depends on how busy the public servers are. Other times and other machines: not measured.
 
 ## Published totals

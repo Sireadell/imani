@@ -45,7 +45,7 @@ The printed report always ends with these limits.
 
 ## Real round
 
-`examples/testnet-01` is a real round on the Zcash test network (lot DRY-01). The public part, that a bid is on the chain inside the window, was run on the real blocks both offline and with `--fetch`. The refund line needs the bidder wallet's own viewing key, which lives in the wallet that paid the 3 bids; see the run notes in the project hand-over.
+`examples/testnet-01` is a real round on the Zcash test network (lot DRY-01). The public part, that a bid is on the chain inside the window, was run on the real blocks both offline and with `--fetch`. The refund line needs the bidder wallet's own viewing key, which lives in the wallet that paid the 3 bids and is not published.
 
 ## README lines to add (for the page owner)
 
