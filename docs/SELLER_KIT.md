@@ -19,6 +19,16 @@ imani settle --folder lot-LOT-01 --fetch
 
 On the first `settle` run a FAIL is expected. The refunds have not been paid yet (`refunds-paid`), and with `--fetch` the blocks up to the refund deadline do not exist yet, so `settle` says which blocks it read and that refunds due later are not covered (`scan-blocks-read`). Only the run after the deadline can pass.
 
+## Show the result on your lot page
+
+Once your round passes, put the badge on your lot page: it shows the result of the latest check of your published files.
+
+```html
+<img src="https://imani-check.vercel.app/api/check?round=testnet-01&format=svg" alt="Imani: testnet-01 checked fair, 21 of 21 checks passed" width="204" height="24">
+```
+
+The badge is a small picture made from the same check the page runs. It holds the result and the check count, nothing else. If a round fails, the same address returns a red badge that says FAIL. Today the address only answers for the rounds shipped with Imani, so a seller's own round gets a badge once it is added to that list. Anyone who clicks can open the checker and run the check themselves.
+
 ## What was tested
 
 `test/seller-kit.test.ts` sets up a lot with the real test-network round's key and blocks, runs `settle` and gets the same bids, winners, price and refunds as the files the seller of that round published, plus totals, and a PASS. It also runs `settle` with one refund missing from the chain: the files are written, the refund owed is listed and the exit code is 1. `test/settle-early.test.ts` runs `settle --fetch` against two fake servers whose newest block is between the close and the refund deadline: it reads only up to that block, never asks for a later one, lists the 3 refunds owed, says the rest of the window is not covered, and exits 1. At the deadline it passes, and before the close it is refused. Setting up a lot refuses spending keys, seed phrases, transparent addresses, blocks out of order and existing files.
