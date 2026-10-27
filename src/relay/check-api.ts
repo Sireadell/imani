@@ -62,6 +62,19 @@ export function checkRound(round: string, dir: string = examplesDir()): CheckAns
 
 const HEADERS = { "cache-control": "public, max-age=60", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "access-control-allow-origin": "*" };
 
+const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+
+/** The "Verified fair" badge: a small SVG a seller can show on a lot page. It holds the verdict and the check counts, nothing else. */
+export function badgeSvg(a: CheckAnswer): string {
+  const pass = a.verdict === "PASS";
+  const right = pass ? `PASS ${a.checks.passed}/${a.checks.total}` : `FAIL ${a.failed.length} of ${a.checks.total}`;
+  const label = "Imani verified fair";
+  const lw = 132;
+  const rw = Math.max(72, 14 + right.length * 7);
+  const alt = pass ? `Imani: ${a.round} checked fair, ${a.checks.passed} of ${a.checks.total} checks passed` : `Imani: ${a.round} failed ${a.failed.length} checks`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${lw + rw}" height="24" role="img" aria-label="${esc(alt)}"><title>${esc(alt)}</title><rect width="${lw}" height="24" fill="#1b2330"/><rect x="${lw}" width="${rw}" height="24" fill="${pass ? "#1a6b3a" : "#a32020"}"/><g fill="#fff" font-family="Verdana,DejaVu Sans,sans-serif" font-size="12" text-anchor="middle"><text x="${lw / 2}" y="16">${label}</text><text x="${lw + rw / 2}" y="16" font-weight="bold">${esc(right)}</text></g></svg>`;
+}
+
 /** Request handler for /api/check. The shipped files never change while the server runs, so a round is checked once and the answer is kept. */
 export function checkApi(dir?: string) {
   const kept = new Map<string, CheckAnswer>();
@@ -74,10 +87,15 @@ export function checkApi(dir?: string) {
     const url = new URL(req.url ?? "/", "http://localhost");
     const keys = [...url.searchParams.keys()];
     const round = url.searchParams.get("round");
-    if (!round || keys.some((k) => k !== "round")) return send(400, { error: "Give ?round=<name>", rounds: ROUNDS });
+    const format = url.searchParams.get("format");
+    if (!round || keys.some((k) => k !== "round" && k !== "format") || (format !== null && format !== "svg")) return send(400, { error: "Give ?round=<name> (and optionally &format=svg)", rounds: ROUNDS });
     if (!ROUNDS.includes(round)) return send(404, { error: "unknown round", rounds: ROUNDS });
     try {
       if (!kept.has(round)) kept.set(round, checkRound(round, dir));
+      if (format === "svg") {
+        res.writeHead(200, { ...HEADERS, "content-type": "image/svg+xml; charset=utf-8" });
+        return void res.end(badgeSvg(kept.get(round)!));
+      }
       send(200, kept.get(round));
     } catch {
       send(500, { error: "could not check this round" });
