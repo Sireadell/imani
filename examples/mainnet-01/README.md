@@ -41,4 +41,4 @@ node bin/imani.js check --disclosure examples/mainnet-01/disclosure.json --resul
 | `result.json` | The seller's claimed bids, winners, price and refunds |
 | `chain.json` | Every block of the auction, as served by two public mainnet light servers that agreed on every byte |
 
-The viewing key can read this lot's payments and cannot spend. It is published on purpose so anyone can run the check. It lets anyone see everything that account received and sent, so this lot account should not be used for anything else. The key also shows the lot's own outgoing payments, including the leftover coins moved out after the round. No spending key and no other wallet's key is in the repo.
+The viewing key can read this lot's payments and cannot spend. It is published on purpose so anyone can run the check. That means anyone can read every bid amount and refund address in this lot, and everything else the account received and sent. The lot account was fresh and was used for this one round only. The key also shows the lot's own outgoing payments, including the leftover coins moved out after the round. No spending key and no other wallet's key is in the repo.
