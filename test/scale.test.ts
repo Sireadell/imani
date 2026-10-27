@@ -1,4 +1,4 @@
-// Locked answers for a round the size of a big public auction (16,971 counted bids, 17,000
+// Locked answers for a generated round larger than a big public auction (18,971 counted bids, 19,000
 // payments in all). Written before the first run.
 //   - The numbers are GENERATED to that size with a fixed seed. They are not real payments, so only the
 //     basic level (no key, no chain) runs on them. Reading real transactions is measured separately.
@@ -12,7 +12,7 @@ import { checkLot } from "../src/check.ts";
 import { decide } from "../src/rules.ts";
 import type { Disclosure, SellerResult } from "../src/files.ts";
 
-const COUNTED = 16_971;
+const COUNTED = 18_971;
 const LATE = 29;
 const ITEMS = 5_000;
 const RESERVE = 100_000_000; // 1 ZEC
@@ -67,13 +67,13 @@ function build() {
 const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x));
 const run = (d: Disclosure, r: SellerResult) => checkLot(d, r, { basicOnly: true });
 
-test("the generated round has the published size", () => {
+test("the generated round has the size it claims", () => {
   const { bids, onTime } = build();
-  assert.equal(bids.length, 17_000);
-  assert.equal(onTime.length, 16_971);
+  assert.equal(bids.length, 19_000);
+  assert.equal(onTime.length, 18_971);
 });
 
-test("an honest 17,000-payment round passes the basic level, with its totals, in under 10 seconds", () => {
+test("an honest 19,000-payment round passes the basic level, with its totals, in under 10 seconds", () => {
   const { d, r } = build();
   const t0 = Date.now();
   const v = run(d, r);
@@ -81,7 +81,7 @@ test("an honest 17,000-payment round passes the basic level, with its totals, in
   assert.equal(v.result, "PASS", v.failed.join(", "));
   assert.ok(v.checks.some((c) => c.id === "published-totals" && c.status === "PASS"));
   assert.ok(ms < 10_000, `took ${ms} ms`);
-  console.log(`scale: basic level on 17,000 payments took ${ms} ms`);
+  console.log(`scale: basic level on 19,000 payments took ${ms} ms`);
 });
 
 test("winners, price and totals equal an independent sort-and-add", () => {
@@ -98,7 +98,7 @@ test("winners, price and totals equal an independent sort-and-add", () => {
   assert.equal(r.totals!.receivedZat, r.totals!.keptZat + r.totals!.refundedZat);
 });
 
-test("one change anywhere in a 17,000-payment round makes it fail", () => {
+test("one change anywhere in a 19,000-payment round makes it fail", () => {
   const { d, r } = build();
   const changes: [string, (x: SellerResult) => void][] = [
     ["a winner's bid left out", (x) => { x.bids.splice(x.bids.findIndex((b) => b.txid === x.winners[0]), 1); }],

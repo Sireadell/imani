@@ -82,9 +82,9 @@ The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs
 | Seller kit | `imani lot-new` sets up a lot and `imani settle` works out every refund owed and writes the two files to publish. A seller can run `imani settle --fetch` right after the close, before the refund deadline: it reads up to the newest block, lists the refunds to pay, and says plainly which blocks are still to come, so it never passes early | [docs/SELLER_KIT.md](docs/SELLER_KIT.md), `npx tsx --test test/settle-early.test.ts` |
 | Proof of one bid | `imani bid-proof` lets a bidder or the seller show one bid to someone else (a friend, an arbiter, a judge) without handing over a viewing key. The other person sees that bid's amount, memo and block, and nothing about the other bids | `npx imani bid-proof check --proof examples/bid-proof-01/proof.json --facts examples/bid-proof-01/lot-public.json --result examples/testnet-01/result.json --chain examples/testnet-01/chain.json`, more in [docs/BID_PROOF.md](docs/BID_PROOF.md) |
 | Checked rounds list | One page with every round we ship or have checked, each with a button to re-check it in your browser | https://imani-check.vercel.app/rounds.html |
-| Scale test | 17,000 generated payments, the size of a 16,971-bid sealed auction on Zcash this year, as reported in the press: the seller-file checks take well under a second (about 50 ms in the scale notes, 143 ms on our last run). Reading real transactions with a key measured 16.8 ms each, so about 5 minutes for 17,000. That second figure is an estimate, not a run | `npx tsx --test test/scale.test.ts`, notes in [docs/SCALE.md](docs/SCALE.md) |
+| Scale test | 19,000 generated payments, more than the 16,971 bids reported for a big public sealed auction on Zcash this year: the seller-file checks take well under a second (about 50 ms in the scale notes, 143 ms on our last run). Reading real transactions with a key measured 16.8 ms each, so about 5 minutes for 19,000. That second figure is an estimate, not a run | `npx tsx --test test/scale.test.ts`, notes in [docs/SCALE.md](docs/SCALE.md) |
 
-The 17,000 payments are made-up amounts built from a fixed seed. Imani has not been run on that real auction's data.
+The 19,000 payments are made-up amounts built from a fixed seed. Imani has not been run on that real auction's data.
 
 ## Zcash pieces it uses
 
@@ -106,7 +106,7 @@ The 17,000 payments are made-up amounts built from a fixed seed. Imani has not b
 - No PCZT and no FROST.
 - A bid proof proves that a payment was made, not who made it: anyone holding the file can show it, like a receipt. Only the lot-owner way of making one has run on a real round. A bidder making one from their own wallet uses the same code but hasn't been tried on a real wallet. Sealed lots and Sapling payments aren't covered, and for a bid raised with top-ups it can't confirm the seller counted the full amount.
 - The bid link QR code has not yet been tested with a wallet. The link format and the QR are checked in tests, not by paying from one.
-- The 17,000-payment scale round is generated, not real.
+- The 19,000-payment scale round is generated, not real.
 - <!-- MAINNET-LINE -->Our real round ran on the Zcash test network with test coins. We haven't run a round on mainnet.<!-- /MAINNET-LINE -->
 
 Every check and every known limit is in [SPEC.md](SPEC.md).
