@@ -81,6 +81,27 @@ The result file is the seller's claim. The disclosure file is the evidence. A ch
 
 **Checks that read no field directly.** The scan checks `scan-blocks-read`, `scan-hidden-bids`, `scan-unlisted-payments`, `scan-listed-in-range` and `scan-heights` read a third file, the chain file (`{ "format": "imani-chain/1", "network", "blocks": [{ "height", "txs": [{ "txid", "txHex" }] }] }`), and compare it with `transactions`. `scan-refund-receivers` runs only when bidders hand over their own viewing keys. Both are described in `SPEC.md`, "Scan level".
 
+### Field sizes
+
+How big each field can be. These are the limits the schemas and the checker enforce today. Where a row says "no upper limit", the files set none, so only the checker's own memory and time bound the size.
+
+| Field | Size limit |
+|---|---|
+| `lotId` | 1 to 40 characters: letters, digits, dots, dashes or underscores |
+| Any txid (`txid`, `bidTxid`, entries in `winners` and `unopened`) | Exactly 64 lowercase hex characters |
+| Block heights (`closeHeight`, `openHeight`, `refundByHeight`, `openByHeight`, `height`) | Whole number, 1 or more, no upper limit |
+| Amounts in zatoshis (`reserveZat`, `forfeitZat`, `amountZat`, the `totals` fields and the result file's `bidCount`) | Whole number, 0 or more, no upper limit in the schema. `goalZat` and `depositZat` need 1 or more |
+| Amount written inside an opening memo | At most 16 digits, no leading zero |
+| `itemCount` | Whole number, 1 or more, no upper limit |
+| `ufvk` | Starts `uview1` or `uviewtest1`, then lowercase letters and digits, no upper limit |
+| `transactions[].txHex` | Hex text of whole bytes (an even number of digits), no upper limit |
+| `transactions` | No upper limit on the list |
+| `refundAddresses[].address` | Any text with a non-space character; read as an address for the lot's network |
+| Memo (a payment note) | 1 to 512 bytes |
+| Bid or seal word in a memo | 1 to 32 letters or digits |
+| Seal hash in a seal memo | Exactly 64 lowercase hex characters |
+| Salt in an opening memo | Exactly 32 hex characters (lowercase) |
+
 ## 3. The three kinds of lot
 
 | Kind | What it is | Who wins | Who gets money back |

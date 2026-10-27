@@ -10,10 +10,56 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="top">
+<header class="top hero">
   <div class="wrap">
     <nav class="nav" aria-label="Pages"><a href="check.html">Check any round</a> <a href="rounds.html">Checked rounds</a></nav>
-    <h1>Imani auction check</h1>
+    <p class="pill" id="round-line">A real round on the Zcash test network, checked in your browser</p>
+    <h1>Prove a sealed Zcash auction was <em>fair</em>.</h1>
+    <p class="sub">Imani works the result out again from the chain: every bid counted, the right winner, every refund paid. It runs on your computer and shows nobody who bid.</p>
+    <div class="homegrid">
+      <div class="hcard" id="home-round">
+        <span class="tag">REAL ROUND</span>
+        <h2 class="lot" id="home-lot">Lot</h2>
+        <dl class="facts">
+          <div><dt>Bids</dt><dd id="home-bids"></dd></div>
+          <div><dt>Winner</dt><dd id="home-winners"></dd></div>
+          <div><dt>Refunds paid</dt><dd id="home-refunds"></dd></div>
+          <div><dt>Blocks read</dt><dd id="home-blocks"></dd></div>
+          <div><dt>Network</dt><dd id="home-network"></dd></div>
+        </dl>
+        <button type="button" class="btn primary wide" id="home-check">Check it yourself</button>
+        <p class="small center">No account. Nothing about you leaves this page.</p>
+      </div>
+      <div class="hcard" id="home-verdict-card">
+        <div class="switch" role="group" aria-label="Honest round or cheated copy">
+          <button type="button" id="home-honest" aria-pressed="true">Honest round</button>
+          <button type="button" id="home-cheat" aria-pressed="false">Cheated copy</button>
+        </div>
+        <p class="small" id="home-note">The seller's files, exactly as published. Every check agrees with the chain.</p>
+        <ul class="hchecks" id="home-checks" aria-live="polite"></ul>
+        <p class="hverdict" id="home-verdict" role="status">Checking...</p>
+      </div>
+    </div>
+    <div class="homegrid">
+      <div class="hcard">
+        <h3>What the check proved</h3>
+        <ul class="tick"><li>The winners and price follow the lot's own rules</li><li>Every bid was counted and none was slipped in late</li><li>Every refund left the lot in full</li><li>It read every block of the auction, not only the seller's list</li></ul>
+      </div>
+      <div class="hcard">
+        <h3>What stayed private</h3>
+        <ul class="sq"><li>Who the bidders are</li><li>What else is in their wallets</li><li>Any payment outside this one lot</li><li>Every amount, from anyone without this lot's key</li></ul>
+      </div>
+    </div>
+    <p class="servers" id="servers-home"><strong>Servers contacted: none.</strong> After this page loads it makes no network calls.</p>
+    <p class="small more-line">Want to dig deeper? Check your own files, find your bid, or watch a cheat get caught.</p>
+  </div>
+</header>
+
+<noscript><div class="wrap"><p class="notice bad">This page needs JavaScript to run the checks. It still sends nothing anywhere.</p></div></noscript>
+
+<main class="wrap">
+  <section aria-labelledby="about-h" class="about">
+    <h2 id="about-h">What Imani is</h2>
     <p class="lead">Imani is a Zcash library and command line. It reads shielded payments with librustzcash, Zcash's own code, built to WebAssembly so it runs right here in your browser. It checks a whole round from one read-only viewing key plus public chain data, and its command line can download every block from two independent block servers that must agree.</p>
     <p class="lead">This page puts it to work on one question: was this sealed-bid auction on Zcash run fairly? It works the result out again from the seller's own files. It runs in your browser and uploads nothing.</p>
     <ul class="adds">
@@ -23,12 +69,8 @@
       <li><strong>Can re-read the chain from two separate operators.</strong> The command line tool downloads every block again and accepts it only when both agree.</li>
     </ul>
     <p class="servers" id="servers-top"><strong>Servers contacted: none.</strong> This page makes no network calls after it loads. Your files stay on your device.</p>
-  </div>
-</header>
+  </section>
 
-<noscript><div class="wrap"><p class="notice bad">This page needs JavaScript to run the checks. It still sends nothing anywhere.</p></div></noscript>
-
-<main class="wrap">
   <section aria-labelledby="pick-h">
     <h2 id="pick-h">1. Pick something to check</h2>
     <p class="muted">The page opens on a real auction: a real Zcash wallet paid these bids and refunds on the public Zcash test network. Test coins have no value. Its lot name, DRY-01, stands for dry run: a real round paid with test coins before any real money.</p>

@@ -280,3 +280,36 @@ test("the page has one button per example, a nav slot for Check any round, and a
   for (const id of ["btn-real", "btn-real-cheat", "btn-honest", "btn-tamper"]) assert.doesNotMatch(html, new RegExp(`id="${id}"`));
   assert.match(js, /Checking\.\.\./);
 });
+
+test("the first screen: the real round, one check button, an honest or cheated switch, and the private box", () => {
+  const html = readFileSync(join(siteDir, "index.html"), "utf8");
+  const hero = html.slice(html.indexOf('<header class="top hero">'), html.indexOf("</header>"));
+  assert.match(hero, /<h1>Prove a sealed Zcash auction was <em>fair<\/em>\.<\/h1>/);
+  assert.equal((hero.match(/>Check it yourself<\/button>/g) ?? []).length, 1);
+  assert.match(hero, />Honest round<\/button>/);
+  assert.match(hero, />Cheated copy<\/button>/);
+  assert.match(hero, /Servers contacted: none/);
+  assert.match(hero, /What the check proved/);
+  const priv = hero.slice(hero.indexOf("What stayed private"), hero.indexOf("</ul>", hero.indexOf("What stayed private"))).replace(/<[^>]*>/g, " ").replace("What stayed private", "");
+  assert.doesNotMatch(priv, /\d|zat|ZEC|u1|utest|memo/i, "the private box names no amount, address or memo");
+  // The old tool sections are still lower on the page.
+  for (const id of ["pick-h", "own-h", "mine-h", "bid-h", "ext-h", "who-h", "lim-h"]) assert.ok(html.indexOf(`id="${id}"`) > html.indexOf("</header>"), id);
+  assert.doesNotMatch(html, /MOCKUP|placeholder figures/i);
+});
+
+test("the first screen runs the real round to PASS and the cheated copy to FAIL, and its lines map to real checks", () => {
+  const app = rd("src/site/app.ts");
+  const round = /const HOME_ROUND = "([^"]+)"/.exec(app)![1];
+  const cheat = /const HOME_CHEAT = "([^"]+)"/.exec(app)![1];
+  const honest = cliVerdict(round === "testnet-01" ? "testnet-01" : round);
+  const page = engine.runPage({ disclosure: ex(`${round}/disclosure.json`), result: ex(`${round}/result.json`), chain: ex(`${round}/chain.json`), chainLabel: "chain.json" });
+  assert.equal(page.verdict.result, "PASS");
+  assert.equal(honest.verdict.result, "PASS");
+  const bad = engine.runPage({ disclosure: ex(`${cheat}/disclosure.json`), result: ex(`${cheat}/result.json`) });
+  assert.equal(bad.verdict.result, "FAIL");
+  assert.ok(bad.verdict.failed.includes("refunds-paid"));
+  const ids = new Set(page.verdict.checks.map((c: any) => c.id));
+  const lines = [...app.matchAll(/ids: \[([^\]]*)\] \}/g)].flatMap((m) => [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]));
+  assert.ok(lines.length >= 5);
+  assert.ok(lines.filter((id) => ids.has(id)).length >= 5, "the line texts point at checks the honest run really has");
+});
