@@ -91,18 +91,20 @@ export function decodeRawTransaction(buf: Buffer): { data: Buffer; height: bigin
 }
 
 /** From a CompactBlock: height, block hash (display hex) and the txids in block order. */
-export function decodeCompactBlock(buf: Buffer): { height: number; hash: string; txids: string[] } {
+export function decodeCompactBlock(buf: Buffer): { height: number; hash: string; prevHash?: string; txids: string[] } {
   let height = 0;
   let hash = "";
+  let prevHash: string | undefined;
   const txids: string[] = [];
   for (const f of decodeMessage(buf)) {
     if (f.field === 2 && f.varint !== undefined) height = Number(f.varint);
     if (f.field === 3 && f.bytes) hash = bytesToTxid(f.bytes);
+    if (f.field === 4 && f.bytes && f.bytes.length === 32) prevHash = bytesToTxid(f.bytes);
     if (f.field === 7 && f.bytes) {
       for (const t of decodeMessage(f.bytes)) if (t.field === 2 && t.bytes) txids.push(bytesToTxid(t.bytes));
     }
   }
-  return { height, hash, txids };
+  return { height, hash, prevHash, txids };
 }
 
 export function decodeLightdInfo(buf: Buffer): { version: string; vendor: string; chainName: string; blockHeight: number } {
