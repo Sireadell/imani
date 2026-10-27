@@ -18,6 +18,14 @@ const verdict = checkLot(disclosure, result); // the seller's two published file
 console.log(verdict.result, verdict.failed);   // PASS [], or FAIL [ 'refunds-paid' ] for a short refund
 ```
 
+In a web page, the same check runs from one file with the payment reader built in (no server, no network):
+
+```js
+import { initReader, runPage } from "imani/browser";
+await initReader();
+const out = runPage({ disclosure, result }); // out.verdict.result is "PASS" or "FAIL"
+```
+
 Every function and type, what it takes, and whether it uses the network: [docs/LIBRARY.md](docs/LIBRARY.md). To run a worked example: `npm run build`, then `node examples/library/check-a-round.mjs`.
 
 The job it does today is checking sealed-bid auctions on Zcash. When bidding closes, the seller publishes a read-only viewing key for that one lot: it can show the lot's private payments but can never spend them. Imani reads the bids and refunds with that key and public chain data, works out the winners, the price and every refund again, and compares them with the seller's published result. You get PASS or FAIL, with the failed check named. It's built for bidders who want to know their bid was counted and their refund was right, and for sellers who want to show a clean round. Since the key and the blocks are public, anyone else can run it too.
@@ -74,7 +82,7 @@ The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs
 
 | What | Count | Where it comes from |
 |---|---|---|
-| Tests | <!--count:total-->1604<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1601<!--/count--> pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
+| Tests | <!--count:total-->1607<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1604<!--/count--> pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
 | Tests that change one fact at a time and must never pass | <!--count:test:tamper-->1127<!--/count--> | `npm run test:tamper` |
 | Example rounds | 10 that pass: 1 real, 9 made up offline with throwaway keys | `examples/` |
 | Broken copies | 42 in 9 folders, each named for what the seller changed, and all 42 fail | `examples/*broken*/manifest.json` |

@@ -64,6 +64,18 @@ test("the packed tarball installs in an empty folder and checks a lot, within 12
     ].join(String.fromCharCode(10));
     writeFileSync(join(app, "scan-check.mjs"), scan);
     assert.equal(sh("node", ["scan-check.mjs"], app).trim(), "FAIL scan-hidden-bids function function function 64");
+    // The browser build installs too, and runs the same check from its own embedded reader.
+    const web = [
+      'import { readFileSync } from "node:fs";',
+      'import { initReader, runPage } from "imani/browser";',
+      'const read = (p) => JSON.parse(readFileSync(p, "utf8"));',
+      `const dir = ${JSON.stringify(ex("round-01"))};`,
+      'await initReader();',
+      'const o = runPage({ disclosure: read(dir + "/disclosure.json"), result: read(dir + "/result.json") });',
+      'console.log(o.ok, o.verdict.result);',
+    ].join(String.fromCharCode(10));
+    writeFileSync(join(app, "web-check.mjs"), web);
+    assert.equal(sh("node", ["web-check.mjs"], app).trim(), "true PASS");
     assert.ok(readdirSync(join(app, "node_modules", "imani", "dist", "types")).includes("index.d.ts"));
     // TypeScript users get types for imani/login from the installed package.
     assert.ok(readdirSync(join(app, "node_modules", "imani", "dist", "types", "login")).includes("index.d.ts"));
