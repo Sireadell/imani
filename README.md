@@ -4,6 +4,11 @@
 
 *Imani means "trust" in Swahili.*
 
+**Start here (Zecathon, Core & Tooling track).** Imani is the neutral checker for sealed-bid auctions on Zcash: it re-derives winners, price and refunds from a read-only viewing key and public chain data, so nobody has to trust the seller's word.
+- Try it in your browser: https://imani-check.vercel.app
+- Two commands, no network: `npm install && npm run demo`, then the offline check in the table below
+- A real mainnet round (0.013 ZEC, 2026-10-27): [examples/mainnet-01](examples/mainnet-01/README.md)
+
 Imani is a Zcash tool: a TypeScript library and a command line that read shielded Zcash payments with a read-only viewing key and check them against what someone published about them.
 
 | Part | What it is |
@@ -76,7 +81,19 @@ The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs
 | Wallet SDKs | A library other wallets and apps can import. It accepts only ZIP 316 read-only viewing keys and refuses spending keys and seed phrases. It makes ZIP 321 `zcash:` bid links with QR codes, which a test scans back with a separate QR reader. The block downloader, the every-block scan that finds a bid the seller left out, and the sealed-lot rules are plain functions too (`fetchBlocks`, `scanFromChain`, `fetchScan`, `openSeals`, `sealHash`), so an app can run the full check without the command line | [src/index.ts](src/index.ts), [docs/LIBRARY.md](docs/LIBRARY.md), [src/bidlink.ts](src/bidlink.ts) | After `npm run build`: `node examples/library/check-a-round.mjs`, and `node examples/library/catch-a-hidden-bid.mjs`, which prints the real round passing 21 of 21 and a copy with a hidden bid failing on `scan-hidden-bids`. `npx tsx --test test/check.test.ts test/bidlink.test.ts` |
 | Proof of one payment | `imani bid-proof make` turns one bid into a small file anyone can check with no viewing key. It holds that one payment's opening key (the one-time secret Zcash encrypts each payment with), which opens that bid and no other. librustzcash refuses to open it unless the amount, memo and lot address match what the transaction committed to, and the checker confirms the block from two servers. Same idea as ZIP 311 payment disclosures. Only made by the lot owner on a real round so far, and it proves a payment was made, not who made it | [docs/BID_PROOF.md](docs/BID_PROOF.md), [src/bid-proof.ts](src/bid-proof.ts), source of the opener in [tools/disclose](tools/disclose) | `npx @sireadell/imani bid-proof check --proof examples/bid-proof-01/proof.json --facts examples/bid-proof-01/lot-public.json --result examples/testnet-01/result.json --fetch` prints `RESULT: PASS (9 of 9 lines proven)` for a real 3,000,000 bid. `--chain examples/testnet-01/chain.json` instead of `--fetch` runs it offline |
 | Lot file format | A written contract for the two files a seller publishes, with a JSON schema for each, so any project can publish them and any checker can read them. A kit of 52 rounds with known answers grades a checker written in any language: 10 honest rounds must PASS, 42 broken copies must FAIL and name the check that caught them | [docs/FORMAT.md](docs/FORMAT.md), [schema/](schema) | `npm run conformance -- --cmd "node bin/imani.js check"` prints `Conformance: FULL (52 of 52 verdicts right, 42 of 42 broken copies named correctly)` |
-| Mainnet chain check | Ties a real mainnet round run by another Zcash auction project to the chain: its 3 listed payments are fetched from two independent servers, which must return the same bytes, and each transaction id is worked out again from those bytes. They were mined in blocks 3,499,413 and 3,499,451. It cannot read the amounts, because that round's viewing key was never published | [src/external/anchor.ts](src/external/anchor.ts), saved copy in [test/external/round-files/demo01-chain.json](test/external/round-files/demo01-chain.json) | `npm run check:external -- test/external/round-files/demo01-settlement.json --fetch`, or `--chain test/external/round-files/demo01-chain.json` instead of `--fetch` to read the saved copy offline |
+| Real mainnet round | Our own small mainnet auction, 3 bids and 3 refunds of real ZEC, paid on 2026-10-27 and checked at scan level from two public mainnet servers | [examples/mainnet-01](examples/mainnet-01/README.md) | the command in that README |
+| Other project's mainnet round, tied to chain | Ties a real mainnet round run by another Zcash auction project to the chain: its 3 listed payments are fetched from two independent servers, which must return the same bytes, and each transaction id is worked out again from those bytes. They were mined in blocks 3,499,413 and 3,499,451. It cannot read the amounts, because that round's viewing key was never published | [src/external/anchor.ts](src/external/anchor.ts), saved copy in [test/external/round-files/demo01-chain.json](test/external/round-files/demo01-chain.json) | `npm run check:external -- test/external/round-files/demo01-settlement.json --fetch`, or `--chain test/external/round-files/demo01-chain.json` instead of `--fetch` to read the saved copy offline |
+
+## How Imani differs from auction platforms
+
+Other Zecathon entries run auctions (custody, escrow, settlement). Imani does not run anything: it checks any round that publishes the two files in [docs/FORMAT.md](docs/FORMAT.md). A platform can use it as its audit step, and a bidder can run it without trusting the platform.
+
+| | Auction platform | Imani |
+|---|---|---|
+| Holds bids or runs settlement | Yes | No, never holds funds or a spending key |
+| Needs trust in the seller's published result | Often | No, it recomputes it from chain data |
+| Finds a bid the seller left out | Rarely | Yes, by scanning every block (`scan-hidden-bids`) |
+| Checks another project's files | No | Yes, any round in the published format; 52-round conformance kit |
 
 ## Real counts
 
@@ -84,7 +101,7 @@ The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs
 |---|---|---|
 | Tests | <!--count:total-->1619<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1616<!--/count--> pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
 | Tests that change one fact at a time and must never pass | <!--count:test:tamper-->1127<!--/count--> | `npm run test:tamper` |
-| Example rounds | 10 that pass: 1 real, 9 made up offline with throwaway keys | `examples/` |
+| Example rounds | 10 that pass: 2 real (`testnet-01` and `mainnet-01`), 8 made up offline with throwaway keys | `examples/` |
 | Broken copies | 42 in 9 folders, each named for what the seller changed, and all 42 fail | `examples/*broken*/manifest.json` |
 | Real round on the Zcash test network | `testnet-01`, lot name `DRY-01` (DRY for dry run: a real round paid with test coins before any real money). 3 bids and 3 refunds, all paid into the Ironwood pool, 34 blocks holding 80 transactions, 21 of 21 checks pass | [examples/testnet-01/README.md](examples/testnet-01/README.md), with an explorer link for each payment |
 | Conformance kit | 52 rounds with known answers: 10 must PASS, 42 broken copies must FAIL and name the right check. Our checker gets 52 of 52 and names 42 of 42 | [docs/FORMAT.md](docs/FORMAT.md), `npm run conformance -- --cmd "node bin/imani.js check"` |
@@ -176,6 +193,6 @@ You sign in by sending a tiny private payment from any shielded Zcash wallet. Yo
 
 A step-by-step guide for judges: [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md). How every test group was run: [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md).
 
-Built for Zecathon, Core & Tooling track. All code was written in the build window: the first commit is dated 2026-10-07.
+Built for Zecathon, Core & Tooling track. All code was written in the build window: the first commit is dated 2026-10-07 (the full history is on GitHub; a shallow clone only shows the latest part).
 
 Licence: MIT. [THIRD_PARTY.md](THIRD_PARTY.md) lists the libraries used.
