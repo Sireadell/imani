@@ -201,6 +201,8 @@ The checker accepts only `uview1` or `uviewtest1` keys and refuses seed phrases,
 | In a sealed lot the seller sees how many deposits arrived and when | Hiding the number of bidders from the seller is out of scope | None in this design |
 | A seller can plant several seals before the close and open only the one that suits them | Each seal left closed costs the penalty, paid to the real bidders who opened, and the check prints how many seals stayed closed. A seller willing to pay the penalty on planted seals is not stopped | Set `forfeitZat` high enough to make planting expensive |
 | In a sealed lot the seller sees prices as they are opened, after the close | The seller cannot add a new seal any more (late seals are not counted) | None in this design |
+| An opening sent before the close shows its price to the seller early | The opening never counts, but the price was readable while bidding was open | Send the opening only after the close. A seller who counts such a bid anyway fails `seal-openings` |
+| Losing the seal file costs the penalty | Without the price and salt the seal cannot be opened | Keep a copy of `seal-<word>.json` until the refunds are paid |
 
 ## Refund address in the bid memo
 
