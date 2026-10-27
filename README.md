@@ -26,6 +26,14 @@ There's a smaller second tool in the box: a sign-in button any website can add, 
 
 In your browser: **https://imani-check.vercel.app** opens on a real auction from the Zcash test network and checks it on your own computer. After it loads, that page makes no network requests.
 
+For an answer a script can read, the same site has a web link that checks the real round and returns JSON:
+
+```sh
+curl "https://imani-check.vercel.app/api/check?round=testnet-01"
+```
+
+You get `verdict` (PASS or FAIL), `checks` (21 of 21 pass today), the `failed` list, the network, lot and block range (4,489,077 to 4,489,110, 34 blocks), `source` and `tookMs`. It runs the same every-block checker as the command line, on the saved blocks in `examples/testnet-01`, so it contacts no servers. To download the blocks again from public servers, use the command line with `--fetch`. It takes only a round name from a fixed list (`testnet-01` for now), never a key or a file, and holds no key itself.
+
 On your computer, with Node 22.18 or newer, in this folder:
 
 ```sh
