@@ -5,6 +5,10 @@
     "api/block.mjs": {
       "maxDuration": 60,
       "includeFiles": "vendor/decoder/**"
+    },
+    "api/check.mjs": {
+      "maxDuration": 10,
+      "includeFiles": "{vendor/decoder/**,examples/testnet-01/**}"
     }
   }
 }

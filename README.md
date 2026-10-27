@@ -26,6 +26,14 @@ There's a smaller second tool in the box: a sign-in button any website can add, 
 
 In your browser: **https://imani-check.vercel.app** opens on a real auction from the Zcash test network and checks it on your own computer. After it loads, that page makes no network requests.
 
+For an answer a script can read, the same site has a web link that checks the real round and returns JSON:
+
+```sh
+curl "https://imani-check.vercel.app/api/check?round=testnet-01"
+```
+
+You get `verdict` (PASS or FAIL), `checks` (21 of 21 pass today), the `failed` list, the network, lot and block range (4,489,077 to 4,489,110, 34 blocks), `source` and `tookMs`. It runs the same every-block checker as the command line, on the saved blocks in `examples/testnet-01`, so it contacts no servers. To download the blocks again from public servers, use the command line with `--fetch`. It takes only a round name from a fixed list (`testnet-01` for now), never a key or a file, and holds no key itself.
+
 On your computer, with Node 22.18 or newer, in this folder:
 
 ```sh
@@ -62,7 +70,7 @@ The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs
 
 | What | Count | Where it comes from |
 |---|---|---|
-| Tests | <!--count:total-->1587<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1584<!--/count--> pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
+| Tests | <!--count:total-->1592<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1589<!--/count--> pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
 | Tests that change one fact at a time and must never pass | <!--count:test:tamper-->1127<!--/count--> | `npm run test:tamper` |
 | Example rounds | 10 that pass: 1 real, 9 made up offline with throwaway keys | `examples/` |
 | Broken copies | 42 in 9 folders, each named for what the seller changed, and all 42 fail | `examples/*broken*/manifest.json` |
