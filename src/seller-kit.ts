@@ -99,7 +99,7 @@ Blocks: bids open at ${i.openHeight}, close at ${i.closeHeight}, every refund is
 - [ ] Do not spend from the lot account before the close.
 
 ## After the close (block ${i.closeHeight})
-- [ ] Wait until block ${i.closeHeight} has passed. Run \`imani settle --folder <this folder> --fetch\` (or \`--chain <file>\`). It prints what each bidder is owed and writes the two files to publish. Nothing is checked against refunds yet at this point, so a FAIL on refunds is expected.
+- [ ] Wait until block ${i.closeHeight} has passed. Run \`imani settle --folder <this folder> --fetch\` (or \`--chain <file>\`). It reads up to the newest block, prints what each bidder is owed and writes the two files to publish. The refunds are not paid yet and the blocks up to the deadline do not exist yet, so a FAIL is expected at this point.
 - [ ] Pay every refund from the lot account, one payment per bid, with the memo \`refund:${i.lotId}:<bid transaction id>\` shown for it.
 - [ ] After block ${i.refundByHeight}, run \`imani settle --folder <this folder> --fetch\` again. It must say PASS.
 
@@ -158,10 +158,26 @@ export interface Settlement {
 }
 
 /** The block range a settlement reads: from the open block to the refund deadline. */
-export function settleRange(folder: string): { network: "main" | "test"; from: number; to: number } {
+export function settleRange(folder: string): { network: "main" | "test"; from: number; to: number; closeHeight: number } {
   const pub = readLotFile(folder, LOT_PUBLIC);
   if (!pub || pub.format !== "imani-lot-public/1") throw new InputError(`Input error: ${LOT_PUBLIC} is not a lot public file.`);
-  return { network: pub.network, from: pub.openHeight, to: pub.refundByHeight };
+  return { network: pub.network, from: pub.openHeight, to: pub.refundByHeight, closeHeight: pub.closeHeight };
+}
+
+/**
+ * Before the refund deadline the newest blocks do not exist yet. An early settle reads from the
+ * open block to the newest block (`tip`) and passes every later block up to the deadline as
+ * missing, so the check of the whole range still fails: an early result never says the refund
+ * window is complete. Refuses before the close, when the bids are not final.
+ */
+export function earlyRange(range: { from: number; to: number; closeHeight: number }, tip: number): { to: number; missing: number[] } {
+  if (tip >= range.to) return { to: range.to, missing: [] };
+  if (tip < range.closeHeight) {
+    throw new InputError(`Input error: the lot has not closed yet. The newest block is ${tip} and bids count up to block ${range.closeHeight}. Run settle again after block ${range.closeHeight}.`);
+  }
+  const missing: number[] = [];
+  for (let h = tip + 1; h <= range.to; h++) missing.push(h);
+  return { to: tip, missing };
 }
 
 /** Build the seller's two files from the chain, add the published totals and check the round. */

@@ -8,13 +8,14 @@ import { DEFAULT_GRACE_BLOCKS, scanRange, type BidderKey, type ScanInput } from 
 import { lookupBid } from "./mine.ts";
 import { BlockFetchError, fetchBlocks } from "./scan/fetch-blocks.ts";
 import { parseServer } from "./fetch/grpc.ts";
+import { fetchChainTip, FetchError } from "./fetch/index.ts";
 import { EXPLORER_PREFIX } from "./fetch/explorer.ts";
 import { ZEBRA_PREFIX, isZebra, loadZebraAuth } from "./fetch/zebra.ts";
 import { bidderCheck, bidderRange, bidderText, validateFacts, type BidClaim, type PublishedResult } from "./bidder.ts";
 import { runOpen, runSeal } from "./seal-cli.ts";
 import { runBidLink } from "./bidlink-cli.ts";
 import { bidMemoAddress } from "./files.ts";
-import { planLot, settle, settleRange, writeLotFiles, LOT_PRIVATE, LOT_PUBLIC } from "./seller-kit.ts";
+import { earlyRange, planLot, settle, settleRange, writeLotFiles, LOT_PRIVATE, LOT_PUBLIC } from "./seller-kit.ts";
 import { LinkingInputError, linkingFromLots, linkingText, lotRefunds } from "./privacy/linking.ts";
 
 const USAGE = `Usage: imani check --disclosure <lot disclosure.json> --result <seller result.json> [options]
@@ -55,6 +56,7 @@ Exit code: 0 PASS, 1 FAIL, 2 refused or bad input.
          Sets up a lot: lot-public.json (publish it), lot-private.json (keep it until the close) and CHECKLIST.md.
        imani settle --folder <lot folder> (--chain <file> | --fetch) [--server <url>] [--proxy <url>] [--concurrency <n>]
          After the close: works out what each bidder is owed, writes disclosure.json and result.json into <folder>/settled and checks them.
+         Before the refund deadline, --fetch reads only up to the newest block and says so: the check cannot pass until a run after the deadline.
 
        imani bidder-check --facts <lot facts.json> --key-file <your viewing key file> [options]
 
@@ -210,7 +212,7 @@ function failure(e: unknown, servers: string[]): CliResult {
   if (e instanceof KeyRefusedError || e instanceof LeakGuardError || e instanceof InputError || e instanceof ScanInputError) {
     return { code: 2, stdout: "", stderr: `${e.message}\n${line}` };
   }
-  if (e instanceof BlockFetchError) {
+  if (e instanceof BlockFetchError || e instanceof FetchError) {
     return { code: 2, stdout: "", stderr: `Could not run the scan: ${e.message}. Nothing was written.\n${line}` };
   }
   // Unknown errors: show a fixed message so nothing from the input can leak into the output.
@@ -486,25 +488,44 @@ function runLotNew(args: string[]): CliResult {
   }
 }
 
-function settleText(outDir: string, s: ReturnType<typeof settle>): string {
+/** Set when settle ran before the refund deadline and read only up to the newest block. */
+interface EarlyRead {
+  from: number;
+  to: number;
+  refundByHeight: number;
+}
+
+function earlyNote(e: EarlyRead): string {
+  return [
+    `Read blocks ${e.from} to ${e.to}, the newest block now. The refund deadline is block ${e.refundByHeight}, so blocks ${e.to + 1} to ${e.refundByHeight} were not read yet.`,
+    `Refunds paid after block ${e.to} are not covered by this run, and the check below cannot pass until they are. Pay the refunds, then run settle again after block ${e.refundByHeight}.`,
+  ].join("\n");
+}
+
+function settleText(outDir: string, s: ReturnType<typeof settle>, early?: EarlyRead): string {
   const lot = s.round.lotId;
-  const lines: string[] = [`Lot ${lot}: ${s.round.bidCount} bids counted, ${s.round.winners.length} winners, price ${s.round.clearingPriceZat} zatoshis each.`, ""];
+  const lines: string[] = [];
+  if (early) lines.push(earlyNote(early), "");
+  lines.push(`Lot ${lot}: ${s.round.bidCount} bids counted, ${s.round.winners.length} winners, price ${s.round.clearingPriceZat} zatoshis each.`, "");
   lines.push(`Refunds owed (${s.result.refunds.length}), one payment each from the lot account:`);
   for (const f of s.result.refunds) {
     const addr = bidMemoAddress(lot, s.bidMemos[f.bidTxid] ?? "");
     lines.push(`  ${f.amountZat} zatoshis (${f.reason}) to ${addr ?? "(no address in the bid memo: ask the bidder)"}, memo ${f.memo}`);
   }
   lines.push("", toText(s.verdict), "", `Wrote ${join(outDir, "disclosure.json")} and ${join(outDir, "result.json")}. Publish them once this says PASS after the refunds were paid.`);
+  if (early) lines.push(`Not ready to publish: this run stopped at block ${early.to}, before the refund deadline ${early.refundByHeight}.`);
   return lines.join("\n");
 }
 
-function settleFinish(folder: string, blocks: any, missing: number[], source: BlockSource): CliResult {
+function settleFinish(folder: string, blocks: any, missing: number[], source: BlockSource, early?: EarlyRead): CliResult {
   const s = settle({ folder, blocks, missing, source });
   const outDir = join(folder, "settled");
   mkdirSync(outDir, { recursive: true });
   writeFileSync(join(outDir, "disclosure.json"), JSON.stringify(s.disclosure, null, 2) + "\n");
   writeFileSync(join(outDir, "result.json"), JSON.stringify(s.result, null, 2) + "\n");
-  return { code: s.verdict.result === "PASS" ? 0 : 1, stdout: settleText(outDir, s), stderr: "" };
+  // An early read always leaves blocks unread, so the check fails; never report it as a pass.
+  const pass = s.verdict.result === "PASS" && !early;
+  return { code: pass ? 0 : 1, stdout: settleText(outDir, s, early), stderr: "" };
 }
 
 const isCliResult = (x: unknown): x is CliResult => typeof (x as CliResult).code === "number" && typeof (x as CliResult).stdout === "string";
@@ -544,16 +565,31 @@ async function runSettleAsync(args: string[], progress?: (line: string) => void)
     const range = settleRange(o.folder as string);
     const concurrency = typeof o.concurrency === "string" ? Number(o.concurrency) : undefined;
     if (concurrency !== undefined && (!Number.isSafeInteger(concurrency) || concurrency < 1 || concurrency > 32)) throw new InputError("Input error: --concurrency must be a whole number from 1 to 32.");
-    progress?.(`Downloading ${range.to - range.from + 1} blocks (${range.from} to ${range.to}) from ${o.server ? "your chosen server" : "public light servers"}. Your key is not sent.`);
-    let fetched;
+    const proxy = typeof o.proxy === "string" ? o.proxy : undefined;
+    const sopts = serverOpts(typeof o.server === "string" ? o.server : undefined, typeof o["zebra-auth-file"] === "string" ? (o["zebra-auth-file"] as string) : undefined);
+    // Between the close and the refund deadline the last blocks do not exist yet: read up to the newest one.
+    let tip;
     try {
-      fetched = await fetchBlocks({ network: range.network, from: range.from, to: range.to, proxy: typeof o.proxy === "string" ? o.proxy : undefined, concurrency, ...serverOpts(typeof o.server === "string" ? o.server : undefined, typeof o["zebra-auth-file"] === "string" ? (o["zebra-auth-file"] as string) : undefined) });
+      tip = await fetchChainTip({ network: range.network, proxy, ...sopts });
     } catch (e) {
-      if (e instanceof BlockFetchError) servers = e.serversContacted;
+      if (e instanceof FetchError) servers = e.serversContacted;
       throw e;
     }
-    servers = fetched.source.serversContacted;
-    return settleFinish(o.folder as string, fetched.blocks, [], fetched.source);
+    servers = [...tip.serversContacted];
+    const early = earlyRange(range, tip.height);
+    if (early.missing.length) progress?.(`The refund deadline is block ${range.to} and the newest block is ${tip.height}, so this run reads only up to block ${tip.height}.`);
+    progress?.(`Downloading ${early.to - range.from + 1} blocks (${range.from} to ${early.to}) from ${o.server ? "your chosen server" : "public light servers"}. Your key is not sent.`);
+    let fetched;
+    try {
+      fetched = await fetchBlocks({ network: range.network, from: range.from, to: early.to, proxy, concurrency, ...sopts });
+    } catch (e) {
+      if (e instanceof BlockFetchError) servers = [...new Set([...servers, ...e.serversContacted])];
+      throw e;
+    }
+    servers = [...new Set([...servers, ...fetched.source.serversContacted])];
+    const source = { ...fetched.source, serversContacted: servers };
+    const earlyRead = early.missing.length ? { from: range.from, to: early.to, refundByHeight: range.to } : undefined;
+    return settleFinish(o.folder as string, fetched.blocks, early.missing, source, earlyRead);
   } catch (e) {
     return failure(e, servers);
   }

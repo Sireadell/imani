@@ -103,6 +103,14 @@ export async function zebraChain(server: string, opts: ZebraCall): Promise<strin
   return r.chain;
 }
 
+/** The network name and the newest block height, as the node reports them. */
+export async function zebraTip(server: string, opts: ZebraCall): Promise<{ chain: string; height: number }> {
+  const r = (await rpc(server, "getblockchaininfo", [], opts)) as { chain?: unknown; blocks?: unknown };
+  if (typeof r?.chain !== "string") throw new Error("reply has no chain name");
+  if (typeof r.blocks !== "number" || !Number.isSafeInteger(r.blocks) || r.blocks < 1) throw new Error("reply has no block height");
+  return { chain: r.chain, height: r.blocks };
+}
+
 const HASH_RE = /^[0-9a-f]{64}$/i;
 
 /** One block: its hash, and every transaction as raw hex with the txid the node gave for it. */
