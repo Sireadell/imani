@@ -6,6 +6,7 @@ Two small JSON files let anyone check a sealed-bid auction or an all-or-nothing 
 |---|---|---|
 | Disclosure file | `"imani-lot-disclosure/1"` | [`schema/disclosure.schema.json`](../schema/disclosure.schema.json) |
 | Result file | `"imani-lot-result/1"` | [`schema/result.schema.json`](../schema/result.schema.json) |
+| Bid proof (optional, one bid, made later) | `"imani-bid-proof/1"` | [`schema/bid-proof.schema.json`](../schema/bid-proof.schema.json), described in [`BID_PROOF.md`](BID_PROOF.md) |
 
 The rules a checker applies (price rule, refunds, sealed lots) are in [`SPEC.md`](../SPEC.md). Amounts are always whole numbers of zatoshis (1 ZEC = 100,000,000 zatoshis). A "txid" is a transaction id: 64 lowercase hex characters (digits and the letters a to f). A "block height" is the number of a block on the chain.
 

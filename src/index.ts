@@ -40,6 +40,21 @@ export { sealHash } from "./files.ts";
 // Help a bidder and a seller.
 export { makeBidLink, qrSvg, qrText, zatToZec, zecToZat, BidLinkError, type BidLink, type BidLinkInput } from "./bidlink.ts";
 export { bidderCheck, type BidderReport } from "./bidder.ts";
+
+// Prove one bid to someone who holds no viewing key (docs/BID_PROOF.md).
+export {
+  makeBidProof,
+  verifyBidProof,
+  validateBidProof,
+  bidProofText,
+  BidProofError,
+  BID_PROOF_FORMAT,
+  type BidProof,
+  type BidProofReport,
+  type MakeBidProofInput,
+  type VerifyOptions,
+  type MinedAt,
+} from "./bid-proof.ts";
 export { planLot, settle, settleRange, type LotNewInput, type LotNewFiles, type Settlement } from "./seller-kit.ts";
 
 // Turn a verdict into text or a web page.
