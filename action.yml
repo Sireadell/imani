@@ -1,0 +1,38 @@
+name: imani-check
+description: Fails the build when a sealed-bid auction round does not check out.
+author: Imani
+inputs:
+  disclosure:
+    description: Path to the lot's disclosure.json, relative to your repository.
+    required: true
+  result:
+    description: Path to the seller's result.json, relative to your repository.
+    required: true
+  scan:
+    description: Set to "true" to also read every block of the round from a chain file. Needs chain.
+    required: false
+    default: "false"
+  chain:
+    description: Path to a chain file. Used only when scan is "true".
+    required: false
+    default: ""
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - name: Check the round
+      shell: bash
+      env:
+        IMANI_DISCLOSURE: ${{ inputs.disclosure }}
+        IMANI_RESULT: ${{ inputs.result }}
+        IMANI_SCAN: ${{ inputs.scan }}
+        IMANI_CHAIN: ${{ inputs.chain }}
+      run: |
+        args=(check --disclosure "$IMANI_DISCLOSURE" --result "$IMANI_RESULT")
+        if [ "$IMANI_SCAN" = "true" ]; then
+          if [ -z "$IMANI_CHAIN" ]; then echo "scan is true but chain is empty"; exit 2; fi
+          args+=(--scan --chain "$IMANI_CHAIN")
+        fi
+        node --disable-warning=ExperimentalWarning "${{ github.action_path }}/bin/imani.js" "${args[@]}"
