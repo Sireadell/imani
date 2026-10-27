@@ -1,8 +1,8 @@
 # The imani library
 
-Everything the command line and the checker page do is also a plain function you can call from your own code. `import { ... } from "imani"` gives you the names below. Only one of them, `fetchTransactions`, opens a network connection, and only when you call it. No function takes a spending key or a seed phrase.
+Everything the command line and the checker page do is also a plain function you can call from your own code. `import { ... } from "imani"` gives you the names below. Only three of them, `fetchTransactions`, `fetchBlocks` and `fetchScan`, open a network connection, and only when you call them. No function takes a spending key or a seed phrase.
 
-imani is not on the npm registry yet. To use it in another project, run `npm pack` in this folder, then `npm install <path to the .tgz file>` in yours. It needs Node 22.18 or newer and installs with no other packages.
+imani is not on the npm registry yet. To use it in another project, run `npm pack` in this folder, then `npm install <path to the .tgz file>` in yours. It needs Node 22.18 or newer and installs with no other packages. The package is about 6 MB because it carries every example round and broken copy, so the commands in the README and the examples below run straight from the installed folder.
 
 ## Check a round in 10 lines
 
@@ -20,6 +20,26 @@ for (const c of verdict.checks) console.log(c.status, c.id, c.reason);
 ```
 
 The same example, ready to run from this folder: `npm run build`, then `node examples/library/check-a-round.mjs`. It prints `DRY-01: PASS (16 of 16 checks passed)`.
+
+## Catch a bid the seller left out
+
+A seller can leave a bid out of both files, and the files still add up. Reading every block of the round with the lot key finds it. `scanFromChain` takes the blocks from a saved block file with no network. `fetchScan` downloads them from two public servers run by different people, which must send the same bytes. Either result goes to `checkLot` as `scan`:
+
+```js
+import { readFileSync } from "node:fs";
+import { checkLot, scanFromChain, fetchScan } from "imani";
+
+const read = (path) => JSON.parse(readFileSync(path, "utf8"));
+const dir = "examples/scan-broken/01-hidden-bid";
+const disclosure = read(`${dir}/disclosure.json`);
+const scan = scanFromChain(disclosure, read(`${dir}/chain.json`)); // or: await fetchScan(disclosure)
+const verdict = checkLot(disclosure, read(`${dir}/result.json`), { scan });
+console.log(verdict.result, verdict.failed); // FAIL [ 'scan-hidden-bids' ]
+```
+
+Ready to run from this folder: `npm run build`, then `node examples/library/catch-a-hidden-bid.mjs`. It prints the honest round passing and this copy failing on `scan-hidden-bids`. Add `--fetch` to download the real test-network round's 34 blocks instead of reading the saved copy.
+
+Sealed lots (bidders pay a fixed deposit with a hidden price, then open it after the close) are checked by `checkLot` too. `openSeals` is the rule on its own: give it the seals and openings and it says which seals count, which are penalised and what every payment is owed back. `sealHash` is how a bidder makes the hidden price in the first place.
 
 ## Every export
 
@@ -41,6 +61,16 @@ The same example, ready to run from this folder: `npm run build`, then `node exa
 | `groupBidPayments` | Bid payments sorted by block, a top-ups yes or no, and the closing block | The payments that count as bids, and the repeats that are owed back in full | none |
 | `validateChainFile` | A saved block file (parsed JSON) | Nothing if it is a valid block file. Throws a plain error if not | none |
 | `fetchTransactions` | `FetchOptions`: the network, and transaction ids or block numbers. Optionally your own servers, a proxy, a time limit | The raw transactions, each checked against its id, and the list of every server contacted. By default two servers run by different people must send the exact same bytes. Throws `FetchError` if that cannot be done | **yes**, to public Zcash block servers, or to your own lightwalletd server or Zebra node |
+| `fetchBlocks` | `FetchBlocksOptions`: the network and the first and last block. Optionally your own servers, a proxy, how many downloads run at once, and a progress callback | Every block in the range with its raw transactions, each checked against its id, and where they came from (servers, bytes, time). By default two servers run by different people must agree on every block. Throws `BlockFetchError` if that cannot be done | **yes**, to public Zcash block servers, or to your own lightwalletd server or Zebra node |
+| `BlockFetchError` | | The error thrown when the blocks cannot be downloaded and checked. It still carries the list of servers contacted | none |
+| `blocksInRange` | A saved block file and the first and last block | The blocks in that range, and the heights the file does not have (never made up) | none |
+| `ScanInputError` | | The error thrown when a block file, a block range or a bidder key is not usable. Its message is safe to print | none |
+| `scanRange` | A disclosure file, and optionally how many blocks past the close to read (default 10) | The first and last block a scan must read: from the open to the refund deadline, and always some blocks past the close so a late bid is found | none |
+| `DEFAULT_GRACE_BLOCKS` | | 10: how many blocks past the close a scan always reads | none |
+| `scanFromChain` | A disclosure file, a saved block file, and optionally `ScanFromChainOptions` | A `ScanInput` for `checkLot`'s `scan` option, taken from the file. Throws `ScanInputError` if the file is for the other network or not a block file | none |
+| `fetchScan` | A disclosure file, and optionally `FetchScanOptions` (the same choices as `fetchBlocks`) | A `ScanInput` for `checkLot`'s `scan` option, with every block of the round downloaded. No key is sent | **yes**, through `fetchBlocks` |
+| `openSeals` | A sealed lot's name, its rules, the closing block, the last block for openings, the seals and the openings | Which seals count and at what opened price, which were never opened or opened wrongly, the penalties and how they are shared, the winners, and what every payment is owed back | none |
+| `sealHash` | A lot name, a secret word, a price in zatoshis, a random salt and an optional refund address | The 64-character hash a bidder puts in a seal memo, so the price stays hidden until the opening | none |
 | `DEFAULT_SERVERS` | | The public servers `fetchTransactions` asks when you give none, per network | none |
 | `FetchError` | | The error thrown when the downloads cannot be checked. It still carries the list of servers contacted | none |
 | `makeBidLink` | A lot name, the lot's address, an amount, and optionally a refund address or a ready-made memo | A ZIP 321 `zcash:` payment link, its memo and amount in ZEC. A wallet that reads the link fills in all three | none |
@@ -74,6 +104,15 @@ The same example, ready to run from this folder: `npm run build`, then `node exa
 | `ChainBlock` | type | One block: its height and its transactions | |
 | `ChainTx` | type | One transaction in a block: its id and raw bytes | |
 | `BlockSource` | type | Where blocks came from, how many bytes and how long it took | |
+| `FetchBlocksOptions` | type | What `fetchBlocks` takes |
+| `ScanInput` | type | The blocks a scan reads, the heights missing, where they came from, and the grace window. Give it to `checkLot` as `scan` |
+| `ScanRange` | type | What `scanRange` returns |
+| `BidderKey` | type | A bidder's own viewing key and the bid it belongs to, so the scan can show their refund arrived |
+| `ScanFromChainOptions` | type | What `scanFromChain` takes besides the two files: grace window, bidder keys, and the name the report uses for the file |
+| `FetchScanOptions` | type | What `fetchScan` takes: the `fetchBlocks` choices, plus grace window and bidder keys |
+| `SealFact` | type | One seal payment for `openSeals`: transaction id, block, amount paid, word, hash, refund address |
+| `OpenFact` | type | One opening payment for `openSeals`: transaction id, block, amount paid, word, price, salt |
+| `SealedOutcome` | type | What `openSeals` returns |
 | `FetchOptions` | type | What `fetchTransactions` takes | |
 | `FetchResult` | type | What `fetchTransactions` returns | |
 | `Network` | type | `"main"` or `"test"` | |

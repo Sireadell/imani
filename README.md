@@ -16,7 +16,7 @@ const verdict = checkLot(disclosure, result); // the seller's two published file
 console.log(verdict.result, verdict.failed);   // PASS [], or FAIL [ 'refunds-paid' ] for a short refund
 ```
 
-Every function and type, what it takes, and whether it uses the network: [docs/LIBRARY.md](docs/LIBRARY.md). To run a worked example: `npm run build`, then `node examples/library/check-a-round.mjs`.
+Every function and type, what it takes, and whether it uses the network: [docs/LIBRARY.md](docs/LIBRARY.md). To run a worked example: `npm run build`, then `node examples/library/check-a-round.mjs`. `node examples/library/catch-a-hidden-bid.mjs` reads every block of a round from code and catches a bid the seller left out.
 
 The job it does today is checking sealed-bid auctions on Zcash. When bidding closes, the seller publishes a read-only viewing key for that one lot: it can show the lot's private payments but can never spend them. Imani reads the bids and refunds with that key and public chain data, works out the winners, the price and every refund again, and compares them with the seller's published result. You get PASS or FAIL, with the failed check named. It's built for bidders who want to know their bid was counted and their refund was right, and for sellers who want to show a clean round. Since the key and the blocks are public, anyone else can run it too.
 
@@ -44,7 +44,7 @@ It checks one small auction three ways in about two seconds, with no internet. T
 | Execution | `npx imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --fetch` | Downloads the real round's 34 blocks from two public test-network servers run by different people, which must agree on every block, then `RESULT: PASS (21 of 21 checks passed)` in about a minute. Use `--chain examples/testnet-01/chain.json` instead of `--fetch` to read the saved copy offline in about 3 seconds |
 | Originality | [examples/testnet-01/README.md](examples/testnet-01/README.md), no git needed | The real round was paid on the public Zcash test network on 2026-10-11, and each payment's explorer link shows its block and date on the chain, which nobody can backdate. The build window opened on 2026-09-28. In a git clone, `git log --reverse --format="%ad %s" --date=short` also shows the first commit, dated 2026-10-07 (this needs the clone, a ZIP download has no history) |
 
-The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs the checker's own tests in about a minute.
+The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs the checker's own tests in about two minutes (1 minute 54 seconds on a Windows laptop).
 
 ## Core & Tooling, line by line
 
@@ -61,7 +61,7 @@ The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs
 
 | What | Count | Where it comes from |
 |---|---|---|
-| Tests | <!--count:total-->1554<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1551<!--/count--> pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
+| Tests | <!--count:total-->1555<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1552<!--/count--> pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
 | Tests that change one fact at a time and must never pass | <!--count:test:tamper-->1127<!--/count--> | `npm run test:tamper` |
 | Example rounds | 10 that pass: 1 real, 9 made up offline with throwaway keys | `examples/` |
 | Broken copies | 42 in 9 folders, each named for what the seller changed, and all 42 fail | `examples/*broken*/manifest.json` |
@@ -80,7 +80,7 @@ The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs
 | Bid links with QR codes | `imani bid-link` turns a bid into a ZIP 321 `zcash:` payment link and QR code, so a wallet fills in the address, amount and memo | [docs/BID_LINK.md](docs/BID_LINK.md) |
 | Seller kit | `imani lot-new` sets up a lot and `imani settle` works out every refund owed and writes the two files to publish | [docs/SELLER_KIT.md](docs/SELLER_KIT.md) |
 | Checked rounds list | One page with every round we ship or have checked, each with a button to re-check it in your browser | https://imani-check.vercel.app/rounds.html |
-| Scale test | 17,000 generated payments, the size of a 16,971-bid sealed auction on Zcash this year, as reported in the press: the seller-file checks take well under a second (about 50 ms in the scale notes, 143 ms on our last run). Reading real transactions with a key measured 16.8 ms each, so about 5 minutes for 17,000. That second figure is an estimate, not a run | `npx tsx --test test/scale.test.ts`, notes in [docs/SCALE.md](docs/SCALE.md) |
+| Scale test | 17,000 generated payments, the size of a big public auction: the seller-file checks take well under a second (about 50 ms in the scale notes, 143 ms on our last run). Reading real transactions with a key measured 16.8 ms each, so about 5 minutes for 17,000. That second figure is an estimate, not a run | `npx tsx --test test/scale.test.ts`, notes in [docs/SCALE.md](docs/SCALE.md) |
 
 The 17,000 payments are made-up amounts built from a fixed seed. Imani has not been run on that real auction's data.
 

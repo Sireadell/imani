@@ -28,3 +28,19 @@ test("the main entry runs a check and refuses a spending key", () => {
   assert.equal(lib.checkLot(d, r).result, "PASS");
   assert.throws(() => lib.assertViewingKey("secret-extended-key-main1qqqqqqqq", "main"), lib.KeyRefusedError);
 });
+
+test("the library runs the hidden-bid scan from a saved block file, and refuses a file for the other network", () => {
+  const read = (p: string) => JSON.parse(readFileSync(p, "utf8"));
+  const dir = "examples/scan-broken/01-hidden-bid";
+  const d = read(`${dir}/disclosure.json`);
+  const chain = read(`${dir}/chain.json`);
+  const scan = lib.scanFromChain(d, chain);
+  assert.deepEqual(scan.source.serversContacted, []);
+  const v = lib.checkLot(d, read(`${dir}/result.json`), { scan });
+  assert.equal(v.result, "FAIL");
+  assert.deepEqual(v.failed, ["scan-hidden-bids"]);
+  const honest = read("examples/testnet-01/disclosure.json");
+  assert.equal(lib.checkLot(honest, read("examples/testnet-01/result.json"), { scan: lib.scanFromChain(honest, read("examples/testnet-01/chain.json")) }).result, "PASS");
+  const other = { ...chain, network: chain.network === "main" ? "test" : "main" };
+  assert.throws(() => lib.scanFromChain(d, other), lib.ScanInputError);
+});

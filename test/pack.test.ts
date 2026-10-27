@@ -52,6 +52,18 @@ test("the packed tarball installs in an empty folder and checks a lot, within 12
     ].join(String.fromCharCode(10));
     writeFileSync(join(app, "lib-check.mjs"), lib);
     assert.equal(sh("node", ["lib-check.mjs"], app).trim(), "PASS 15 FAIL refunds-paid function function");
+    // The hidden-bid scan runs from code too: blocks from the shipped saved copy, then checkLot with `scan`.
+    const scan = [
+      'import { readFileSync } from "node:fs";',
+      'import { checkLot, scanFromChain, fetchBlocks, fetchScan, openSeals, sealHash } from "imani";',
+      'const read = (p) => JSON.parse(readFileSync(p, "utf8"));',
+      `const dir = ${JSON.stringify(ex("scan-broken/01-hidden-bid"))};`,
+      'const d = read(dir + "/disclosure.json");',
+      'const v = checkLot(d, read(dir + "/result.json"), { scan: scanFromChain(d, read(dir + "/chain.json")) });',
+      'console.log(v.result, v.failed.join(","), typeof fetchBlocks, typeof fetchScan, typeof openSeals, sealHash("L", "w", 1, "s").length);',
+    ].join(String.fromCharCode(10));
+    writeFileSync(join(app, "scan-check.mjs"), scan);
+    assert.equal(sh("node", ["scan-check.mjs"], app).trim(), "FAIL scan-hidden-bids function function function 64");
     assert.ok(readdirSync(join(app, "node_modules", "imani", "dist", "types")).includes("index.d.ts"));
     // TypeScript users get types for imani/login from the installed package.
     assert.ok(readdirSync(join(app, "node_modules", "imani", "dist", "types", "login")).includes("index.d.ts"));
