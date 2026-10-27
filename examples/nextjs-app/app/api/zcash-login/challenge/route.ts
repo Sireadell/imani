@@ -1,4 +1,4 @@
-import { zcashChallengeRoute, zcashReservedChallengeRoute } from "imani/login";
+import { zcashChallengeRoute, zcashReservedChallengeRoute } from "@sireadell/imani/login";
 import { kit } from "@/lib/kit";
 
 export const dynamic = "force-dynamic";

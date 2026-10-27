@@ -26,7 +26,7 @@ Each check runs with its own users. A login that throws an error fails the check
 Write an adapter: an object with `name`, `ttlSeconds` and five small functions. The scorecard never reads the login's code.
 
 ```ts
-import { runScorecard, scorecardText, type LoginUnderTest } from "imani/login";
+import { runScorecard, scorecardText, type LoginUnderTest } from "@sireadell/imani/login";
 
 const adapter: LoginUnderTest = {
   name: "my login",

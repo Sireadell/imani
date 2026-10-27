@@ -43,9 +43,9 @@ export async function buildPackage(outDir = p("dist")): Promise<void> {
     plugins: [vendorPath],
     logLevel: "warning",
   });
-  // The browser build: one file with the payment reader embedded, for a web page (imani/browser).
+  // The browser build: one file with the payment reader embedded, for a web page (@sireadell/imani/browser).
   await buildBrowserBundle(join(outDir, "browser.js"));
-  // Type definitions for imani and imani/login, so TypeScript users get types from the installed package.
+  // Type definitions for @sireadell/imani and @sireadell/imani/login, so TypeScript users get types from the installed package.
   const tsc = join(dirname(createRequire(import.meta.url).resolve("typescript/package.json")), "bin", "tsc");
   execFileSync(process.execPath, [tsc, "-p", p("tsconfig.types.json"), "--outDir", join(outDir, "types")], { cwd: root, stdio: "inherit" });
   // The sources import each other with .ts endings. In the shipped definitions, point them at .js.

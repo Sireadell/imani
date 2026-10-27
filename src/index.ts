@@ -1,4 +1,4 @@
-// The public library: what `import ... from "imani"` gives you. Everything here is the same code
+// The public library: what `import ... from "@sireadell/imani"` gives you. Everything here is the same code
 // the command line and the checker page run. Nothing here opens a network connection unless you
 // call fetchTransactions, fetchBlocks or fetchScan yourself, and no function takes a spending key or a seed phrase.
 
