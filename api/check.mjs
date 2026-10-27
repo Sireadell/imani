@@ -1145,7 +1145,7 @@ function checkRound(round, dir = examplesDir()) {
     tookMs: Date.now() - started
   };
 }
-var HEADERS = { "cache-control": "public, max-age=60", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "access-control-allow-origin": "*" };
+var HEADERS = { "cache-control": "public, max-age=60, s-maxage=3600, stale-while-revalidate=86400", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "access-control-allow-origin": "*" };
 var esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 function badgeSvg(a) {
   const pass = a.verdict === "PASS";

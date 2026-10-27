@@ -60,7 +60,7 @@ export function checkRound(round: string, dir: string = examplesDir()): CheckAns
   };
 }
 
-const HEADERS = { "cache-control": "public, max-age=60", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "access-control-allow-origin": "*" };
+const HEADERS = { "cache-control": "public, max-age=60, s-maxage=3600, stale-while-revalidate=86400", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "access-control-allow-origin": "*" };
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
