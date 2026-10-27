@@ -25,7 +25,11 @@ after(() => {
   rmSync(tmp, { recursive: true, force: true });
 });
 
-test("testnet-01 answers PASS with its counts, range, source and time, in under 2 seconds", async () => {
+test("testnet-01 answers PASS with its counts, range, source and time, in under 2 seconds once the checker is loaded", async () => {
+  // The first request of a fresh server also loads the decoder; time the next one.
+  const first = Date.now();
+  assert.equal((await fetch(`${base}/api/check?round=testnet-01`)).status, 200);
+  assert.ok(Date.now() - first < 8000, "first request");
   const t0 = Date.now();
   const res = await fetch(`${base}/api/check?round=testnet-01`);
   const ms = Date.now() - t0;

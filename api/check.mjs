@@ -1147,6 +1147,7 @@ function checkRound(round, dir = examplesDir()) {
 }
 var HEADERS = { "cache-control": "public, max-age=60", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "access-control-allow-origin": "*" };
 function checkApi(dir) {
+  const kept = /* @__PURE__ */ new Map();
   return (req, res) => {
     const send = (code, body) => {
       res.writeHead(code, { ...HEADERS, "content-type": "application/json; charset=utf-8" });
@@ -1159,7 +1160,8 @@ function checkApi(dir) {
     if (!round || keys.some((k) => k !== "round")) return send(400, { error: "Give ?round=<name>", rounds: ROUNDS });
     if (!ROUNDS.includes(round)) return send(404, { error: "unknown round", rounds: ROUNDS });
     try {
-      send(200, checkRound(round, dir));
+      if (!kept.has(round)) kept.set(round, checkRound(round, dir));
+      send(200, kept.get(round));
     } catch {
       send(500, { error: "could not check this round" });
     }

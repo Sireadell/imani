@@ -62,8 +62,9 @@ export function checkRound(round: string, dir: string = examplesDir()): CheckAns
 
 const HEADERS = { "cache-control": "public, max-age=60", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "access-control-allow-origin": "*" };
 
-/** Request handler for /api/check. */
+/** Request handler for /api/check. The shipped files never change while the server runs, so a round is checked once and the answer is kept. */
 export function checkApi(dir?: string) {
+  const kept = new Map<string, CheckAnswer>();
   return (req: IncomingMessage, res: ServerResponse) => {
     const send = (code: number, body: unknown) => {
       res.writeHead(code, { ...HEADERS, "content-type": "application/json; charset=utf-8" });
@@ -76,7 +77,8 @@ export function checkApi(dir?: string) {
     if (!round || keys.some((k) => k !== "round")) return send(400, { error: "Give ?round=<name>", rounds: ROUNDS });
     if (!ROUNDS.includes(round)) return send(404, { error: "unknown round", rounds: ROUNDS });
     try {
-      send(200, checkRound(round, dir));
+      if (!kept.has(round)) kept.set(round, checkRound(round, dir));
+      send(200, kept.get(round));
     } catch {
       send(500, { error: "could not check this round" });
     }
