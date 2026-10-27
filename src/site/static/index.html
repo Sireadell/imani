@@ -50,6 +50,27 @@
         <ul class="sq"><li>Who the bidders are</li><li>What else is in their wallets</li><li>Any payment outside this one lot</li><li>Every amount, from anyone without this lot's key</li></ul>
       </div>
     </div>
+    <div class="homegrid">
+<section id="cheat-lab" class="hcard">
+  <h2>Cheat lab</h2>
+  <p>Pick a cheat. The page changes one fact in the seller's files and runs the same check again.</p>
+  <div class="cheat-row">
+    <button type="button" class="btn" data-cheat="testnet-broken/01-hidden-losing-bid">Hide a bid</button>
+    <p class="small">The seller drops a losing bid of 1,500,000 zat from the files, so the price can fall.</p>
+  </div>
+  <div class="cheat-row">
+    <button type="button" class="btn" data-cheat="broken/04-short-refund">Short a refund</button>
+    <p class="small">Carol lost and got 1,400,000 back, not her 1,500,000. The seller's file still says 1,500,000.</p>
+  </div>
+  <div class="cheat-row">
+    <button type="button" class="btn" data-cheat="pricing-broken/04-leaves-out-the-lowest-winner">Name the wrong winner</button>
+    <p class="small">Carol's 1,500,000 is on the chain but the seller's list leaves it out and raises the price to Bob's bid, 2,000,000.</p>
+  </div>
+  <p class="cheat-result" role="status" hidden></p>
+  <button type="button" class="btn cheat-reset" hidden>Undo the cheat</button>
+  <p class="small">Each cheat is a real file from our test kit. Your own copy of Imani fails it the same way.</p>
+</section>
+    </div>
     <p class="servers" id="servers-home"><strong>Servers contacted: none.</strong> After this page loads it makes no network calls.</p>
     <p class="small more-line">Want to dig deeper? Check your own files, find your bid, or watch a cheat get caught.</p>
   </div>

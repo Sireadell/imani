@@ -160,3 +160,5 @@ table.who th[scope="row"] { min-width: 8rem; }
   .homegrid { grid-template-columns: 1fr; }
   .hero h1 { font-size: 32px; }
 }
+
+#cheat-lab .cheat-row { margin: 10px 0; } #cheat-lab .btn.on { border-color: currentColor; } #cheat-lab .cheat-result { margin: 12px 0 8px; font-weight: 600; } #cheat-lab [hidden] { display: none; }
