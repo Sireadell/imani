@@ -117,3 +117,46 @@ table.who th[scope="row"] { min-width: 8rem; }
 .nav a { color: var(--accent); font-weight: 600; }
 .chip:disabled { opacity: 0.6; cursor: progress; }
 .checking { font-weight: 600; padding: 12px 0; }
+
+/* Top of the page: the real round, one button, an honest or cheated switch. */
+.hero { background: #0e1013; color: #f3f4f6; border-bottom: 0; padding: 20px 0 28px; }
+.hero .nav a { color: #f3f4f6; }
+.hero .pill { display: inline-block; margin: 18px 0 0; padding: 6px 14px; border: 1px solid #2c3037; border-radius: 99px; font-size: 13px; color: #aab0ba; background: #14171b; }
+.hero h1 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 40px; line-height: 1.1; margin: 16px 0 12px; }
+.hero h1 em { font-style: italic; color: #f5a524; }
+.hero .sub { font-size: 17px; color: #aab0ba; margin: 0 0 22px; max-width: 720px; }
+.homegrid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 16px; margin-bottom: 16px; }
+.hcard { background: #15181c; border: 1px solid #2c3037; border-radius: 14px; padding: 18px; }
+.hcard h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; color: #aab0ba; }
+.hero .tag { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; color: #6fd7a3; background: rgba(76, 195, 138, 0.14); border-radius: 99px; padding: 4px 10px; }
+.hero .lot { font-family: Georgia, serif; font-weight: 400; font-size: 26px; margin: 14px 0 6px; }
+.facts { margin: 0; }
+.facts > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid #2c3037; font-size: 14px; }
+.facts dt { color: #aab0ba; }
+.facts dd { margin: 0; text-align: right; }
+.hero .btn.wide { width: 100%; margin-top: 16px; background: #f3f4f6; color: #0e1013; border-color: #f3f4f6; }
+.hero .btn:focus-visible, .switch button:focus-visible { outline: 3px solid #f2a900; outline-offset: 2px; }
+.center { text-align: center; color: #aab0ba; }
+.switch { display: inline-flex; background: #0e1013; border: 1px solid #2c3037; border-radius: 99px; padding: 3px; margin-bottom: 10px; }
+.switch button { font: inherit; font-size: 14px; min-height: 40px; padding: 6px 16px; border-radius: 99px; border: 0; background: transparent; color: #aab0ba; cursor: pointer; }
+.switch button[aria-pressed="true"] { background: #262a31; color: #f3f4f6; }
+.hero .small { color: #aab0ba; }
+.hchecks { list-style: none; margin: 0; padding: 0; }
+.hchecks li { display: flex; gap: 10px; padding: 7px 0; font-size: 14px; color: #d6d9de; }
+.hchecks li b { width: 16px; flex: none; }
+.hchecks li.ok b { color: #6fd7a3; }
+.hchecks li.bad b { color: #ff8f86; }
+.hchecks li.dim { color: #8a919c; }
+.hverdict { margin: 12px 0 0; padding: 12px; border-radius: 10px; text-align: center; font-weight: 700; border: 1px solid #2c3037; }
+.hverdict.pass { color: #6fd7a3; background: rgba(76, 195, 138, 0.12); border-color: rgba(76, 195, 138, 0.35); }
+.hverdict.fail { color: #ff8f86; background: rgba(255, 143, 134, 0.1); border-color: rgba(255, 143, 134, 0.35); }
+.tick, .sq { list-style: none; margin: 0; padding: 0; }
+.tick li, .sq li { padding: 5px 0; font-size: 14px; }
+.tick li::before { content: "\2713  "; color: #6fd7a3; }
+.sq li::before { content: "\25A0  "; color: #4a4f58; font-size: 10px; }
+.hero .servers { background: transparent; color: #aab0ba; padding: 0; margin: 12px 0 4px; }
+.more-line { margin: 4px 0 0; }
+@media (max-width: 700px) {
+  .homegrid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 32px; }
+}
