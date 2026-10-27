@@ -84,3 +84,13 @@ test("the panel markup has the agreed words and nothing risky", () => {
   assert.doesNotMatch(html, /trustless|\bfirst\b/i);
   assert.doesNotMatch(rd("src/site/cheat-lab.ts"), /—|trustless|\bfirst\b/i);
 });
+
+test("the home page holds the cheat lab panel and app.ts mounts it", () => {
+  const html = rd("src/site/static/index.html");
+  assert.equal((html.match(/id="cheat-lab"/g) ?? []).length, 1);
+  for (const c of CHEATS) assert.ok(html.includes(`data-cheat="${c.exampleId}"`), c.exampleId);
+  assert.equal((html.match(/<a href="check\.html">Check any round<\/a>/g) ?? []).length, 1);
+  const app = rd("src/site/app.ts");
+  assert.match(app, /import \{ mountCheatLab \} from "\.\/cheat-lab\.ts"/);
+  assert.match(app, /mountCheatLab\(labRoot/);
+});
