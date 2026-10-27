@@ -42,7 +42,7 @@ For an answer a script can read, the same site has a web link that checks the re
 curl "https://imani-check.vercel.app/api/check?round=testnet-01"
 ```
 
-You get `verdict` (PASS or FAIL), `checks` (21 of 21 pass today), the `failed` list, the network, lot and block range (4,489,077 to 4,489,110, 34 blocks), `source` and `tookMs`. It runs the same every-block checker as the command line, on the saved blocks in `examples/testnet-01`, so it contacts no servers. To download the blocks again from public servers, use the command line with `--fetch`. It takes only a round name from a fixed list (`testnet-01` for now), never a key or a file, and holds no key itself.
+You get `verdict` (PASS or FAIL), `checks` (21 of 21 pass today), the `failed` list, the network, lot and block range (4,489,077 to 4,489,110, 34 blocks), `source` and `tookMs`. It runs the same every-block checker as the command line, on the saved blocks in `examples/testnet-01`, so it contacts no servers. To download the blocks again from public servers, use the command line with `--fetch`. It takes only a round name from a fixed list (`testnet-01` and `mainnet-01`), never a key or a file, and holds no key itself.
 
 On your computer, with Node 22.18 or newer, in this folder:
 
@@ -82,7 +82,7 @@ The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs
 
 | What | Count | Where it comes from |
 |---|---|---|
-| Tests | <!--count:total-->1607<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1604<!--/count--> pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
+| Tests | <!--count:total-->1608<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1605<!--/count--> pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
 | Tests that change one fact at a time and must never pass | <!--count:test:tamper-->1127<!--/count--> | `npm run test:tamper` |
 | Example rounds | 10 that pass: 1 real, 9 made up offline with throwaway keys | `examples/` |
 | Broken copies | 42 in 9 folders, each named for what the seller changed, and all 42 fail | `examples/*broken*/manifest.json` |
@@ -128,7 +128,7 @@ The 19,000 payments are made-up amounts built from a fixed seed. Imani has not b
 - The bid link QR code has not yet been tested with a wallet. The link format and the QR are checked in tests, not by paying from one.
 - The 19,000-payment scale round is generated to the published size, with made-up amounts from a fixed seed. It is not real.
 - The Zebra node route has been tested only against a fake node that answers in the shape of Zebra's own code, filled with real test-network blocks. It has not yet been run against a live Zebra node.
-- <!-- MAINNET-LINE -->Our real round ran on the Zcash test network with test coins. We haven't run a round on mainnet.<!-- /MAINNET-LINE -->
+- <!-- MAINNET-LINE -->Our mainnet round is small on purpose: 3 bids and 3 refunds of real ZEC (0.013 ZEC bid in total) on 2026-10-27, paid into the Ironwood pool in blocks 3,532,597 to 3,532,624, and checked at scan level from two public mainnet servers. Files and the command to re-check it: [examples/mainnet-01](examples/mainnet-01/README.md).<!-- /MAINNET-LINE -->
 
 Every check and every known limit is in [SPEC.md](SPEC.md).
 

@@ -11,7 +11,7 @@ import { checkLot } from "../check.ts";
 import { scanFromChain } from "../scan/input.ts";
 
 /** The rounds this address will check. Add a name here only when its files are in examples/. */
-export const ROUNDS: readonly string[] = ["testnet-01"];
+export const ROUNDS: readonly string[] = ["testnet-01", "mainnet-01"];
 
 export interface CheckAnswer {
   round: string;
