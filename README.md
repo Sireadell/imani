@@ -1,5 +1,7 @@
 # Imani
 
+[![tests on Windows, macOS and Linux](https://github.com/Sireadell/imani/actions/workflows/ci.yml/badge.svg)](https://github.com/Sireadell/imani/actions/workflows/ci.yml)
+
 *Imani means "trust" in Swahili.*
 
 Imani is a Zcash tool: a TypeScript library and a command line that read shielded Zcash payments with a read-only viewing key and check them against what someone published about them.
