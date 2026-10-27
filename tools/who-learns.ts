@@ -13,7 +13,7 @@ const doc = `# Who learns what
 Worked out by \`src/privacy/who-learns.ts\` from the real round in \`examples/testnet-01\` (lot ${rep.lotId}, Zcash test network), not typed by hand. \`npm run who-learns\` writes this table and the one on the checker page, and a test fails if either drifts from the code.
 
 ${whoLearnsMarkdown(rep)}
-How far a refund can be followed in any round: \`npx imani linking <disclosure.json> [more disclosures]\`.
+How far a refund can be followed in any round: \`npx @sireadell/imani linking <disclosure.json> [more disclosures]\`.
 
 ## Sealed lots
 

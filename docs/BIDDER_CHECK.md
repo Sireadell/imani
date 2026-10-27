@@ -3,7 +3,7 @@
 `imani bidder-check` is for one bidder. It needs three things the bidder already has or can get: their own viewing key (read-only, from their wallet), the lot's public facts (published before the auction), and public chain data. It does not need the seller's disclosure file or the lot key.
 
 ```sh
-npx imani bidder-check --facts lot-public.json --key-file my-viewing-key.txt --fetch --bid <txid>:<zatoshis you paid>
+npx @sireadell/imani bidder-check --facts lot-public.json --key-file my-viewing-key.txt --fetch --bid <txid>:<zatoshis you paid>
 ```
 
 | Input | What it is |

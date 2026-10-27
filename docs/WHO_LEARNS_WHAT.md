@@ -11,7 +11,7 @@ Worked out by `src/privacy/who-learns.ts` from the real round in `examples/testn
 | The checker page and its host | That the page was downloaded | Anything you check here: the checker page makes no network calls after it loads |
 | The "Check any round" page, its host and two public Zcash servers | Only after you press the button that names them: which block numbers you asked for. The host also sees your IP address, as any website does | Your viewing key, or any amount, memo or address: the key never leaves your browser tab, and the blocks are read there. A saved block file sends nothing at all |
 
-How far a refund can be followed in any round: `npx imani linking <disclosure.json> [more disclosures]`.
+How far a refund can be followed in any round: `npx @sireadell/imani linking <disclosure.json> [more disclosures]`.
 
 ## Sealed lots
 

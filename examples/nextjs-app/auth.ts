@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { zcashCredentials } from "imani/login";
+import { zcashCredentials } from "@sireadell/imani/login";
 import { kit } from "@/lib/kit";
 
 // The only change from the Next.js auth example: GitHub is replaced by the Zcash login. The
