@@ -2,7 +2,7 @@
 // Run from the repo root after `npm run build`:
 //   node examples/library/catch-a-hidden-bid.mjs           saved blocks, no network
 //   node examples/library/catch-a-hidden-bid.mjs --fetch   the real test-network round, downloaded live
-// In your own project, after installing imani, import from "imani" instead.
+// In your own project, after installing imani, import from "@sireadell/imani" instead.
 import { readFileSync } from "node:fs";
 import { checkLot, scanFromChain, fetchScan } from "../../dist/index.js";
 

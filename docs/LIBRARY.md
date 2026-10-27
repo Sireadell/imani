@@ -1,15 +1,15 @@
 # The imani library
 
-Everything the command line and the checker page do is also a plain function you can call from your own code. `import { ... } from "imani"` gives you the names below. Only three of them, `fetchTransactions`, `fetchBlocks` and `fetchScan`, open a network connection, and only when you call them. No function takes a spending key or a seed phrase.
+Everything the command line and the checker page do is also a plain function you can call from your own code. `import { ... } from "@sireadell/imani"` gives you the names below. Only three of them, `fetchTransactions`, `fetchBlocks` and `fetchScan`, open a network connection, and only when you call them. No function takes a spending key or a seed phrase.
 
-imani is not on the npm registry yet. To use it in another project, run `npm pack` in this folder, then `npm install <path to the .tgz file>` in yours. It needs Node 22.18 or newer and installs with no other packages. The package is about 6 MB because it carries every example round and broken copy, so the commands in the README and the examples below run straight from the installed folder. For example, `npx imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json` works right after install, and the honest rounds and broken copies the conformance kit grades against travel with it, so the proof ships inside the package.
+imani is not on the npm registry yet. To use it in another project, run `npm pack` in this folder, then `npm install <path to the .tgz file>` in yours. It needs Node 22.18 or newer and installs with no other packages. The package is about 6 MB because it carries every example round and broken copy, so the commands in the README and the examples below run straight from the installed folder. For example, `npx @sireadell/imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json` works right after install, and the honest rounds and broken copies the conformance kit grades against travel with it, so the proof ships inside the package.
 
 ## Use it in a web page
 
-`imani/browser` is one JavaScript file (about 1.4 MB) with the payment reader built in. It makes no network calls, so a page can check a round on the visitor's own computer. Fetching the two files is up to your page.
+`@sireadell/imani/browser` is one JavaScript file (about 1.4 MB) with the payment reader built in. It makes no network calls, so a page can check a round on the visitor's own computer. Fetching the two files is up to your page.
 
 ```js
-import { initReader, runPage } from "imani/browser";
+import { initReader, runPage } from "@sireadell/imani/browser";
 
 await initReader(); // starts the built-in reader once
 const disclosure = await (await fetch("/lot-public.json")).json();
@@ -24,7 +24,7 @@ console.log(out.ok ? out.verdict.result : out.message); // "PASS", "FAIL", or a 
 
 ```js
 import { readFileSync } from "node:fs";
-import { checkLot } from "imani";
+import { checkLot } from "@sireadell/imani";
 
 const read = (path) => JSON.parse(readFileSync(path, "utf8"));
 const verdict = checkLot(read("examples/testnet-01/disclosure.json"), read("examples/testnet-01/result.json"));
@@ -43,7 +43,7 @@ A seller can leave a bid out of both files, and the files still add up. Reading 
 
 ```js
 import { readFileSync } from "node:fs";
-import { checkLot, scanFromChain, fetchScan } from "imani";
+import { checkLot, scanFromChain, fetchScan } from "@sireadell/imani";
 
 const read = (path) => JSON.parse(readFileSync(path, "utf8"));
 const dir = "examples/scan-broken/01-hidden-bid";
@@ -150,4 +150,4 @@ Sealed lots (bidders pay a fixed deposit with a hidden price, then open it after
 | `LotNewFiles` | type | What `planLot` returns | |
 | `Settlement` | type | What `settle` returns | |
 
-The sign-in kit is a separate import, `imani/login`. Its format is in [LOGIN_SPEC.md](../LOGIN_SPEC.md).
+The sign-in kit is a separate import, `@sireadell/imani/login`. Its format is in [LOGIN_SPEC.md](../LOGIN_SPEC.md).

@@ -1,4 +1,4 @@
-import { LoginKit } from "imani/login";
+import { LoginKit } from "@sireadell/imani/login";
 import party from "./sim-party.json";
 import { simReader } from "./sim-chain";
 

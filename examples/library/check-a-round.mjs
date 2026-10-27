@@ -1,6 +1,6 @@
 // Check a real round with the imani library. Run from the repo root after `npm run build`:
 //   node examples/library/check-a-round.mjs
-// In your own project, after installing imani, import from "imani" instead.
+// In your own project, after installing imani, import from "@sireadell/imani" instead.
 import { readFileSync } from "node:fs";
 import { checkLot } from "../../dist/index.js";
 

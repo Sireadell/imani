@@ -3,7 +3,7 @@
 Same offline round as `scan-01` (lot LOT-01), seen by each bidder with only their own throwaway test key. The keys hold nothing.
 
 ```sh
-npx imani bidder-check --facts examples/bidder-01/lot-public.json --key-file examples/bidder-01/carol.key --chain examples/scan-01/chain.json --bid e0656c882730bbc466afa80f0cd07c0caa8a5c2dc74132190c16ff965d8d426c:1500000
+npx @sireadell/imani bidder-check --facts examples/bidder-01/lot-public.json --key-file examples/bidder-01/carol.key --chain examples/scan-01/chain.json --bid e0656c882730bbc466afa80f0cd07c0caa8a5c2dc74132190c16ff965d8d426c:1500000
 ```
 
 | Key file | Bid | Expected |

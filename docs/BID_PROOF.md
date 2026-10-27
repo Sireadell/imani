@@ -19,7 +19,7 @@ The idea is the same as the payment disclosures in ZIP 311, applied to one aucti
 The lot owner, with the lot's viewing key and their own disclosure file:
 
 ```sh
-npx imani bid-proof make --facts lot-public.json --key-file lot-viewing-key.txt \
+npx @sireadell/imani bid-proof make --facts lot-public.json --key-file lot-viewing-key.txt \
   --bid <bid txid> --disclosure disclosure.json --result result.json --out proof.json
 ```
 
@@ -30,7 +30,7 @@ Instead of `--disclosure`, the transaction can come from a saved chain file (`--
 No key is needed:
 
 ```sh
-npx imani bid-proof check --proof proof.json --facts lot-public.json --result result.json --fetch
+npx @sireadell/imani bid-proof check --proof proof.json --facts lot-public.json --result result.json --fetch
 ```
 
 | Line | PROVEN when |
@@ -68,7 +68,7 @@ The report also prints what the seller's result says about the bid (won or not, 
 `examples/bid-proof-01/` holds a proof of a real bid: 3,000,000 zatoshis in lot DRY-01 on the Zcash test network (transaction `b76cd31fa4...`, block 4,489,081), made by the lot owner with the round's published lot key. Checked on 2026-10-27 against the live test network, with no key:
 
 ```text
-$ npx imani bid-proof check --proof examples/bid-proof-01/proof.json --facts examples/bid-proof-01/lot-public.json --result examples/testnet-01/result.json --fetch
+$ npx @sireadell/imani bid-proof check --proof examples/bid-proof-01/proof.json --facts examples/bid-proof-01/lot-public.json --result examples/testnet-01/result.json --fetch
   [PROVEN] mined-height: Transaction b76cd31fa4 is in block 4489081, read from testnet.zec.rocks and api.testnet.cipherscan.app.
 RESULT: PASS (9 of 9 lines proven)
 Servers contacted: https://testnet.zec.rocks:443, cipherscan:https://api.testnet.cipherscan.app
