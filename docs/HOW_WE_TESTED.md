@@ -9,12 +9,12 @@ npm ci
 npm run test:all
 ```
 
-<!--count:total-->1604<!--/count--> tests in <!--count:groups-->9<!--/count--> groups. On a normal run <!--count:pass-->1601<!--/count--> pass and <!--count:skipped-->3<!--/count--> are skipped: the two live tests below, which read from public servers only when you ask. Expect about nine minutes on a laptop. GitHub runs the same suite on every push, on Windows and on Linux (`.github/workflows/ci.yml`), after a type check and both leak scans.
+<!--count:total-->1610<!--/count--> tests in <!--count:groups-->9<!--/count--> groups. On a normal run <!--count:pass-->1607<!--/count--> pass and <!--count:skipped-->3<!--/count--> are skipped: the two live tests below, which read from public servers only when you ask. Expect about nine minutes on a laptop. GitHub runs the same suite on every push, on Windows and on Linux (`.github/workflows/ci.yml`), after a type check and both leak scans.
 
 <!-- test-groups:start -->
 | Command | What it covers | Tests | Skipped |
 |---|---|---|---|
-| `npm run test` | The checker: reading payments with a viewing key, the auction rules, each check level, the bidder's own check, refusing spending keys, the packed package, the leak scanner | 219 | 0 |
+| `npm run test` | The checker: reading payments with a viewing key, the auction rules, each check level, the bidder's own check, refusing spending keys, the packed package, the leak scanner | 225 | 0 |
 | `npm run test:login` | Sign-in with a private wallet: one-time codes, expiry, replays, copied links, wrong sites, the receipt, a real test-network payment | 76 | 0 |
 | `npm run test:fetch` | Downloading blocks from two public servers and checking they agree | 35 | 2 (live, needs `LIVE=1`) |
 | `npm run test:demo` | The auction shop demo, from sign-in to the checked result | 11 | 0 |
