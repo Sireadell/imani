@@ -2,6 +2,8 @@
 
 This one used real ZEC. A real wallet paid 3 bids into a fresh lot account on Zcash mainnet on 2026-10-27, and the lot paid 3 refunds back. Lot id `IMANI-M1`, 2 items, reserve 100,000 zatoshis. The round is small on purpose: the bids add up to 0.013 ZEC. All six payments are in the Ironwood pool.
 
+All 3 bids were paid from that one wallet, which we ran ourselves, and we also ran the lot. So this round shows the checker working on real mainnet data. It does not show independent bidders.
+
 ```sh
 node bin/imani.js check --disclosure examples/mainnet-01/disclosure.json --result examples/mainnet-01/result.json --scan --chain examples/mainnet-01/chain.json
 ```
@@ -21,7 +23,7 @@ Each one can be looked up on a public explorer. The explorer shows that the paym
 | Refund (change) to the 0.004 bid | 0.001 | 3,532,618 | `711ee0935873a08da6ac3ec032c66ec660aef1732e5eab3cda006f99fcbf5828` |
 | Refund to the losing 0.003 bid (in full) | 0.003 | 3,532,624 | `25381f8eef3c352d265d2b4cc09221c16f7c934bbfd465000e242434c009fdb2` |
 
-The two top bids win and both pay the clearing price of 0.003 ZEC (300,000 zatoshis, the highest losing bid). Each bidder wrote their own refund address at the end of their bid memo, and each refund went to that address.
+The two top bids win and both pay the clearing price of 0.003 ZEC (300,000 zatoshis, the highest losing bid). Each bid memo ends with a refund address, and each refund went to the address in its bid's memo.
 
 ## Re-run it from the chain yourself
 

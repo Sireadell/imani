@@ -311,7 +311,7 @@ A shielded Zcash payment carries a memo of up to 512 bytes that only the people 
 
 ## 5. The conformance kit
 
-The kit tests any checker, written in any language, against real rounds where the right answer is known.
+The kit tests any checker, written in any language, against rounds where the right answer is known.
 
 **What `conformance/manifest.json` holds.** 52 cases. 10 are honest rounds that must PASS. 42 are broken copies of those rounds, each with one dishonest change by the seller, that must FAIL. Each broken case lists in `failing` every check id a correct checker must name, and has a one-line `story` of what the seller did. Seven cases (2 honest, 5 broken) also come with a chain file and must be checked with a full scan. All files live under `examples/`, and `npm run conformance:make` rebuilds the manifest from them.
 
@@ -362,6 +362,10 @@ Conformance: PARTIAL (10 of 52 verdicts right, 0 of 42 broken copies named corre
 ```
 
 A checker that says FAIL to everything scores 42 of 52 verdicts and names 0 of 42, so neither shortcut can reach a full score. Both are run by `test/format.test.ts` on every test run.
+
+**Who wrote the kit.** We built the kit ourselves, next to our own checker, and wrote the expected answers in `conformance/manifest.json` ourselves. A full score from Imani's checker shows that it agrees with those written answers. It is not a review by anyone else. To cross-check the answers we wrote a second checker in Python, `tools/second-checker/check.py`, separately from the main one and from the rules in `SPEC.md` and this page. It does not open payments, so it can decide 37 of the 52 cases from the numbers in the files, and it agrees on all 37. The other 15 can only be seen in the payments or on the chain.
+
+Only one honest round in the kit, `testnet-01`, holds real payments. The other 9 were made up offline with throwaway keys. In `testnet-01`, and in the mainnet round in `examples/mainnet-01`, every bid was paid from one wallet that we ran ourselves, and we also ran the lot. Those rounds show the checker on real chain data, not on independent bidders.
 
 ## 6. Versions, and how to ask for a new field
 
