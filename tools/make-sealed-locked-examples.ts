@@ -59,5 +59,5 @@ const manifest = {
     return { name: c.name, changed: c.changed, expectedFailingChecks: failed, story: c.story };
   }),
 };
-writeFileSync(new URL("examples/sealed-locked-broken/manifest.json", root), JSON.stringify(manifest, null, 2) + "\n");
+writeFileSync(new URL("examples/sealed-locked-broken/expected.json", root), JSON.stringify(manifest, null, 2) + "\n");
 console.log("wrote examples/sealed-locked-broken", manifest.copies.map((c) => `${c.name}: ${c.expectedFailingChecks.join(",")}`).join(" | "));

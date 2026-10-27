@@ -30,6 +30,7 @@ export function sellerViewAt(d: Disclosure, height: number): SellerSight[] {
   const out: SellerSight[] = [];
   for (const t of d.transactions) {
     if (t.height > height) continue;
+    if (!t.txHex || !d.ufvk) continue;
     const read = readTransactionWithId(t.txHex, d.ufvk);
     const byKind = new Map<SellerSight["kind"], { paid: number; memo: string }>();
     for (const o of read.outputs) {

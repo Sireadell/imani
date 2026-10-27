@@ -87,6 +87,9 @@ Sealed lots (bidders pay a fixed deposit with a hidden price, then open it after
 | `fetchScan` | A disclosure file, and optionally `FetchScanOptions` (the same choices as `fetchBlocks`) | A `ScanInput` for `checkLot`'s `scan` option, with every block of the round downloaded. No key is sent | **yes**, through `fetchBlocks` |
 | `openSeals` | A sealed lot's name, its rules, the closing block, the last block for openings, the seals and the openings | Which seals count and at what opened price, which were never opened or opened wrongly, the penalties and how they are shared, the winners, and what every payment is owed back | none |
 | `sealHash` | A lot name, a secret word, a price in zatoshis, a random salt and an optional refund address | The 64-character hash a bidder puts in a seal memo, so the price stays hidden until the opening | none |
+| `sellerViewAt` | A disclosure file and a block number | What the holder of the lot's viewing key can read of each payment by that block: the kind (bid, seal, opening), the amount paid, and the price if one is readable. A sealed deposit shows no price before it is opened | none |
+| `pricesReadableAt` | A disclosure file and a block number | Only the payments whose price the lot's viewing key can read by that block | none |
+| `earlyOpenings` | A disclosure file | The openings that arrived at or before the closing block, which the rules do not count | none |
 | `DEFAULT_SERVERS` | | The public servers `fetchTransactions` asks when you give none, per network | none |
 | `FetchError` | | The error thrown when the downloads cannot be checked. It still carries the list of servers contacted | none |
 | `makeBidLink` | A lot name, the lot's address, an amount, and optionally a refund address or a ready-made memo | A ZIP 321 `zcash:` payment link, its memo and amount in ZEC. A wallet that reads the link fills in all three | none |

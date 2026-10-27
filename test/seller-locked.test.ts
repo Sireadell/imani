@@ -36,7 +36,7 @@ test("seller peek: at the close the lot key shows no price in a sealed lot, and 
 });
 
 test("early open: an opening sent at or before the close never counts, and the early price is reported", () => {
-  const manifest = JSON.parse(readFileSync(new URL("examples/sealed-locked-broken/manifest.json", root), "utf8"));
+  const manifest = JSON.parse(readFileSync(new URL("examples/sealed-locked-broken/expected.json", root), "utf8"));
   const copy = manifest.copies.find((c: { name: string }) => c.name === "01-counts-early-opening");
   const { d, r } = load("sealed-locked-broken/01-counts-early-opening");
   const v = checkLot(d, r);
