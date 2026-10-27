@@ -296,7 +296,7 @@ async function explorerGetBlock(base, height, opts) {
   if (typeof b.hash !== "string" || !txs) throw new Error("reply has no block hash or transaction list");
   const txids = txs.map((t) => t.txid);
   if (!txids.every((t) => typeof t === "string" && /^[0-9a-f]{64}$/i.test(t))) throw new Error("reply has a malformed transaction id");
-  const prev = [b.previousBlockHash, b.previousblockhash, b.prevHash].find((x) => typeof x === "string" && /^[0-9a-f]{64}$/i.test(x));
+  const prev = [b.previous_block_hash, b.previousBlockHash, b.previousblockhash, b.prevHash].find((x) => typeof x === "string" && /^[0-9a-f]{64}$/i.test(x));
   return { height: Number(b.height), hash: b.hash.toLowerCase(), prevHash: prev?.toLowerCase(), txids: txids.map((t) => t.toLowerCase()) };
 }
 

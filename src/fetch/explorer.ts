@@ -95,11 +95,11 @@ export async function explorerGetTransaction(base: string, txid: string, opts: G
 export async function explorerGetBlock(base: string, height: number, opts: GetOptions): Promise<{ height: number; hash: string; prevHash?: string; txids: string[] }> {
   const { status, body } = await getJson(`${base.replace(/\/+$/, "")}/api/block/${height}`, opts);
   if (status !== 200) throw new Error(`http status ${status}`);
-  const b = body as { height?: unknown; hash?: unknown; transactions?: unknown; previousBlockHash?: unknown; previousblockhash?: unknown; prevHash?: unknown };
+  const b = body as { height?: unknown; hash?: unknown; transactions?: unknown; previous_block_hash?: unknown; previousBlockHash?: unknown; previousblockhash?: unknown; prevHash?: unknown };
   const txs = Array.isArray(b.transactions) ? (b.transactions as { txid?: unknown }[]) : null;
   if (typeof b.hash !== "string" || !txs) throw new Error("reply has no block hash or transaction list");
   const txids = txs.map((t) => t.txid);
   if (!txids.every((t): t is string => typeof t === "string" && /^[0-9a-f]{64}$/i.test(t))) throw new Error("reply has a malformed transaction id");
-  const prev = [b.previousBlockHash, b.previousblockhash, b.prevHash].find((x) => typeof x === "string" && /^[0-9a-f]{64}$/i.test(x)) as string | undefined;
+  const prev = [b.previous_block_hash, b.previousBlockHash, b.previousblockhash, b.prevHash].find((x) => typeof x === "string" && /^[0-9a-f]{64}$/i.test(x)) as string | undefined;
   return { height: Number(b.height), hash: b.hash.toLowerCase(), prevHash: prev?.toLowerCase(), txids: txids.map((t) => t.toLowerCase()) };
 }
