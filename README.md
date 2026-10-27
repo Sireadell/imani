@@ -95,6 +95,22 @@ Other Zecathon entries run auctions (custody, escrow, settlement). Imani does no
 | Finds a bid the seller left out | Rarely | Yes, by scanning every block (`scan-hidden-bids`) |
 | Checks another project's files | No | Yes, any round in the published format; 52-round conformance kit |
 
+## Auction formats Imani can verify
+
+Each format is a setting in the lot's `rules` (see [SPEC.md](SPEC.md) and [docs/FORMAT.md](docs/FORMAT.md)).
+
+| Format | Rule setting | Example | What is checked |
+|---|---|---|---|
+| Second-price (Vickrey), one item | `"itemCount": 1`, no `pricing` (or `"highest-losing"`) | No one-item folder; `examples/round-01` runs the same rule with 2 items | The winner pays the highest losing bid, never below the reserve |
+| First-price, one item | `"itemCount": 1`, `"pricing": "lowest-winning"` | No one-item folder; `examples/pricing-01` runs the same rule with 3 items | The winner pays exactly what they bid |
+| Multi-item, uniform price | `"itemCount"` above 1, either price rule | `examples/round-01`, `examples/pricing-01`, `examples/testnet-01` | The top bids win one item each and all pay the same price; losers and change refunded |
+| Raising a bid (top-ups) | `"topUps": true` | No folder; `test/pricing.test.ts` | On-time payments under one memo add up to one bid; late ones are refunded in full |
+| Fundraiser or group buy (all or nothing) | `"kind": "goal"`, `"goalZat"` | `examples/goal-reached`, `examples/goal-missed` | If on-time payments reach the goal all are kept, if not all are refunded |
+| Sealed lot (commit, then reveal) | `"kind": "sealed"`, `depositZat`, `forfeitZat` (plus `openByHeight` in the disclosure) | `examples/sealed-01` | Equal deposits, each opened price matches its seal, an unopened or wrongly opened seal loses `forfeitZat`; default price rule only ([src/sealed.ts](src/sealed.ts)) |
+| Published totals (add-on to any lot) | `totals` in the result file | `examples/totals-01` | Payments, received, kept and refunded add up and match the chain |
+
+Not supported: RFQ or quote-request trading, descending (Dutch) or open ascending (English) auctions, an encrypted order book or threshold-decrypted bids, FROST or other threshold custody, and PCZT. Imani checks a finished round; it does not hold funds or run the auction.
+
 ## Real counts
 
 | What | Count | Where it comes from |
