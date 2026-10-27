@@ -12,6 +12,7 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync,
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { roundRows, roundsPage } from "./rounds-list.ts";
+import { allCertificates } from "./certificate.ts";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const p = (...s: string[]) => join(root, ...s);
@@ -264,6 +265,7 @@ export async function buildSite(outDir = p("site")): Promise<string[]> {
   await build({ ...common, entryPoints: [p("src/site/referee-app.ts")], outfile: join(outDir, "check.js"), format: "iife" });
   for (const f of readdirSync(p("src/site/static"))) copyFileSync(p("src/site/static", f), join(outDir, f));
   writeFileSync(join(outDir, "rounds.html"), roundsPage(roundRows()));
+  for (const c of allCertificates()) writeFileSync(join(outDir, c.file), c.html);
   const files = readdirSync(outDir).sort();
   const lines = files.map((f) => `${sha(readFileSync(join(outDir, f)))}  ${f}`);
   lines.push(`${sums["imani_decoder_bg.wasm"]}  imani_decoder_bg.wasm (embedded in app.js, same bytes as vendor/decoder)`);
