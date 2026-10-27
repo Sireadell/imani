@@ -103,7 +103,7 @@ test("the list page makes no network requests and shows no key", () => {
   assert.deepEqual(html.match(/https?:\/\/[^\s"'`)]+/g) ?? [], [], "no web addresses at all");
   assert.deepEqual([...html.matchAll(/\bsrc="([^"]+)"/g)].map((m) => m[1]), []);
   const links = [...html.matchAll(/\bhref="([^"]+)"/g)].map((m) => m[1]);
-  assert.ok(links.every((l) => l === "style.css" || l === "data:," || /^(index|check)\.html(#[^"]*)?$/.test(l)), "only local links");
+  assert.ok(links.every((l) => l === "style.css" || l === "data:," || /^(index|check)\.html(#[^"]*)?$/.test(l) || /^certificate-[A-Za-z0-9_-]+\.html$/.test(l)), "only local links");
   assert.match(html, /default-src 'none'/);
   assert.match(html, /connect-src 'none'/);
   assert.doesNotMatch(html, /script-src/);
