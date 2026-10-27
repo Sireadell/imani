@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://imani-check.vercel.app/schema/bid-proof.schema.json",
+  "title": "imani-bid-proof/1",
+  "description": "Proof of one bid: the bid transaction and the opening key of the one payment in it that went to the lot. Holds no viewing key, and no field outside this list is allowed. See docs/BID_PROOF.md.",
+  "type": "object",
+  "required": ["format", "lot", "bid", "openingKey", "txHex"],
+  "additionalProperties": false,
+  "properties": {
+    "format": { "const": "imani-bid-proof/1" },
+    "lot": {
+      "type": "object",
+      "required": ["lotId", "network", "lotAddress", "closeHeight"],
+      "additionalProperties": false,
+      "properties": {
+        "lotId": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,40}$" },
+        "network": { "enum": ["main", "test"] },
+        "lotAddress": { "type": "string", "pattern": "^u(test)?1[02-9ac-hj-np-z]+$", "description": "The lot's payment address. It must hold an Orchard receiver: the opening key is checked against it." },
+        "openHeight": { "type": "integer", "minimum": 1 },
+        "closeHeight": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "bid": {
+      "type": "object",
+      "required": ["txid", "height", "pool", "index", "amountZat", "memo", "word"],
+      "additionalProperties": false,
+      "properties": {
+        "txid": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "height": { "type": "integer", "minimum": 1, "description": "The block that mined the bid, as the maker read it. A checker confirms it from the chain." },
+        "pool": { "enum": ["orchard", "ironwood"] },
+        "index": { "type": "integer", "minimum": 0, "description": "Position of the payment among the pool's actions in the transaction." },
+        "amountZat": { "type": "integer", "minimum": 1 },
+        "memo": { "type": "string", "maxLength": 512, "description": "bid:<lotId>:<word> or bid:<lotId>:<word>:<refund address>" },
+        "word": { "type": "string", "minLength": 1 }
+      }
+    },
+    "openingKey": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "The payment's one-time encryption secret (the ephemeral secret key). Opens this one payment and no other." },
+    "txHex": { "type": "string", "pattern": "^([0-9a-f]{2})+$" },
+    "result": {
+      "type": "object",
+      "required": ["sha256"],
+      "additionalProperties": false,
+      "properties": {
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "SHA-256 of the seller's published result file the proof was made against." }
+      }
+    }
+  }
+}

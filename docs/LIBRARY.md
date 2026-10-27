@@ -50,6 +50,12 @@ The same example, ready to run from this folder: `npm run build`, then `node exa
 | `zecToZat` | An amount in ZEC as text | The whole number of zatoshis, or `null` if the text is not a valid amount | none |
 | `BidLinkError` | | The error thrown when a bid link cannot be made, with the reason | none |
 | `bidderCheck` | A lot's public facts, the bidder's own viewing key, the blocks of the round, and optionally the seller's result | For each of the bidder's bids: counted or not, won or not, what should come back and whether it did. Needs no help from the seller | none |
+| `makeBidProof` | The lot's public facts, a viewing key that can see one bid (the lot's, or the bidder's own), the bid's transaction id, its raw bytes and its block | An `imani-bid-proof/1` file as a value: that bid's amount, memo and word, and the opening key of that one payment. The viewing key is not in it. Throws `BidProofError` if the key cannot see a bid to the lot in that transaction | none |
+| `verifyBidProof` | A bid proof, and optionally the seller's published lot facts, result file and where the transaction was mined (`MinedAt`) | A `BidProofReport`: each line PROVEN, GIVEN, NOT CHECKED or FAIL, and PASS only when every line is proven. Needs no viewing key | none |
+| `validateBidProof` | A parsed bid proof file | Nothing if it is well formed. Throws `InputError` if not, including for any field the format does not define | none |
+| `bidProofText` | A `BidProofReport` | The report as plain text, the same as `imani bid-proof check` prints | none |
+| `BidProofError` | | The error thrown when a bid proof cannot be made, with the reason | none |
+| `BID_PROOF_FORMAT` | | The format string `"imani-bid-proof/1"` | none |
 | `planLot` | A lot name, address, viewing key, item count, reserve, price rule and block heights | The lot's public file, private file and a checklist, as values. It writes nothing to disk | none |
 | `settle` | A lot folder made by `planLot` (read from disk) and the blocks of the round | The disclosure file and result file to publish, the verdict on them, and each bid's memo | none |
 | `settleRange` | A lot folder made by `planLot` | The network and the first and last block a settlement must read | none |
@@ -80,6 +86,11 @@ The same example, ready to run from this folder: `npm run build`, then `node exa
 | `BidLink` | type | What `makeBidLink` returns | |
 | `BidLinkInput` | type | What `makeBidLink` takes | |
 | `BidderReport` | type | What `bidderCheck` returns | |
+| `BidProof` | type | The bid proof file, `imani-bid-proof/1`. Schema: `schema/bid-proof.schema.json` | |
+| `BidProofReport` | type | What `verifyBidProof` returns: the result, each line, what the seller's result says about the bid, and the servers contacted | |
+| `MakeBidProofInput` | type | What `makeBidProof` takes | |
+| `VerifyOptions` | type | What `verifyBidProof` takes besides the proof: lot facts, result file and its bytes, and `MinedAt` | |
+| `MinedAt` | type | Where a transaction was mined, read from a chain file or from servers you trust: block, found or not, and the source | |
 | `LotNewInput` | type | What `planLot` takes | |
 | `LotNewFiles` | type | What `planLot` returns | |
 | `Settlement` | type | What `settle` returns | |

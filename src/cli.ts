@@ -13,6 +13,7 @@ import { ZEBRA_PREFIX, isZebra, loadZebraAuth } from "./fetch/zebra.ts";
 import { bidderCheck, bidderRange, bidderText, validateFacts, type BidClaim, type PublishedResult } from "./bidder.ts";
 import { runOpen, runSeal } from "./seal-cli.ts";
 import { runBidLink } from "./bidlink-cli.ts";
+import { runBidProof, runBidProofAsync } from "./bid-proof-cli.ts";
 import { bidMemoAddress } from "./files.ts";
 import { planLot, settle, settleRange, writeLotFiles, LOT_PRIVATE, LOT_PUBLIC } from "./seller-kit.ts";
 import { LinkingInputError, linkingFromLots, linkingText, lotRefunds } from "./privacy/linking.ts";
@@ -65,7 +66,9 @@ Exit code: 0 PASS, 1 FAIL, 2 refused or bad input.
   --chain <file>         read the blocks from this chain file (offline)
   --fetch                download the blocks from public light servers (two operators must agree)
   --grace, --proxy, --server, --zebra-auth-file, --concurrency   as for check
-  Exit code: 0 PASS, 1 FAIL, 3 NOT PROVEN (nothing wrong, but your key alone cannot settle it), 2 bad input.`;
+  Exit code: 0 PASS, 1 FAIL, 3 NOT PROVEN (nothing wrong, but your key alone cannot settle it), 2 bad input.
+
+       imani bid-proof make ...   and   imani bid-proof check ...   (prove one bid with no viewing key; imani bid-proof for details)`;
 
 export interface CliResult {
   code: number;
@@ -246,6 +249,7 @@ export function run(argv: string[]): CliResult {
   if (argv[0] === "bidder-check") return runBidder(argv.slice(1));
   if (argv[0] === "seal") return runSeal(argv.slice(1));
   if (argv[0] === "bid-link") return runBidLink(argv.slice(1));
+  if (argv[0] === "bid-proof") return runBidProof(argv.slice(1));
   if (argv[0] === "lot-new") return runLotNew(argv.slice(1));
   if (argv[0] === "settle") return runSettleChain(argv.slice(1));
   if (argv[0] === "open") return runOpen(argv.slice(1));
@@ -563,6 +567,7 @@ async function runSettleAsync(args: string[], progress?: (line: string) => void)
 export async function runAsync(argv: string[], progress?: (line: string) => void): Promise<CliResult> {
   if (argv[0] === "bidder-check") return runBidderAsync(argv.slice(1), progress);
   if (argv[0] === "settle") return runSettleAsync(argv.slice(1), progress);
+  if (argv[0] === "bid-proof") return runBidProofAsync(argv.slice(1));
   const opts = parse(argv);
   if (isResult(opts) || !opts.fetch) return run(argv);
   let servers: string[] = [];
