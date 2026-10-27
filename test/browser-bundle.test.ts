@@ -1,4 +1,4 @@
-// The package's browser build (imani/browser): one file, reader embedded, no network, same verdict as the command line.
+// The package's browser build (@sireadell/imani/browser): one file, reader embedded, no network, same verdict as the command line.
 import { test, before } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -39,7 +39,7 @@ test("the browser build refuses a spending key and makes no network call or Node
   assert.doesNotMatch(text, /from\s*["']node:|require\(["']node:|\bfetch\s*\(|XMLHttpRequest|WebSocket|sendBeacon/);
 });
 
-test("package.json exports imani/browser, is not marked private, and names where the code lives", () => {
+test("package.json exports @sireadell/imani/browser, is not marked private, and names where the code lives", () => {
   const pkg = JSON.parse(rd("package.json"));
   assert.equal(pkg.private, undefined);
   assert.equal(pkg.exports["./browser"].default, "./dist/browser.js");

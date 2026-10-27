@@ -24,8 +24,8 @@ test("the packed tarball installs in an empty folder and checks a lot, within 12
     mkdirSync(app);
     writeFileSync(join(app, "package.json"), "{}");
     sh(npm, ["install", "--silent", "--no-audit", "--no-fund", join(tmp, tgz)], app);
-    const ex = (p: string) => join(app, "node_modules", "imani", "examples", p);
-    const bin = join(app, "node_modules", "imani", "bin", "imani.js");
+    const ex = (p: string) => join(app, "node_modules", "@sireadell", "imani", "examples", p);
+    const bin = join(app, "node_modules", "@sireadell", "imani", "bin", "imani.js");
     const honest = sh("node", [bin, "check", "--disclosure", ex("round-01/disclosure.json"), "--result", ex("round-01/result.json"), "--mine", "d928588fc1"], app);
     assert.match(honest, /RESULT: PASS \(15 of 15 checks passed\)/);
     assert.match(honest, /Your bid: counted/);
@@ -37,13 +37,13 @@ test("the packed tarball installs in an empty folder and checks a lot, within 12
       assert.equal(e.status, 1);
     }
     assert.match(failed, /RESULT: FAIL \(1 of 15 checks failed: refunds-paid\)/);
-    writeFileSync(join(app, "login-check.mjs"), 'import { LoginKit } from "imani/login"; console.log(typeof LoginKit);');
+    writeFileSync(join(app, "login-check.mjs"), 'import { LoginKit } from "@sireadell/imani/login"; console.log(typeof LoginKit);');
     const login = sh("node", ["login-check.mjs"], app);
     assert.match(login, /function/);
     // The checker is importable by package name, and a broken copy fails through the same call.
     const lib = [
       'import { readFileSync } from "node:fs";',
-      'import { checkLot, makeBidLink, decide } from "imani";',
+      'import { checkLot, makeBidLink, decide } from "@sireadell/imani";',
       'const read = (p) => JSON.parse(readFileSync(p, "utf8"));',
       `const dir = ${JSON.stringify(ex("round-01"))};`,
       'const v = checkLot(read(dir + "/disclosure.json"), read(dir + "/result.json"));',
@@ -55,7 +55,7 @@ test("the packed tarball installs in an empty folder and checks a lot, within 12
     // The hidden-bid scan runs from code too: blocks from the shipped saved copy, then checkLot with `scan`.
     const scan = [
       'import { readFileSync } from "node:fs";',
-      'import { checkLot, scanFromChain, fetchBlocks, fetchScan, openSeals, sealHash } from "imani";',
+      'import { checkLot, scanFromChain, fetchBlocks, fetchScan, openSeals, sealHash } from "@sireadell/imani";',
       'const read = (p) => JSON.parse(readFileSync(p, "utf8"));',
       `const dir = ${JSON.stringify(ex("scan-broken/01-hidden-bid"))};`,
       'const d = read(dir + "/disclosure.json");',
@@ -67,7 +67,7 @@ test("the packed tarball installs in an empty folder and checks a lot, within 12
     // The browser build installs too, and runs the same check from its own embedded reader.
     const web = [
       'import { readFileSync } from "node:fs";',
-      'import { initReader, runPage } from "imani/browser";',
+      'import { initReader, runPage } from "@sireadell/imani/browser";',
       'const read = (p) => JSON.parse(readFileSync(p, "utf8"));',
       `const dir = ${JSON.stringify(ex("round-01"))};`,
       'await initReader();',
@@ -76,9 +76,9 @@ test("the packed tarball installs in an empty folder and checks a lot, within 12
     ].join(String.fromCharCode(10));
     writeFileSync(join(app, "web-check.mjs"), web);
     assert.equal(sh("node", ["web-check.mjs"], app).trim(), "true PASS");
-    assert.ok(readdirSync(join(app, "node_modules", "imani", "dist", "types")).includes("index.d.ts"));
-    // TypeScript users get types for imani/login from the installed package.
-    assert.ok(readdirSync(join(app, "node_modules", "imani", "dist", "types", "login")).includes("index.d.ts"));
+    assert.ok(readdirSync(join(app, "node_modules", "@sireadell", "imani", "dist", "types")).includes("index.d.ts"));
+    // TypeScript users get types for @sireadell/imani/login from the installed package.
+    assert.ok(readdirSync(join(app, "node_modules", "@sireadell", "imani", "dist", "types", "login")).includes("index.d.ts"));
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

@@ -2,7 +2,7 @@
 // site you delete this file: the wallet pays the site address for real, and your server reads
 // the real transaction with the site's viewing key (see the imani login docs).
 import { randomBytes } from "node:crypto";
-import { checkSinglePayee } from "imani/login";
+import { checkSinglePayee } from "@sireadell/imani/login";
 import party from "./sim-party.json";
 
 export const SIM_PREFIX = Buffer.from("imani-simulated-tx:", "utf8").toString("hex");

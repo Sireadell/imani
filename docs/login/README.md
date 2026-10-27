@@ -2,7 +2,7 @@
 
 The full design, checks and limits are in [LOGIN_SPEC.md](../../LOGIN_SPEC.md). Servers contacted: none. In this version your server passes in the raw transaction; fetching it from a light server comes later.
 
-The package is not on npm yet. Until it is, import from `src/login/index.ts` in this repo where the examples say `"imani/login"`.
+The package is not on npm yet. Until it is, import from `src/login/index.ts` in this repo where the examples say `"@sireadell/imani/login"`.
 
 You need: a shielded or unified address used only for logins, and its read-only unified full viewing key (`uview1...`). Never give the kit a seed phrase or spending key; it refuses them.
 
@@ -11,7 +11,7 @@ You need: a shielded or unified address used only for logins, and its read-only 
 Express is not a dependency of imani; use the one your app already has.
 
 ```ts
-import { LoginKit, SignedSessions, zcashLogin, requireZcashLogin } from "imani/login";
+import { LoginKit, SignedSessions, zcashLogin, requireZcashLogin } from "@sireadell/imani/login";
 const kit = new LoginKit({ siteId: "shop.example", siteAddress: process.env.LOGIN_ADDRESS!, viewingKey: process.env.LOGIN_UFVK! });
 app.use(express.json({ limit: "1mb" }));
 app.use(zcashLogin({ kit, sessions: new SignedSessions(process.env.SESSION_SECRET!) }));
@@ -27,7 +27,7 @@ Auth.js is not a dependency of imani either. The kit returns the settings for Au
 ```ts
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { LoginKit, zcashCredentials } from "imani/login";
+import { LoginKit, zcashCredentials } from "@sireadell/imani/login";
 const kit = new LoginKit({ siteId: "shop.example", siteAddress: process.env.LOGIN_ADDRESS!, viewingKey: process.env.LOGIN_UFVK! });
 export const { handlers, auth, signIn } = NextAuth({ providers: [Credentials(zcashCredentials(kit))] });
 // app/api/zcash-login/challenge/route.ts:  export const GET = zcashChallengeRoute(kit);
@@ -38,7 +38,7 @@ Sign in with `signIn("zcash", { txHex, proof })`. For a reserved code, also expo
 ## On the user's side
 
 ```ts
-import { AccountKey, buildLoginMemo, buildLoginProof, buildPaymentUri, exportAccountKey, importAccountKey, EXPORT_WARNING } from "imani/login";
+import { AccountKey, buildLoginMemo, buildLoginProof, buildPaymentUri, exportAccountKey, importAccountKey, EXPORT_WARNING } from "@sireadell/imani/login";
 const key = AccountKey.generate();                    // once; keep exportAccountKey(key) as the backup, show EXPORT_WARNING
 // Ask for a code reserved for this key, so nobody else can use it up (siteId is your site's id):
 const accountId = key.siteKey(siteId).publicKey;
