@@ -9,6 +9,7 @@
     "bin",
     "dist",
     "vendor/decoder",
+    "vendor/disclose",
     "examples",
     "schema",
     "!examples/nextjs-app",
