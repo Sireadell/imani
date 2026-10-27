@@ -82,7 +82,7 @@ The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs
 
 | What | Count | Where it comes from |
 |---|---|---|
-| Tests | <!--count:total-->1608<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1605<!--/count--> pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
+| Tests | <!--count:total-->1610<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1607<!--/count--> pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
 | Tests that change one fact at a time and must never pass | <!--count:test:tamper-->1127<!--/count--> | `npm run test:tamper` |
 | Example rounds | 10 that pass: 1 real, 9 made up offline with throwaway keys | `examples/` |
 | Broken copies | 42 in 9 folders, each named for what the seller changed, and all 42 fail | `examples/*broken*/manifest.json` |
