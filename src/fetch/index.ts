@@ -17,7 +17,7 @@ import {
   decodeLightdInfo,
 } from "./grpc.ts";
 import { EXPLORER_PREFIX, explorerGetBlock, explorerGetTransaction } from "./explorer.ts";
-import { isZebra, zebraBase, zebraChain, zebraGetBlock, zebraGetTransaction } from "./zebra.ts";
+import { isZebra, zebraBase, zebraChain, zebraGetBlock, zebraGetTransaction, zebraTip } from "./zebra.ts";
 import { checkTxBytes, TXID_RE } from "./verify.ts";
 
 import { DEFAULT_SERVERS, type Network } from "./servers.ts";
@@ -274,4 +274,58 @@ export async function fetchTransactions(opts: FetchOptions): Promise<FetchResult
     return { txid: t, hex: list[0].hex, height, server: list[0].server, confirmedBy: list.map((c) => c.server) };
   });
   return { transactions, serversContacted: contacted, problems };
+}
+
+export interface ChainTipOptions {
+  network: Network;
+  servers?: string[];
+  /** Ask two servers run by different operators when two are on the list. Default true. */
+  crossCheck?: boolean;
+  timeoutMs?: number;
+  proxy?: string;
+  zebraAuth?: string;
+}
+
+/**
+ * The newest block height the servers have. Explorers are skipped (they are only ever a second
+ * opinion). With cross-checking on, up to two operators are asked and the lower height is used,
+ * so every block up to it is on both. One answer is enough: the tip only decides how far to
+ * read, and every block read is still checked as usual, so a wrong tip can make a read shorter
+ * or make it fail, never make it pass. Throws FetchError when no server answers.
+ */
+export async function fetchChainTip(opts: ChainTipOptions): Promise<{ height: number; serversContacted: string[] }> {
+  if (opts.network !== "main" && opts.network !== "test") throw new Error('network must be "main" or "test"');
+  const servers = validateServers(opts.servers ?? DEFAULT_SERVERS[opts.network]).filter((s) => !isExplorer(s));
+  const want = opts.crossCheck === false ? 1 : 2;
+  const call = { timeoutMs: opts.timeoutMs ?? 15000, proxy: opts.proxy };
+  const contacted: string[] = [];
+  const problems: { server: string; error: string }[] = [];
+  const heights: number[] = [];
+  const ops = new Set<string>();
+  for (const server of servers) {
+    if (heights.length >= want) break;
+    if (ops.has(operatorOf(server))) continue;
+    if (!contacted.includes(server)) contacted.push(server);
+    try {
+      let chain: string;
+      let height: number;
+      if (isZebra(server)) ({ chain, height } = await zebraTip(server, { ...call, auth: opts.zebraAuth }));
+      else {
+        const info = decodeLightdInfo(await unary(server, "GetLightdInfo", Buffer.alloc(0), call));
+        chain = info.chainName;
+        height = info.blockHeight;
+      }
+      if (chain !== opts.network) throw new Error(`serves the "${chain}" network, not "${opts.network}"`);
+      if (!Number.isSafeInteger(height) || height < 1) throw new Error("reported no block height");
+      heights.push(height);
+      ops.add(operatorOf(server));
+    } catch (e) {
+      problems.push({ server, error: (e as Error).message });
+    }
+  }
+  if (heights.length === 0) {
+    const why = problems.slice(-2).map((p) => `${p.server}: ${p.error}`);
+    throw new FetchError(`could not get the newest block height from any server${why.length ? ` (${why.join("; ")})` : ""}`, contacted, problems);
+  }
+  return { height: Math.min(...heights), serversContacted: contacted };
 }
