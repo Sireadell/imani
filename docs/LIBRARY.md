@@ -4,6 +4,22 @@ Everything the command line and the checker page do is also a plain function you
 
 imani is not on the npm registry yet. To use it in another project, run `npm pack` in this folder, then `npm install <path to the .tgz file>` in yours. It needs Node 22.18 or newer and installs with no other packages. The package is about 6 MB because it carries every example round and broken copy, so the commands in the README and the examples below run straight from the installed folder. For example, `npx imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json` works right after install, and the honest rounds and broken copies the conformance kit grades against travel with it, so the proof ships inside the package.
 
+## Use it in a web page
+
+`imani/browser` is one JavaScript file (about 1.4 MB) with the payment reader built in. It makes no network calls, so a page can check a round on the visitor's own computer. Fetching the two files is up to your page.
+
+```js
+import { initReader, runPage } from "imani/browser";
+
+await initReader(); // starts the built-in reader once
+const disclosure = await (await fetch("/lot-public.json")).json();
+const result = await (await fetch("/result.json")).json();
+const out = runPage({ disclosure, result });
+console.log(out.ok ? out.verdict.result : out.message); // "PASS", "FAIL", or a plain reason it could not run
+```
+
+`runPage` also takes `chain` (a saved block file) to run the every-block scan, and `discreet: true` to hide amounts and memos. A spending key or seed phrase is refused with a plain message, and nothing from the input is echoed back. The file is the same code the checker page runs: [https://imani-check.vercel.app](https://imani-check.vercel.app).
+
 ## Check a round in 10 lines
 
 ```js

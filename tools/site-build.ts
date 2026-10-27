@@ -255,6 +255,12 @@ export async function buildEngine(outfile: string): Promise<void> {
   await build({ ...common, entryPoints: [p("src/site/engine.ts")], outfile, format: "esm" });
 }
 
+/** The package's browser build (dist/browser.js): the page logic as one module with the reader embedded. */
+export async function buildBrowserBundle(outfile: string): Promise<void> {
+  verifyVendor();
+  await build({ ...common, entryPoints: [p("src/browser.ts")], outfile, format: "esm" });
+}
+
 /** Build the whole static site into outDir. Returns the files written. */
 export async function buildSite(outDir = p("site")): Promise<string[]> {
   const sums = verifyVendor();

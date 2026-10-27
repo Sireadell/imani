@@ -18,6 +18,14 @@ const verdict = checkLot(disclosure, result); // the seller's two published file
 console.log(verdict.result, verdict.failed);   // PASS [], or FAIL [ 'refunds-paid' ] for a short refund
 ```
 
+In a web page, the same check runs from one file with the payment reader built in (no server, no network):
+
+```js
+import { initReader, runPage } from "imani/browser";
+await initReader();
+const out = runPage({ disclosure, result }); // out.verdict.result is "PASS" or "FAIL"
+```
+
 Every function and type, what it takes, and whether it uses the network: [docs/LIBRARY.md](docs/LIBRARY.md). To run a worked example: `npm run build`, then `node examples/library/check-a-round.mjs`.
 
 The job it does today is checking sealed-bid auctions on Zcash. When bidding closes, the seller publishes a read-only viewing key for that one lot: it can show the lot's private payments but can never spend them. Imani reads the bids and refunds with that key and public chain data, works out the winners, the price and every refund again, and compares them with the seller's published result. You get PASS or FAIL, with the failed check named. It's built for bidders who want to know their bid was counted and their refund was right, and for sellers who want to show a clean round. Since the key and the blocks are public, anyone else can run it too.
