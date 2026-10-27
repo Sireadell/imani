@@ -6,6 +6,7 @@ import { sha256Hex } from "./crypto-shim.ts";
 import type { Check } from "../check.ts";
 import { lookupBid } from "../mine.ts";
 import { BidLinkError, makeBidLink, qrSvg, zecToZat } from "../bidlink.ts";
+import { mountCheatLab } from "./cheat-lab.ts";
 import { parseShareTarget, shareLink, type ShareTarget } from "./share.ts";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -532,6 +533,16 @@ async function start(): Promise<void> {
   }
   ready = true;
   homeStart();
+  const labRoot = document.getElementById("cheat-lab");
+  if (labRoot) {
+    mountCheatLab(labRoot, {
+      runExample: (id) => {
+        const res = outcomeFor({ kind: "example", id }, false);
+        if (!res.outcome.ok) throw new Error(res.outcome.message);
+        return res.outcome.verdict;
+      },
+    });
+  }
   // A link from the checked rounds list: #round=<example id> or #external=<published round id>.
   const m = parseShareTarget(location.search, location.hash);
   if (m) {

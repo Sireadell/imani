@@ -59,3 +59,17 @@ test("scan mode with a chain file passes on the honest round", () => {
   const r = spawnSync(process.execPath, ["--disable-warning=ExperimentalWarning", "bin/imani.js", "check", "--disclosure", `${d}/disclosure.json`, "--result", `${d}/result.json`, "--scan", "--chain", `${d}/chain.json`], { encoding: "utf8" });
   assert.equal(r.status, 0, r.stdout);
 });
+
+test("action.yml installs the packages before it runs the checker", () => {
+  const install = action.indexOf("npm ci");
+  const run = action.indexOf("bin/imani.js");
+  assert.ok(install > 0, "action.yml has no npm ci step");
+  assert.ok(install < run, "npm ci must come before the checker runs");
+  assert.match(action, /working-directory:\s*\${{ github\.action_path }}/);
+});
+
+test("the self-test workflow runs only on main pushes and pull requests into main", () => {
+  const wf = read(".github/workflows/action-selftest.yml");
+  assert.match(wf, /push:\s*\n\s+branches:\s*\[main\]/);
+  assert.match(wf, /pull_request:\s*\n\s+branches:\s*\[main\]/);
+});
