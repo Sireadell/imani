@@ -16,4 +16,4 @@ imani bid-link --lot LOT-01 --address <lot address> --amount-zat 3000000 --refun
 
 How it is tested: `test/bidlink.test.ts` reads the link back with a small parser written from the ZIP 321 grammar, and scans the QR code with an independent reader (jsQR) to check it returns exactly the link.
 
-What is not tested: paying from a real wallet. A wallet may show the memo differently or ignore a field it does not support, so check the amount, address and memo your wallet shows before you send.
+Tested by hand once: a mainnet QR scanned with the ZODL wallet, which read it. A testnet link did nothing in that wallet. What is not tested: other wallets, and a paid bid checked end to end. A wallet may show the memo differently or ignore a field it does not support, so check the amount, address and memo your wallet shows before you send.
