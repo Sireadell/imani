@@ -79,3 +79,45 @@ test("api/check.mjs in the repo is the current build and vercel.json ships the r
   assert.ok(v.functions["api/check.mjs"].includeFiles.includes("examples/testnet-01"));
   for (const r of ROUNDS) assert.ok(v.functions["api/check.mjs"].includeFiles.includes(`examples/${r}`), r);
 });
+
+test("format=svg gives a badge that reads PASS with the same counts, and the JSON answer is unchanged", async () => {
+  const json = await (await fetch(`${base}/api/check?round=testnet-01`)).text();
+  const res = await fetch(`${base}/api/check?round=testnet-01&format=svg`);
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get("content-type") ?? "", /^image\/svg\+xml/);
+  const svg = await res.text();
+  const a = JSON.parse(json);
+  assert.match(svg, /^<svg /);
+  assert.ok(svg.includes(`PASS ${a.checks.passed}/${a.checks.total}`));
+  assert.ok(svg.includes("Imani verified fair"));
+  assert.doesNotMatch(svg, /uview|ufvk|<script|href=|http:\/\/(?!www\.w3\.org\/2000\/svg)/i);
+  assert.equal(await (await fetch(`${base}/api/check?round=testnet-01`)).text(), json, "JSON unchanged");
+});
+
+test("the badge refuses an unknown round, an unknown format and extra parameters, and never draws a badge for them", async () => {
+  for (const [q, code] of [["round=nope&format=svg", 404], ["round=testnet-01&format=png", 400], ["format=svg", 400], ["round=testnet-01&format=svg&x=1", 400]] as const) {
+    const r = await fetch(`${base}/api/check?${q}`);
+    assert.equal(r.status, code, q);
+    assert.doesNotMatch(r.headers.get("content-type") ?? "", /svg/, q);
+  }
+});
+
+test("a round that fails gets a red badge that says FAIL", async () => {
+  const dir = join(tmp, "badge-fail");
+  cpSync(new URL("examples/testnet-01", root), join(dir, "testnet-01"), { recursive: true });
+  const f = join(dir, "testnet-01", "result.json");
+  const r = JSON.parse(readFileSync(f, "utf8"));
+  r.clearingPriceZat += 1;
+  writeFileSync(f, JSON.stringify(r));
+  const s = createServer(checkApi(dir));
+  await new Promise<void>((ok) => s.listen(0, "127.0.0.1", ok));
+  try {
+    const url = `http://127.0.0.1:${(s.address() as AddressInfo).port}/api/check?round=testnet-01&format=svg`;
+    const svg = await (await fetch(url)).text();
+    assert.match(svg, /FAIL \d+ of \d+/);
+    assert.match(svg, /#a32020/);
+    assert.doesNotMatch(svg, /PASS/);
+  } finally {
+    s.close();
+  }
+});
