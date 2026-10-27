@@ -18,6 +18,24 @@ Run the first row yourself: `npx tsx --test test/scale.test.ts` (it prints the t
 - The generated round proves that the seller-file checks and the totals stay fast and exact at that size. It does not prove anything about a real auction's payments.
 - Imani has not been run on the payments of a real auction this size. The round is bigger than the 16,971 bids reported for a big public auction, but that is a comparison of sizes only: nothing here was checked against that auction's own data.
 
+## A mainnet-sized check
+
+What a small real-money round and a day-long auction cover, using only saved timings. Sources: the "Speed and cost" table in [SPEC.md](../SPEC.md) (500 real mainnet blocks, measured 2026-10-07) and the mainnet round plan in the internal runbook `MAINNET_RUNBOOK_1027.md` (5 mainnet blocks in 13 seconds, measured 2026-10-27).
+
+| What | Blocks | Bids | Check time | Where the number comes from |
+|---|---|---|---|---|
+| Small mainnet round (lot IMANI-M1): opens, closes 20 blocks later, refunds due 40 blocks after that | 60 | 3 bids, 3 refunds | About 3 minutes per download, at about 2.6 seconds per block. This is the per-block rate multiplied out, not a run of 60 blocks | `MAINNET_RUNBOOK_1027.md` (5 blocks in 13 seconds) |
+| Measured real-block stretch | 500 | Not applicable (a stranger key, nothing decrypted) | 1,366 seconds to download (about 2.7 seconds per block), 27 seconds to read 2,893 transactions | SPEC.md, "Speed and cost" |
+| Day-long mainnet auction | About 1,150 (one block every 75 seconds) | Not measured | About 52 minutes and about 65 MB at the 500-block rate | SPEC.md, "Speed and cost" |
+| The basic level at 19,000 bid payments (generated) | Not applicable | 19,000 | About 50 milliseconds | The table above, `test/scale.test.ts` |
+
+## What is still unmeasured
+
+- The small mainnet round has not been run end to end, so there is no measured check time for it. The 3 minute figure is the 5-block rate multiplied out.
+- No check has been timed on the bids of a real mainnet auction with thousands of bids. Bids per day-long auction: not measured.
+- The 5-block timing is from one short run on one day. The 500-block run is the longer measurement.
+- Download time depends on how busy the public servers are. Other times and other machines: not measured.
+
 ## Published totals
 
 Big auctions are reported as a few headline numbers. A result file can carry `totals`: the number of payments, the amount received, kept and refunded. The check `published-totals` adds them up (received must equal kept plus refunded), compares kept with what the winners pay and refunded with the refund list, and checks the payment count is not lower than the bids and late payments the seller lists. The check `published-totals-chain` compares all four figures with what the lot key reads from the chain. Example: `examples/totals-01` and four broken copies in `examples/totals-broken/`.

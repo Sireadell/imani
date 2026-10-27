@@ -46,6 +46,19 @@ test("testnet-01 answers PASS with its counts, range, source and time, in under 
   assert.ok(!JSON.stringify(j).includes("uview"), "no viewing key in the answer");
 });
 
+test("mainnet-01 answers PASS 23 of 23 on the real mainnet blocks and never shows the key", async () => {
+  const res = await fetch(`${base}/api/check?round=mainnet-01`);
+  assert.equal(res.status, 200);
+  const j = await res.json();
+  assert.equal(j.verdict, "PASS");
+  assert.equal(j.checks.passed, 23);
+  assert.equal(j.checks.total, 23);
+  assert.deepEqual(j.blockRange, { from: 3532593, to: 3532653, blocks: 61 });
+  assert.equal(j.network, "main");
+  assert.equal(j.lotId, "IMANI-M1");
+  assert.ok(!JSON.stringify(j).includes("uview"), "no viewing key in the answer");
+});
+
 test("an unknown round, a missing round and extra parameters are refused", async () => {
   assert.equal((await fetch(`${base}/api/check?round=nope`)).status, 404);
   assert.equal((await fetch(`${base}/api/check`)).status, 400);

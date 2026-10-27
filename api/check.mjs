@@ -1114,7 +1114,7 @@ function scanFromChain(d, chain, opts = {}) {
 }
 
 // src/relay/check-api.ts
-var ROUNDS = ["testnet-01"];
+var ROUNDS = ["testnet-01", "mainnet-01"];
 function examplesDir() {
   const here = dirname(fileURLToPath(import.meta.url));
   for (const up of ["..", "../.."]) {

@@ -8,7 +8,7 @@
     },
     "api/check.mjs": {
       "maxDuration": 10,
-      "includeFiles": "{vendor/decoder/**,examples/testnet-01/**}"
+      "includeFiles": "{vendor/decoder/**,examples/testnet-01/**,examples/mainnet-01/**}"
     }
   }
 }
