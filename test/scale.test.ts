@@ -1,4 +1,4 @@
-// Locked answers for a round the size of the year's largest Zcash auction (16,971 counted bids, 17,000
+// Locked answers for a round the size of a big public auction (16,971 counted bids, 17,000
 // payments in all). Written before the first run.
 //   - The numbers are GENERATED to that size with a fixed seed. They are not real payments, so only the
 //     basic level (no key, no chain) runs on them. Reading real transactions is measured separately.

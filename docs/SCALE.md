@@ -1,6 +1,6 @@
 # How big a round can it check?
 
-There was a 16,971-bid sealed auction on Zcash this year. This page says what Imani does at that size, what was measured, and what was not.
+A big public auction can draw thousands of bids. This page says what Imani does with a round of 17,000 bid payments, what was measured, and what was not.
 
 ## What was run
 
@@ -16,7 +16,7 @@ Run the first row yourself: `npx tsx --test test/scale.test.ts` (it prints the t
 
 - A 17,000-bid round of real encrypted payments was not built, so the key level was not run end to end at that size. What is measured is the cost per transaction.
 - The generated round proves that the seller-file checks and the totals stay fast and exact at that size. It does not prove anything about a real auction's payments.
-- The 16,971-bid sealed auction on Zcash this year is the size we aimed at. Imani has not been run on its data.
+- Imani has not been run on the payments of a real auction this size.
 
 ## Published totals
 
