@@ -6,6 +6,7 @@ import { sha256Hex } from "./crypto-shim.ts";
 import type { Check } from "../check.ts";
 import { lookupBid } from "../mine.ts";
 import { BidLinkError, makeBidLink, qrSvg, zecToZat } from "../bidlink.ts";
+import { parseShareTarget, shareLink, type ShareTarget } from "./share.ts";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -332,8 +333,26 @@ async function checkWithNotice(): Promise<void> {
   try { render(); } finally { doneChecking(); }
 }
 
+function showShareLink(target: ShareTarget): void {
+  const out = $("share-out");
+  const url = shareLink(location.href, target);
+  const input = el("input", "field") as HTMLInputElement;
+  input.readOnly = true;
+  input.value = url;
+  input.setAttribute("aria-label", "Link that re-runs this check");
+  input.addEventListener("focus", () => input.select());
+  const b = el("button", "btn", "Copy link");
+  b.type = "button";
+  b.addEventListener("click", () => {
+    input.select();
+    void navigator.clipboard?.writeText(url).then(() => { b.textContent = "Copied"; }, () => { b.textContent = "Press Ctrl+C to copy"; });
+  });
+  out.replaceChildren(el("p", "muted small", "Send this link to anyone. Opening it runs the same check in their browser, on their device."), input, b);
+}
+
 async function choose(id: string, scroll = true): Promise<void> {
   selection = { kind: "example", id };
+  showShareLink({ kind: "round", id });
   syncChips();
   if (scroll) $("results").scrollIntoView({ behavior: "smooth", block: "start" });
   await checkWithNotice();
@@ -441,15 +460,20 @@ async function start(): Promise<void> {
   }
   ready = true;
   // A link from the checked rounds list: #round=<example id> or #external=<published round id>.
-  const m = /^#(round|external)=(.+)$/.exec(location.hash);
+  const m = parseShareTarget(location.search, location.hash);
   if (m) {
-    const id = decodeURIComponent(m[2]);
-    if (m[1] === "round" && examples.some((e) => e.id === id)) {
+    const id = m.id;
+    if (m.kind === "round" && examples.some((e) => e.id === id)) {
       await choose(id);
       return;
     }
-    const x = m[1] === "external" ? externals.find((e) => e.id === id) : undefined;
-    if (x) renderExternal(parseJsonText(blobs[x.blob], x.title), x.title);
+    const x = m.kind === "external" ? externals.find((e) => e.id === id) : undefined;
+    if (x) {
+      renderExternal(parseJsonText(blobs[x.blob], x.title), x.title);
+      showShareLink({ kind: "external", id });
+    } else {
+      $("share-out").replaceChildren(el("p", "notice bad", `This link names a round the page does not know ("${id}"). Pick one of the rounds below instead.`));
+    }
   }
   await checkWithNotice();
 }

@@ -85,7 +85,7 @@ test("each re-check link opens a round the checker page knows", () => {
     const known = kind === "round" ? entries.some((e) => e.id === id) : externals.some((x) => x.id === id);
     assert.ok(known, href);
   }
-  assert.match(appTs, /\(round\|external\)/);
+  assert.match(readFileSync(new URL("../../src/site/share.ts", import.meta.url), "utf8"), /\(round\|external\)/);
 });
 
 test("the checker page links to the list", () => {
