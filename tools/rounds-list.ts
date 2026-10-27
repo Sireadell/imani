@@ -6,6 +6,7 @@ import { checkExternalRound } from "../src/external/published-round.ts";
 import { blocksInRange } from "../src/scan/chain.ts";
 import { DEFAULT_GRACE_BLOCKS, scanRange } from "../src/scan/scan.ts";
 import { exampleData } from "./site-build.ts";
+import { certificateFile } from "./certificate.ts";
 
 export type RoundKind = "real" | "honest" | "tampered" | "published";
 
@@ -105,7 +106,7 @@ export function roundsPage(rows: RoundRow[]): string {
     const trs = rs
       .map(
         (r) =>
-          `<tr><td>${esc(r.title)}<br><span class="muted small">${esc(r.id)}</span></td><td>${esc(r.network)}</td><td>${esc(r.blocks)}</td><td class="${r.result === "PASS" ? "pass" : "fail"}">${r.result}${r.result === "FAIL" ? ` (${esc(r.failing.join(", "))})` : ""}</td><td>${r.passed} of ${r.total}</td><td>${esc(r.checked)}</td><td><a href="${r.link}">Re-check it yourself</a></td></tr>`,
+          `<tr><td>${esc(r.title)}<br><span class="muted small">${esc(r.id)}</span></td><td>${esc(r.network)}</td><td>${esc(r.blocks)}</td><td class="${r.result === "PASS" ? "pass" : "fail"}">${r.result}${r.result === "FAIL" ? ` (${esc(r.failing.join(", "))})` : ""}</td><td>${r.passed} of ${r.total}</td><td>${esc(r.checked)}</td><td><a href="${r.link}">Re-check it yourself</a> <a href="${certificateFile(r.id)}">Certificate</a></td></tr>`,
       )
       .join("\n");
     return `<section><h2>${h}</h2><p class="muted">${note}</p><div class="tablewrap"><table><thead><tr><th>Round</th><th>Network</th><th>Blocks</th><th>Result</th><th>Checks passed</th><th>Checked</th><th></th></tr></thead><tbody>\n${trs}\n</tbody></table></div></section>`;
