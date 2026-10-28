@@ -18,6 +18,7 @@ import { runBidProof, runBidProofAsync } from "./bid-proof-cli.ts";
 import { bidMemoAddress } from "./files.ts";
 import { earlyRange, planLot, settle, settleRange, writeLotFiles, LOT_PRIVATE, LOT_PUBLIC } from "./seller-kit.ts";
 import { LinkingInputError, linkingFromLots, linkingText, lotRefunds } from "./privacy/linking.ts";
+import { exposureText, lotExposure } from "./privacy/exposure.ts";
 
 const USAGE = `Usage: imani check --disclosure <lot disclosure.json> --result <seller result.json> [options]
 
@@ -412,10 +413,12 @@ function runLinking(files: string[]): CliResult {
   const none = "\nServers contacted: none";
   if (files.length === 0 || files.some((f) => f.startsWith("--"))) return { code: 2, stdout: "", stderr: USAGE };
   try {
+    const exposure: ReturnType<typeof lotExposure>[] = [];
     const lots = files.map((f) => {
       const d = readJson(f, "disclosure") as any;
       if (!d || typeof d.lotId !== "string" || !Array.isArray(d.transactions)) throw new InputError(`Input error: ${basename(f)} is not a lot disclosure file.`);
       if (d.ufvk !== undefined) assertViewingKey(d.ufvk, d.network);
+      if (d.ufvk !== undefined) exposure.push(lotExposure(d));
       return lotRefunds(d);
     });
     // Two rounds may share a lot name. The same round given twice shares its payments.
@@ -423,7 +426,7 @@ function runLinking(files: string[]): CliResult {
     const twice = lots.find((_, i) => keys.indexOf(keys[i]) !== i);
     if (twice) return { code: 2, stdout: "", stderr: `Input error: lot ${twice.lotId} was given twice.${none}` };
     const rep = linkingFromLots(lots);
-    const text = linkingText(rep);
+    const text = linkingText(rep, exposure.length ? exposureText(exposure) : []);
     assertNoSecret(text, "the linking report");
     return { code: rep.linksOutside === 0 ? 0 : 1, stdout: text, stderr: "" };
   } catch (e) {

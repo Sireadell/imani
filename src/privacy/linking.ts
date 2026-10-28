@@ -78,7 +78,7 @@ export function linkingFromLots(lots: LotRefunds[]): LinkingReport {
   return { lots: out, acrossRounds, linksOutside };
 }
 
-export function linkingText(rep: LinkingReport): string {
+export function linkingText(rep: LinkingReport, extra: string[] = []): string {
   const short = (h: string) => `${h.slice(0, 8)}…`;
   const lines = ["How far a refund can be followed by anyone who has the lot key", "Servers contacted: none", ""];
   for (const l of rep.lots) {
@@ -97,6 +97,7 @@ export function linkingText(rep: LinkingReport): string {
     "What someone without the lot key sees: that shielded payments happened, in which blocks, and their fees. No amounts, no memos, no addresses.",
     "How bidders keep it this way: write a fresh address in each bid memo. Two addresses made from one wallet cannot be tied together without that wallet's own key.",
     "",
+    ...extra,
     rep.linksOutside === 0
       ? "RESULT: NO LINKS OUTSIDE THE ROUND"
       : `RESULT: ${rep.linksOutside} ${rep.linksOutside === 1 ? "LINK" : "LINKS"} ${rep.acrossRounds.length && !rep.lots.some((l) => l.reusedInRound.length) ? "BETWEEN ROUNDS" : "OUTSIDE A SINGLE BID"}`,
