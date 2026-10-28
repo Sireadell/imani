@@ -37,7 +37,7 @@ The printed report always ends with these limits.
 
 ## Works with `--fetch` from two servers
 
-`--fetch` uses the same download as the full checker: a light server and an explorer from different operators must return identical bytes for every transaction or the run stops. On the Zcash test network this works today (`testnet.zec.rocks` and the Cipherscan testnet explorer). A run from the lot's open height to the deadline plus 10 blocks reads those blocks only. Your key stays on your machine.
+`--fetch` uses the same download as the full checker: a light server and an explorer from different operators must return identical bytes for every transaction or the run stops. It works today on the Zcash test network (`testnet.zec.rocks` and the Cipherscan testnet explorer) and on mainnet (`zec.rocks` and `zec-node.cakewallet.com`). A run from the lot's open height to the deadline plus 10 blocks reads those blocks only. Your key stays on your machine.
 
 ## Tested
 
@@ -46,6 +46,8 @@ The printed report always ends with these limits.
 ## Real round
 
 `examples/testnet-01` is a real round on the Zcash test network (lot DRY-01). The public part, that a bid is on the chain inside the window, was run on the real blocks both offline and with `--fetch`. The refund line needs the bidder wallet's own viewing key, which lives in the wallet that paid the 3 bids and is not published.
+
+`examples/mainnet-01` is a real round on Zcash mainnet (lot IMANI-M1). On 28 Oct 2026 we ran `imani bidder-check` for all three of its bids, each with that bidder wallet's own read-only viewing key, from zecd 0.9.0-rc1. All three ended `RESULT: PASS`, both offline from `examples/mainnet-01/chain.json` and live with `--fetch` from `zec.rocks` and `zec-node.cakewallet.com` (71 blocks, both servers agreeing). The amounts were proven by each bidder's own key, and the seller's result matched. The 0.006 ZEC bid got 300,000 zat back and paid 300,000, the 0.004 bid got 100,000 back and paid 300,000 (both fit a win), and the 0.003 bid got its full 300,000 back (fits a loss). As expected, the clearing price was not provable from one bidder's key. Limits: all three wallets were ours, not outside users, all ran the same wallet software, and this is one lot and one set of bids.
 
 ## README lines to add (for the page owner)
 
