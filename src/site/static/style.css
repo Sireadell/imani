@@ -156,6 +156,14 @@ table.who th[scope="row"] { min-width: 8rem; }
 .sq li::before { content: "\25A0  "; color: #4a4f58; font-size: 10px; }
 .hero .servers { background: transparent; color: #aab0ba; padding: 0; margin: 12px 0 4px; }
 .more-line { margin: 4px 0 0; }
+#mainnet-round { margin-bottom: 16px; }
+#mainnet-round h2 { margin: 14px 0 8px; }
+#mainnet-round a { color: #f5a524; font-weight: 600; }
+#mainnet-round code { background: #0e1013; color: #d6d9de; }
+#mainnet-round pre { margin: 8px 0; padding: 10px 12px; background: #0e1013; border: 1px solid #2c3037; border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
+#mainnet-round pre code { padding: 0; }
+.mainnet-links { margin: 8px 0; padding-left: 20px; }
+.mainnet-links li { padding: 3px 0; }
 @media (max-width: 700px) {
   .homegrid { grid-template-columns: 1fr; }
   .hero h1 { font-size: 32px; }

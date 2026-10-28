@@ -50,6 +50,19 @@
         <ul class="sq"><li>Who the bidders are</li><li>What else is in their wallets</li><li>Any payment outside this one lot</li><li>Every amount, from anyone without this lot's key</li></ul>
       </div>
     </div>
+    <section id="mainnet-round" class="hcard" aria-labelledby="mainnet-h">
+      <span class="tag">REAL ZEC</span>
+      <h2 id="mainnet-h">A small round on Zcash mainnet</h2>
+      <p>The round above uses test coins. There is also a small round paid in real ZEC on Zcash mainnet: lot IMANI-M1, 3 bids and 3 refunds, with the bids adding up to 0.013 ZEC. The check reads every block from 3,532,593 to 3,532,653 (482 transactions) and passes 23 of 23 checks.</p>
+      <p class="small">All 3 bids came from one wallet we ran, and we ran the lot too. So this round shows the checker working on real chain data. It does not show independent bidders. Its saved blocks are 3.8 MB, too large to put in this page, so the live answer below is worked out on our server from those saved blocks.</p>
+      <ul class="mainnet-links">
+        <li><a href="/api/check?round=mainnet-01">Live answer for this round</a></li>
+        <li><a href="https://github.com/Sireadell/imani/tree/main/examples/mainnet-01" target="_blank" rel="noopener noreferrer">The round's files on GitHub</a></li>
+      </ul>
+      <p class="small">To check it yourself, run this in a copy of the Imani repository. It should print <code>RESULT: PASS (23 of 23 checks passed)</code>.</p>
+      <pre><code>node bin/imani.js check --disclosure examples/mainnet-01/disclosure.json --result examples/mainnet-01/result.json --scan --chain examples/mainnet-01/chain.json</code></pre>
+      <p class="small">To download the same blocks again from two public mainnet servers instead of using the saved copy, put <code>--fetch</code> in place of <code>--chain examples/mainnet-01/chain.json</code>.</p>
+    </section>
     <div class="homegrid">
 <section id="cheat-lab" class="hcard">
   <h2>Cheat lab</h2>
