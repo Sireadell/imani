@@ -1,16 +1,43 @@
-:root { --ink: #14161a; --muted: #5a6068; --pass: #1a6b3a; --fail: #a32020; --line: #cfd3d8; }
+/* The printable certificate. On screen it matches the result page: black, mono, dotted lines. On paper it is black on white. */
+:root { --ink: #f5f5f5; --soft: #d3d3d3; --muted: #a3a3a3; --pass: #f5f5f5; --fail: #ff6b6b; --line: #2f2f2f; --dot: #444; --bg: #000; --card: #050505; --mono: "Source Code Pro", ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
 * { box-sizing: border-box; }
-body { margin: 0; font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); background: #fff; }
-.sheet { max-width: 720px; margin: 0 auto; padding: 32px 16px; }
-h1 { font-size: 28px; margin: 0 0 8px; }
-h2 { font-size: 18px; margin: 28px 0 8px; }
-.lead { color: var(--muted); margin: 0 0 20px; }
-table { width: 100%; border-collapse: collapse; }
-th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
-th { width: 38%; font-weight: 600; }
+html { background: var(--bg); }
+body { margin: 0; font: 15px/1.6 var(--mono); color: var(--soft); background-color: var(--bg); background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1.2px, transparent 1.4px); background-size: 14px 14px; }
+.sheet { max-width: 700px; margin: 0 auto; padding: 46px 20px 32px; }
+a { color: var(--ink); }
+h1 { font-size: 32px; font-weight: 600; letter-spacing: -1px; line-height: 1.15; margin: 0 0 14px; color: var(--ink); }
+h2 { font-size: 12px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); margin: 34px 0 10px; padding-top: 18px; border-top: 1px solid var(--line); }
+.lead { color: var(--soft); margin: 0 0 20px; }
+table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid #fff; border-radius: 4px; padding: 14px 24px; display: block; }
+tbody { display: block; }
+tr { display: flex; align-items: baseline; gap: 8px; padding: 6px 0; }
+th, td { text-align: left; padding: 0; border: 0; vertical-align: top; overflow-wrap: anywhere; }
+th { display: flex; flex: 1; align-items: baseline; gap: 8px; width: auto; font-weight: 400; color: var(--soft); }
+th::after { content: ""; flex: 1; border-bottom: 1px dotted var(--dot); }
+td { text-align: right; color: var(--ink); max-width: 65%; }
 .pass { color: var(--pass); font-weight: 700; }
 .fail { color: var(--fail); font-weight: 700; }
-code { font: 13px/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace; overflow-wrap: anywhere; }
+code { font: 13px/1.4 var(--mono); overflow-wrap: anywhere; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 1px 4px; color: var(--soft); }
 .foot { color: var(--muted); font-size: 14px; margin-top: 28px; }
+@media (max-width: 560px) { .sheet { padding: 22px 16px; } h1 { font-size: 24px; } table { padding: 10px 16px; } }
 @page { size: A4; margin: 16mm; }
-@media print { .noprint { display: none; } .sheet { padding: 0; max-width: none; } body { font-size: 12pt; } }
+@media print {
+  .noprint { display: none; }
+  html, body { background: #fff; background-image: none; color: #14161a; }
+  .sheet { padding: 0; max-width: none; }
+  body { font-size: 12pt; }
+  h1, th, td, a, code { color: #14161a; }
+  .lead, .foot, h2 { color: #5a6068; }
+  table { background: #fff; border-color: #14161a; }
+  .pass { color: #1a6b3a; }
+  .fail { color: #a32020; }
+  th::after { border-bottom-color: #8a8f96; }
+  code { background: #fff; border-color: #cfd3d8; }
+}
+
+.stamp { display: flex; justify-content: space-between; align-items: flex-end; margin: 24px 0; padding-top: 18px; border-top: 1px solid var(--line, #2f2f2f); }
+.stamp .k { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+.stamp .big { font-size: 40px; font-weight: 700; letter-spacing: -2px; line-height: 1.1; }
+.stamp.fail .big { color: #ff6b6b; }
+.stamp .count { text-align: right; }
+.stamp .n { font-size: 20px; font-weight: 600; }

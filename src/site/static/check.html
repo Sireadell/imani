@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src data:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src data:; font-src data:; connect-src 'self'; form-action 'none'; base-uri 'none'">
 <meta name="description" content="Check any sealed-bid auction on Zcash with its viewing key and a block range. The key stays in your browser.">
 <title>Imani referee</title>
 <link rel="icon" href="data:,">
@@ -13,6 +13,7 @@
 <body>
 <header class="top">
   <div class="wrap">
+    <a class="logo" href="index.html"><span class="dot"></span>Imani</a>
     <h1>Imani referee</h1>
     <p class="lead">Paste the viewing key of any sealed-bid auction on Zcash, and the blocks it ran in. In under a minute this page reads those blocks, counts the bids, finds the winners and the price, and checks that every refund was paid exactly as the rules say. It works on rounds Imani did not run.</p>
     <p class="servers" id="what-is-sent"><strong>Nothing is sent until you say yes.</strong> Before any request, the page tells you which servers it would contact and waits for your press. Then it sends only requests for blocks, one per block, saying the network (main or test) and the block number. <strong>Your key is never sent anywhere.</strong> It is read in this tab and not stored. If you would rather send nothing at all, check from a saved block file instead.</p>
