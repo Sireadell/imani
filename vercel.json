@@ -1,4 +1,5 @@
 {
+  "git": { "deploymentEnabled": { "main": true, "site-home": false, "site-result": false } },
   "buildCommand": "npm run site:build",
   "outputDirectory": "site",
   "functions": {
@@ -12,3 +13,4 @@
     }
   }
 }
+
