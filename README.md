@@ -115,7 +115,7 @@ Not supported: RFQ or quote-request trading, descending (Dutch) or open ascendin
 
 | What | Count | Where it comes from |
 |---|---|---|
-| Tests | <!--count:total-->1619<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1616<!--/count--> pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
+| Tests | <!--count:total-->1637<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1634<!--/count--> pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
 | Tests that change one fact at a time and must never pass | <!--count:test:tamper-->1127<!--/count--> | `npm run test:tamper` |
 | Example rounds | 14 that pass: 2 real (`testnet-01` and `mainnet-01`), 12 made up offline with throwaway keys | `examples/` |
 | Broken copies | 52 in 12 folders, each named for what the seller changed, and all 52 fail | `examples/*broken*/manifest.json` |

@@ -9,19 +9,19 @@ npm ci
 npm run test:all
 ```
 
-<!--count:total-->1619<!--/count--> tests in <!--count:groups-->9<!--/count--> groups. On a normal run <!--count:pass-->1616<!--/count--> pass and <!--count:skipped-->3<!--/count--> are skipped: the two live tests below, which read from public servers only when you ask. Expect about nine minutes on a laptop. GitHub runs the same suite on every push, on Linux, and on Windows and macOS for main and pull requests to main (`.github/workflows/ci.yml`), after a type check and both leak scans.
+<!--count:total-->1637<!--/count--> tests in <!--count:groups-->9<!--/count--> groups. On a normal run <!--count:pass-->1634<!--/count--> pass and <!--count:skipped-->3<!--/count--> are skipped: the two live tests below, which read from public servers only when you ask. Expect about nine minutes on a laptop. GitHub runs the same suite on every push, on Linux, and on Windows and macOS for main and pull requests to main (`.github/workflows/ci.yml`), after a type check and both leak scans.
 
 <!-- test-groups:start -->
 | Command | What it covers | Tests | Skipped |
 |---|---|---|---|
-| `npm run test` | The checker: reading payments with a viewing key, the auction rules, each check level, the bidder's own check, refusing spending keys, the packed package, the leak scanner | 231 | 0 |
+| `npm run test` | The checker: reading payments with a viewing key, the auction rules, each check level, the bidder's own check, refusing spending keys, the packed package, the leak scanner | 240 | 0 |
 | `npm run test:login` | Sign-in with a private wallet: one-time codes, expiry, replays, copied links, wrong sites, the receipt, a real test-network payment | 76 | 0 |
 | `npm run test:fetch` | Downloading blocks from two public servers and checking they agree | 35 | 2 (live, needs `LIVE=1`) |
 | `npm run test:demo` | The auction shop demo, from sign-in to the checked result | 11 | 0 |
 | `npm run test:scan` | The scan that reads every block of an auction to find bids the seller left out | 32 | 1 (live, needs `LIVE=1`) |
 | `npm run test:site` | The browser page and the page that checks any round: same answers as the command line, no network call until the reader says yes, and a saved-file check with none | 80 | 0 |
 | `npm run test:tamper` | Change one fact at a time in every example round; none of the changed copies may pass | 1127 | 0 |
-| `npm run test:external` | Rounds another auction project published, read from their own files | 16 | 0 |
+| `npm run test:external` | Rounds another auction project published, read from their own files | 25 | 0 |
 | `npm run test:privacy` | Refund linking, the who-learns-what table, keys never printed or saved | 11 | 0 |
 <!-- test-groups:end -->
 
