@@ -86,14 +86,15 @@ The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs
 
 ## How Imani differs from auction platforms
 
-Other Zecathon entries run auctions (custody, escrow, settlement). Imani does not run anything: it checks any round that publishes the two files in [docs/FORMAT.md](docs/FORMAT.md). A platform can use it as its audit step, and a bidder can run it without trusting the platform.
+Imani is not an auction. It is a tool that checks auctions, so it belongs in the Core & Tooling track. It never holds funds, bids or a spending key.
 
-| | Auction platform | Imani |
-|---|---|---|
-| Holds bids or runs settlement | Yes | No, never holds funds or a spending key |
-| Needs trust in the seller's published result | Often | No, it recomputes it from chain data |
-| Finds a bid the seller left out | Rarely | Yes, by scanning every block (`scan-hidden-bids`) |
-| Checks another project's files | No | Yes, any round in the published format; 66-round conformance kit |
+Auction platforms, which hold bids, run escrow and pay out, are a different kind of project. They are the ones who could use Imani as their audit step. A bidder can also run it on their own, without trusting the platform.
+
+Imani does not need every platform to adopt it today. It checks any round that publishes the two files in [docs/FORMAT.md](docs/FORMAT.md). The aim is a checker that is solid, easy to run and useful on its own.
+
+One outside project so far: we re-read a real test-network lot from [Blind Bazaar](https://github.com/Don-Vicks/blind-bazaar) and got PASS, 6 of 6, with refunds not covered ([details](examples/external-lots/blind-bazaar-testnet-ejp8jz0s/README.md)). Imani is not affiliated with, endorsed by or connected to Blind Bazaar or its authors. We only used the viewing key, reveals and result they published themselves (MIT-licensed, credited in [THIRD_PARTY.md](THIRD_PARTY.md)). This is not a review or audit of their project.
+
+That is the limit today: only this one outside project has been re-read. Projects that hide bids with threshold encryption or zero-knowledge proofs would each need their own reader (see [Next steps](#next-steps)).
 
 ## Auction formats Imani can verify
 
