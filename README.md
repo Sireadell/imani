@@ -82,7 +82,7 @@ The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs
 
 | What | Count | Where it comes from |
 |---|---|---|
-| Tests | <!--count:total-->1641<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1638<!--/count--> pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
+| Tests | <!--count:total-->1650<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1644<!--/count--> pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
 | Tests that change one fact at a time and must never pass | <!--count:test:tamper-->1127<!--/count--> | `npm run test:tamper` |
 | Example rounds | 10 that pass: 1 real, 9 made up offline with throwaway keys | `examples/` |
 | Broken copies | 42 in 9 folders, each named for what the seller changed, and all 42 fail | `examples/*broken*/manifest.json` |
@@ -136,7 +136,7 @@ Every check and every known limit is in [SPEC.md](SPEC.md).
 
 | Who | Caught, by check id | Not caught (stated limits) |
 |---|---|---|
-| Dishonest seller | Fake bid `bid-count`, wrong amount `bid-amounts`, short or missing refund `refunds-paid`, wrong price `winners-and-price`, late bid counted `no-late-bids`, hidden bid `scan-hidden-bids`, false block number `scan-heights`, refund to the wrong address `refund-receivers`, books that do not add up `refund-total` | A shill bid paid from the seller's own second wallet. Peeking at bids in a plain lot. A refund paid to themselves when no refund address is in the memo or the list |
+| Dishonest seller | Fake bid `bid-count`, wrong amount `bid-amounts`, short or missing refund `refunds-paid`, wrong price `winners-and-price`, late bid counted `no-late-bids`, hidden bid `scan-hidden-bids`, false block number `scan-heights`, refund to the wrong address `refund-receivers`, books that do not add up `refund-total` | A shill bid paid from the seller's own second wallet. Peeking at bids in a plain lot (in a sealed lot the lot key shows no price before the close, only that a deposit arrived; `sellerViewAt` shows exactly what it can read; tested on a built example, no seal has been paid from a real wallet yet). A refund paid to themselves when no refund address is in the memo or the list |
 | Dishonest bidder | Same memo sent twice `no-duplicate-bids`. A late bid or late top-up is never counted and is owed back in full | Showing someone else's bid proof as their own. A stray payment to the lot address makes an honest round fail `key-hygiene` |
 | Lying block server | With `--fetch`, two servers run by different people must agree on every block and every byte, or the run stops. A missing or altered block fails `scan-blocks-read` | Two servers working together to hide the same bid. A doctored saved chain file |
 | Lot-key holder | Cannot move money: the key only reads. A reused seller key `key-hygiene`. A refund address reused across rounds is reported by `imani linking` | Sees every bid and refund of the lot, including which refund went to which bid, so they can link a bidder's bid to the refund address written in its memo. `--discreet` only hides what Imani prints |
