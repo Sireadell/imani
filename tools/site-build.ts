@@ -132,14 +132,6 @@ export function exampleData(): { entries: any[]; externals: { id: string; title:
     label: `${x.label}, block ${x.block.toLocaleString("en-US")} (${x.txid.slice(0, 10)})`,
     url: `${ex.explorer}${x.txid}`,
   }));
-  honest(
-    "mainnet-01",
-    "mainnet-01",
-    "Real round on Zcash mainnet (IMANI-M1)",
-    "A real wallet paid 3 bids into a fresh lot account on Zcash mainnet on 27 Oct 2026, and the lot paid 3 refunds back. 2 items, reserve 100,000 zatoshis. The scan reads all 61 real blocks of the auction (482 transactions) with the lot key and finds exactly the 6 payments of this lot.",
-    true,
-    "real-honest",
-  );
   group("testnet-broken", "testnet-01", "real-tampered");
   honest(
     "round-01",
@@ -225,6 +217,31 @@ export function exampleData(): { entries: any[]; externals: { id: string; title:
     ["external-tampered", "tampered", "Published reveal file, one refund changed"],
   ].map(([id, file, title]) => ({ id, title, blob: store(p("test", "external", "round-files", `${file}.json`)) }));
   return { entries, externals, blobs };
+}
+
+/** Rounds shown on rounds.html only. Their files are too large to ship inside the checker page, so the
+ *  list reads them at build time and its link opens the live check instead of the in-page checker. */
+export function listOnlyData(): { entries: any[]; blobs: Record<string, string> } {
+  const blobs: Record<string, string> = {};
+  const store = (path: string) => {
+    const text = readText(path);
+    const id = sha(text).slice(0, 16);
+    blobs[id] = text;
+    return id;
+  };
+  const entries = [
+    {
+      id: "mainnet-01",
+      group: "real-honest",
+      title: "Real round on Zcash mainnet (IMANI-M1)",
+      expectedFailingCheck: null,
+      link: "/api/check?round=mainnet-01",
+      disclosure: store(p("examples", "mainnet-01", "disclosure.json")),
+      result: store(p("examples", "mainnet-01", "result.json")),
+      chain: store(p("examples", "mainnet-01", "chain.json")),
+    },
+  ];
+  return { entries, blobs };
 }
 
 export function examplesModule(): string {

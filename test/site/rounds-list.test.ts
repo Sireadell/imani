@@ -6,7 +6,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { buildEngine, buildSite, exampleData } from "../../tools/site-build.ts";
+import { buildEngine, buildSite, exampleData, listOnlyData } from "../../tools/site-build.ts";
 import { roundRows } from "../../tools/rounds-list.ts";
 
 const tmp = mkdtempSync(join(tmpdir(), "imani-rounds-"));
@@ -33,9 +33,10 @@ after(() => {
 
 test("the list has one row per bundled round, and the page shows exactly those rows", () => {
   const { entries, externals } = exampleData();
+  const extra = listOnlyData().entries;
   const rows = roundRows();
-  assert.equal(rows.length, entries.length + externals.length);
-  assert.deepEqual(rows.map((r) => r.id).sort(), [...entries.map((e) => e.id), ...externals.map((x) => x.id)].sort());
+  assert.equal(rows.length, entries.length + extra.length + externals.length);
+  assert.deepEqual(rows.map((r) => r.id).sort(), [...entries.map((e) => e.id), ...extra.map((e) => e.id), ...externals.map((x) => x.id)].sort());
   assert.equal((html.match(/<tr><td>/g) ?? []).length, rows.length);
   for (const r of rows) assert.ok(html.includes(`<span class="muted small">${r.id}</span>`), r.id);
   // The real round is on the list, with its published block range.
@@ -55,9 +56,10 @@ test("the real mainnet round is on the list, passes 23 of 23, and has its re-che
   assert.equal(row.total, 23);
   assert.equal(row.expected, true);
   assert.ok(html.includes("23 of 23"));
-  assert.ok(html.includes('<a href="index.html#round=mainnet-01">Re-check it yourself</a>'));
+  assert.ok(html.includes('<a href="/api/check?round=mainnet-01">Re-check it yourself</a>'));
   assert.ok(readFileSync(join(tmp, "site", "certificate-mainnet-01.html"), "utf8").includes("mainnet-01"));
-  assert.ok(exampleData().entries.some((e) => e.id === "mainnet-01"), "bundled so the checker page can open it");
+  assert.ok(!exampleData().entries.some((e) => e.id === "mainnet-01"), "its files are not bundled into the checker page");
+  assert.ok(!readFileSync(join(tmp, "site", "app.js"), "utf8").includes("IMANI-M1"), "app.js carries nothing of mainnet-01");
 });
 
 test("every example row has the result its own files were built to give", () => {
@@ -94,7 +96,8 @@ test("every row re-checks to the stated result, in the page's own checker", () =
 test("each re-check link opens a round the checker page knows", () => {
   const { entries, externals } = exampleData();
   const hrefs = [...html.matchAll(/<a href="(index\.html#(round|external)=[^"]+)">Re-check it yourself<\/a>/g)];
-  assert.equal(hrefs.length, roundRows().length);
+  assert.equal(hrefs.length, roundRows().length - 1, "every row but the live-check one");
+  assert.equal((html.match(/<a href="\/api\/check\?round=mainnet-01">Re-check it yourself<\/a>/g) ?? []).length, 1);
   for (const [, href, kind] of hrefs) {
     const id = decodeURIComponent(href.split("=").slice(1).join("="));
     const known = kind === "round" ? entries.some((e) => e.id === id) : externals.some((x) => x.id === id);
@@ -118,7 +121,7 @@ test("the list page makes no network requests and shows no key", () => {
   assert.deepEqual(html.match(/https?:\/\/[^\s"'`)]+/g) ?? [], [], "no web addresses at all");
   assert.deepEqual([...html.matchAll(/\bsrc="([^"]+)"/g)].map((m) => m[1]), []);
   const links = [...html.matchAll(/\bhref="([^"]+)"/g)].map((m) => m[1]);
-  assert.ok(links.every((l) => l === "style.css" || l === "data:," || /^(index|check)\.html(#[^"]*)?$/.test(l) || /^certificate-[A-Za-z0-9_-]+\.html$/.test(l)), "only local links");
+  assert.ok(links.every((l) => l === "style.css" || l === "data:," || /^(index|check)\.html(#[^"]*)?$/.test(l) || l === "/api/check?round=mainnet-01" || /^certificate-[A-Za-z0-9_-]+\.html$/.test(l)), "only local links");
   assert.match(html, /default-src 'none'/);
   assert.match(html, /connect-src 'none'/);
   assert.doesNotMatch(html, /script-src/);
