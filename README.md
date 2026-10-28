@@ -40,6 +40,32 @@ The job it does today is checking sealed-bid auctions on Zcash. When bidding clo
 
 There's a smaller second tool in the box: a sign-in button any website can add, where you log in by sending a tiny private payment from a shielded Zcash wallet. [More below](#also-sign-in-by-paying-from-a-private-zcash-wallet).
 
+## Everything it does
+
+| Capability | What it does | More |
+|---|---|---|
+| Check a whole round | Reads the bids and refunds with a read-only viewing key, works out winners, price and refunds again, and gives PASS or FAIL with the failed check named | [SPEC.md](SPEC.md) |
+| In the browser | Four screens: Check, Bid, Files and More. Check any round from its key and blocks, or from files, with a downloadable certificate and a share link | https://imani-theta.vercel.app |
+| Cheat lab | Change one fact in a round on the site and watch the check catch it | home page, More screen |
+| Hidden-bid scan | Reads every block of the auction and finds a payment the seller left out | [docs/PROOF.md](docs/PROOF.md) |
+| Two servers must agree | With `--fetch`, blocks come from two servers run by different people, and each block must name the one before it | [docs/BLOCK_LINKS.md](docs/BLOCK_LINKS.md) |
+| Check your own bid | `--mine`, or `imani bidder-check` with only your own viewing key | [docs/BIDDER_CHECK.md](docs/BIDDER_CHECK.md) |
+| Show one bid | `imani bid-proof` makes a small file anyone can check without a viewing key | [docs/BID_PROOF.md](docs/BID_PROOF.md) |
+| Refund address in the bid memo | Checks the seller's refund went to the address the bidder wrote | [docs/FORMAT.md](docs/FORMAT.md) |
+| Sealed lots | Same-size deposits and a sealed fingerprint of the price, opened after the close | [docs/SELLER_BLIND_PLAN.md](docs/SELLER_BLIND_PLAN.md) |
+| Fundraisers and group buys | All or nothing, with full refunds if the goal is missed | `examples/goal-reached` |
+| Two price rules and top-ups | Highest losing bid or lowest winning bid, and raising a bid before the close | `examples/pricing-01` |
+| Published totals | Payments, received, kept and refunded must add up and match the chain | `examples/totals-01` |
+| Privacy tools | `--discreet` prints no amounts, and `imani linking` checks no refund can be followed past its bid | [docs/WHO_LEARNS_WHAT.md](docs/WHO_LEARNS_WHAT.md) |
+| Seller kit | `imani lot-new` sets up a lot, `imani settle` writes the two files to publish | [docs/SELLER_KIT.md](docs/SELLER_KIT.md) |
+| Bid links and QR codes | `imani bid-link` makes a ZIP 321 `zcash:` link and QR code | [docs/BID_LINK.md](docs/BID_LINK.md) |
+| Rounds by other projects | Works out another project's round from its own files | [docs/EXTERNAL_ROUNDS.md](docs/EXTERNAL_ROUNDS.md) |
+| Library | Import the same checker into any app | [docs/LIBRARY.md](docs/LIBRARY.md) |
+| GitHub Action | Checks your round's files on every push and turns the build red if it does not add up | [docs/GITHUB_ACTION.md](docs/GITHUB_ACTION.md) |
+| Test kit | 52 rounds with known answers that grade a checker written in any language | [docs/FORMAT.md](docs/FORMAT.md) |
+| Network upgrades | Reads up to NU7 and says what to check at each upgrade | [docs/UPGRADES.md](docs/UPGRADES.md) |
+| Sign in by paying | A login button any site can add, using a tiny shielded payment | [LOGIN_SPEC.md](LOGIN_SPEC.md) |
+
 ## Try it in under a minute
 
 In your browser: **https://imani-theta.vercel.app** opens on a real auction from the Zcash test network and checks it on your own computer. After it loads, that page makes no network requests.
