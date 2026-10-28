@@ -23,11 +23,11 @@ const script = "tools/second-checker/check.py";
 test("second checker: agrees with the manifest on every case it can decide, and says how many that is", { skip }, () => {
   const r = spawnSync(python!, [script], { encoding: "utf8" });
   assert.equal(r.status, 0, r.stdout + r.stderr);
-  const m = /decided (\d+) of 52, agrees on all (\d+); the other (\d+) need the payment reader/.exec(r.stdout);
+  const m = /decided (\d+) of 66, agrees on all (\d+); the other (\d+) need the payment reader/.exec(r.stdout);
   assert.ok(m, "summary line missing:\n" + r.stdout);
   const [decided, agreed, rest] = [Number(m[1]), Number(m[2]), Number(m[3])];
   assert.equal(decided, agreed);
-  assert.equal(decided + rest, 52);
+  assert.equal(decided + rest, 66);
   assert.ok(decided >= 10, "it should at least decide the honest rounds");
   assert.doesNotMatch(r.stdout, /DISAGREE/);
 });

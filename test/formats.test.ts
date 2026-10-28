@@ -7,11 +7,15 @@ import type { Disclosure, SellerResult } from "../src/files.ts";
 const manifest = JSON.parse(readFileSync("examples/formats-01/manifest.json", "utf8"));
 const read = (name: string, file: string) => JSON.parse(readFileSync(`examples/formats-01/${name}/${file}`, "utf8"));
 
-for (const c of manifest.rounds as { name: string; expect: "PASS" | "FAIL"; failing?: string[] }[]) {
-  test(`formats-01/${c.name}: ${c.expect === "PASS" ? "passes" : `fails on ${c.failing!.join(", ")}`}`, () => {
+const cases: { name: string; expect: "PASS" | "FAIL"; failing: string[] }[] = [
+  ...manifest.honest.map((h: { name: string }) => ({ name: h.name, expect: "PASS" as const, failing: [] })),
+  ...manifest.copies.map((c: { name: string; expectedFailingChecks: string[] }) => ({ name: c.name, expect: "FAIL" as const, failing: c.expectedFailingChecks })),
+];
+for (const c of cases) {
+  test(`formats-01/${c.name}: ${c.expect === "PASS" ? "passes" : `fails on ${c.failing.join(", ")}`}`, () => {
     const v = checkLot(read(c.name, "disclosure.json") as Disclosure, read(c.name, "result.json") as SellerResult);
     assert.equal(v.result, c.expect);
-    assert.deepEqual([...v.failed].sort(), [...(c.failing ?? [])].sort());
+    assert.deepEqual([...v.failed].sort(), [...c.failing].sort());
   });
 }
 

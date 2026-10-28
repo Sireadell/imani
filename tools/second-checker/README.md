@@ -19,7 +19,7 @@ For each case it reads `disclosure.json` and `result.json` and works out, from t
 - the goal rule (reached or missed) and the sealed-lot floors on refunds;
 - that the rules, the bid count, the memos and any published totals agree with each other.
 
-It prints AGREE, NEEDS-READER or DISAGREE for each case. At the end it prints one line, for example `decided 37 of 52, agrees on all 37; the other 15 need the payment reader`.
+It prints AGREE, NEEDS-READER or DISAGREE for each case. At the end it prints one line, for example `decided 45 of 66, agrees on all 45; the other 21 need the payment reader`.
 
 ## What it cannot do
 
@@ -29,7 +29,7 @@ An honest round counts as "decided" when its numbers all agree. That means the a
 
 ## The cases it cannot decide
 
-On these 15 cases the numbers in the files are consistent, and the fault is only visible in the payments or on the chain. The checker says so and does not count them as decided. It does not count them as wrong either.
+On these 21 cases the numbers in the files are consistent, and the fault is only visible in the payments or on the chain. The checker says so and does not count them as decided. It does not count them as wrong either.
 
 | Case | What only the payments or the chain show |
 |---|---|
@@ -44,5 +44,11 @@ On these 15 cases the numbers in the files are consistent, and the fault is only
 | scan-broken/01 | A bid paid into the lot but left out of the files |
 | scan-broken/02 | A refund paid after the refund deadline |
 | scan-broken/03 | A bid shown at the wrong block height |
+| mainnet-broken/01 | A losing bid and its refund left out of the files (only the chain shows them) |
+| checks-broken/01 | A transaction listed at block height 0 |
+| checks-broken/03 | Transaction ids that do not match the transaction bytes |
+| checks-broken/05 | The viewing key also shows a payment that is not a bid |
+| checks-broken/06 | One block missing from the saved chain |
+| formats-01/top-up-broken | A second payment under the same memo that the seller ignored |
 
-37 of the 52 cases are decided and the checker agrees with the manifest on all 37. It does not check 52 of 52.
+45 of the 66 cases are decided and the checker agrees with the manifest on all 45. It does not check 66 of 66.

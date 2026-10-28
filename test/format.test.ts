@@ -44,8 +44,14 @@ const pairs: { id: string; d: string; r: string }[] = [];
 for (const m of json("conformance/manifest.json").cases) pairs.push({ id: m.id, d: m.disclosure, r: m.result });
 
 test("every example file validates against its schema", () => {
-  assert.ok(pairs.length >= 52);
+  assert.ok(pairs.length >= 66);
   for (const p of pairs) {
+    // This copy is broken on purpose in a way the schema also refuses: a block height of 0. The checker's
+    // close-height check is what a reader without a schema validator relies on, so the kit keeps it.
+    if (p.id === "checks-broken/01-block-height-is-zero") {
+      assert.deepEqual(validate(disclosureSchema, json(p.d), disclosureSchema), ["$.transactions[0].height: below 1"]);
+      continue;
+    }
     assert.deepEqual(validate(disclosureSchema, json(p.d), disclosureSchema), [], `${p.id} disclosure`);
     assert.deepEqual(validate(resultSchema, json(p.r), resultSchema), [], `${p.id} result`);
   }
@@ -93,8 +99,8 @@ test("no field used in any example file is missing from the schemas (no drift)",
 
 test("the conformance manifest covers every broken copy under examples/", () => {
   const m = json("conformance/manifest.json");
-  assert.equal(m.honest, 10);
-  assert.equal(m.broken, 42);
+  assert.equal(m.honest, 14);
+  assert.equal(m.broken, 52);
   const dirs = readdirSync("examples").filter((d) => existsSync(`examples/${d}/manifest.json`));
   let copies = 0;
   for (const d of dirs) copies += json(`examples/${d}/manifest.json`).copies.length;
@@ -111,9 +117,9 @@ test("the conformance manifest is up to date", () => {
 
 test("Imani's own checker scores full marks on the kit", () => {
   const s = runConformance("node bin/imani.js check");
-  assert.equal(s.verdictRight, 52);
-  assert.equal(s.named, 42);
-  assert.equal(s.honestPassed, 10);
+  assert.equal(s.verdictRight, 66);
+  assert.equal(s.named, 52);
+  assert.equal(s.honestPassed, 14);
 });
 
 test("the kit can tell a weak checker from a good one", () => {
@@ -122,12 +128,12 @@ test("the kit can tell a weak checker from a good one", () => {
   writeFileSync(join(dir, "always-pass.mjs"), "process.exit(0);");
   writeFileSync(join(dir, "always-fail.mjs"), "process.exit(1);");
   const weak = runConformance(`node "${join(dir, "always-pass.mjs")}"`);
-  assert.equal(weak.honestPassed, 10);
-  assert.equal(weak.verdictRight, 10);
+  assert.equal(weak.honestPassed, 14);
+  assert.equal(weak.verdictRight, 14);
   assert.equal(weak.named, 0);
   // A checker that says FAIL to everything gets the broken copies right but never names a check.
   const strict = runConformance(`node "${join(dir, "always-fail.mjs")}"`);
   assert.equal(strict.honestPassed, 0);
-  assert.equal(strict.verdictRight, 42);
+  assert.equal(strict.verdictRight, 52);
   assert.equal(strict.named, 0);
 });

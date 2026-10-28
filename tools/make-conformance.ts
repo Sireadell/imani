@@ -29,6 +29,10 @@ const honest: { dir: string; scan?: string }[] = [
   { dir: "totals-01" },
   { dir: "sealed-01" },
   { dir: "testnet-01", scan: "examples/testnet-01/chain.json" },
+  { dir: "mainnet-01", scan: "examples/mainnet-01/chain.json" },
+  { dir: "formats-01/second-price" },
+  { dir: "formats-01/first-price" },
+  { dir: "formats-01/top-up" },
 ];
 // Broken copies. `chain` is the chain file to scan with, or "own" when each copy carries its own.
 // A copy that changes only one file leaves the other out; it then uses the honest round's file (`base`).
@@ -42,6 +46,9 @@ const broken: { dir: string; chain?: string; base?: string }[] = [
   { dir: "sealed-broken" },
   { dir: "scan-broken", chain: "own" },
   { dir: "testnet-broken", chain: "examples/testnet-01/chain.json", base: "testnet-01" },
+  { dir: "mainnet-broken", chain: "examples/mainnet-01/chain.json", base: "mainnet-01" },
+  { dir: "checks-broken" },
+  { dir: "formats-01" },
 ];
 
 const cases: Case[] = [];
@@ -54,7 +61,8 @@ for (const b of broken) {
   for (const c of manifest.copies) {
     const base = `examples/${b.dir}/${c.name}`;
     const failing: string[] = c.expectedFailingChecks ?? [c.expectedFailingCheck];
-    const chain = b.chain === "own" ? `${base}/chain.json` : b.chain;
+    // A copy that names its own chain file in its manifest entry uses that one.
+    const chain = c.chain ? `${base}/${c.chain}` : b.chain === "own" ? `${base}/chain.json` : b.chain;
     if (chain && !existsSync(chain)) throw new Error(`missing ${chain}`);
     const file = (name: string) => (existsSync(`${base}/${name}`) ? `${base}/${name}` : b.base ? `examples/${b.base}/${name}` : (() => { throw new Error(`missing ${base}/${name}`); })());
     cases.push({ id: `${b.dir}/${c.name}`, kind: "broken", disclosure: file("disclosure.json"), result: file("result.json"), ...(chain ? { chain } : {}), expect: "FAIL", failing, story: c.story });

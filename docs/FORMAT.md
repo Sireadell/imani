@@ -313,7 +313,7 @@ A shielded Zcash payment carries a memo of up to 512 bytes that only the people 
 
 The kit tests any checker, written in any language, against real rounds where the right answer is known.
 
-**What `conformance/manifest.json` holds.** 52 cases. 10 are honest rounds that must PASS. 42 are broken copies of those rounds, each with one dishonest change by the seller, that must FAIL. Each broken case lists in `failing` every check id a correct checker must name, and has a one-line `story` of what the seller did. Seven cases (2 honest, 5 broken) also come with a chain file and must be checked with a full scan. All files live under `examples/`, and `npm run conformance:make` rebuilds the manifest from them.
+**What `conformance/manifest.json` holds.** 66 cases. 14 are honest rounds that must PASS. 52 are broken copies of those rounds, each with one dishonest change by the seller, that must FAIL. Each broken case lists in `failing` every check id a correct checker must name, and has a one-line `story` of what the seller did. Seven cases (2 honest, 5 broken) also come with a chain file and must be checked with a full scan. All files live under `examples/`, and `npm run conformance:make` rebuilds the manifest from them.
 
 | Group | Cases | Check ids the broken copies must name |
 |---|---|---|
@@ -336,7 +336,7 @@ npm run conformance -- --cmd "<checker command>"
 
 | Step | What happens |
 |---|---|
-| 1 | For each of the 52 cases, the kit runs your command with `--disclosure <file> --result <file>` added. Cases with a chain file also get `--scan --chain <file>` |
+| 1 | For each of the 66 cases, the kit runs your command with `--disclosure <file> --result <file>` added. Cases with a chain file also get `--scan --chain <file>` |
 | 2 | Your command's exit code is its verdict: 0 means PASS, 1 means FAIL. Any other exit code counts as a wrong answer. Printing "FAIL" while exiting 0 is a PASS |
 | 3 | For a broken case, the verdict counts as fully right only if your command also printed (on normal output or error output) the id of every check in `failing`, each as a whole word. `refunds-paid` is not found inside `refunds-paid-late` |
 | 4 | The kit prints each case it got wrong, then three score lines. It exits 0 only for a full score (every verdict right and every broken copy named), and 1 otherwise |
@@ -345,9 +345,9 @@ npm run conformance -- --cmd "<checker command>"
 
 ```text
 $ npm run conformance -- --cmd "node bin/imani.js check"
-Right verdict: 52 of 52 (honest rounds passed: 10 of 10; broken copies failed: 42 of 42)
-Broken copies failed on the right check: 42 of 42
-Conformance: FULL (52 of 52 verdicts right, 42 of 42 broken copies named correctly)
+Right verdict: 66 of 66 (honest rounds passed: 14 of 14; broken copies failed: 52 of 52)
+Broken copies failed on the right check: 52 of 52
+Conformance: FULL (66 of 66 verdicts right, 52 of 52 broken copies named correctly)
 ```
 
 It took 39 seconds on a laptop. A script that does nothing but exit 0 (`process.exit(0);`), so it says PASS to everything:
@@ -356,12 +356,12 @@ It took 39 seconds on a laptop. A script that does nothing but exit 0 (`process.
 $ npm run conformance -- --cmd "node always-pass.mjs"
   broken/01-extra-fake-bid: expected FAIL, got PASS
   ... the same line for each of the other 41 broken copies ...
-Right verdict: 10 of 52 (honest rounds passed: 10 of 10; broken copies failed: 0 of 42)
-Broken copies failed on the right check: 0 of 42
-Conformance: PARTIAL (10 of 52 verdicts right, 0 of 42 broken copies named correctly)
+Right verdict: 14 of 66 (honest rounds passed: 14 of 14; broken copies failed: 0 of 52)
+Broken copies failed on the right check: 0 of 52
+Conformance: PARTIAL (14 of 66 verdicts right, 0 of 52 broken copies named correctly)
 ```
 
-A checker that says FAIL to everything scores 42 of 52 verdicts and names 0 of 42, so neither shortcut can reach a full score. Both are run by `test/format.test.ts` on every test run.
+A checker that says FAIL to everything scores 52 of 66 verdicts and names 0 of 52, so neither shortcut can reach a full score. Both are run by `test/format.test.ts` on every test run.
 
 ## 6. Versions, and how to ask for a new field
 

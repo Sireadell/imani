@@ -107,17 +107,20 @@ const wrongPrice = (r: [Disclosure, SellerResult], price: number): [Disclosure, 
   write("top-up-broken", c);
 }
 
+const stories = {
+  "second-price": "One item, the winner pays the highest losing bid (Vickrey).",
+  "first-price": "One item, the winner pays their own bid.",
+  "top-up": "One item, first price. Alice pays 3,000,000 and later 3,000,000 more under the same memo, so her bid is 6,000,000.",
+};
 writeFileSync(
   new URL("examples/formats-01/manifest.json", root),
   json({
-    about: "One-item rounds for the formats the larger examples only imply. Each folder is an honest round that must PASS, and each *-broken folder is a copy where the seller applied the wrong rule or ignored a top-up, which must FAIL on the checks listed.",
-    rounds: [
-      { name: "second-price", expect: "PASS", story: "One item, the winner pays the highest losing bid (Vickrey)." },
-      { name: "first-price", expect: "PASS", story: "One item, the winner pays their own bid." },
-      { name: "top-up", expect: "PASS", story: "One item, first price. Alice pays 3,000,000 and later 3,000,000 more under the same memo, so her bid is 6,000,000." },
-      { name: "second-price-broken", expect: "FAIL", failing: ["winners-and-price"], story: "The seller charges the second-price winner their whole bid, 3,000,000, and sends no change, instead of the highest losing bid, 1,500,000." },
-      { name: "first-price-broken", expect: "FAIL", failing: ["clearing-range", "winners-and-price"], story: "The seller charges the first-price winner only the highest losing bid." },
-      { name: "top-up-broken", expect: "FAIL", failing: ["bid-amounts", "winners-and-price", "refund-total"], story: "The seller counts only the first of Alice's two payments, so her bid looks like 3,000,000 instead of 6,000,000." },
+    about: "One-item rounds for the formats the larger examples only imply. `honest` lists the rounds that must PASS; each copy is a *-broken folder where the seller applied the wrong rule or ignored a top-up, which must FAIL on the checks listed.",
+    honest: Object.entries(stories).map(([name, story]) => ({ name, story })),
+    copies: [
+      { name: "second-price-broken", changed: "result.json", expectedFailingCheck: "winners-and-price", expectedFailingChecks: ["winners-and-price"], story: "The seller charges the second-price winner their whole bid, 3,000,000, and sends no change, instead of the highest losing bid, 1,500,000." },
+      { name: "first-price-broken", changed: "result.json", expectedFailingCheck: "clearing-range", expectedFailingChecks: ["clearing-range", "winners-and-price"], story: "The seller charges the first-price winner only the highest losing bid, 1,500,000, instead of their own bid, 3,000,000." },
+      { name: "top-up-broken", changed: "result.json", expectedFailingCheck: "bid-amounts", expectedFailingChecks: ["bid-amounts", "winners-and-price", "refund-total"], story: "The seller counts only the first of Alice's two payments, so her bid looks like 3,000,000 instead of 6,000,000." },
     ],
   }),
 );

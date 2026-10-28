@@ -22,22 +22,16 @@ interface Case {
   chain?: string;
 }
 
-/** The 52 conformance cases, plus the broken copies in examples/checks-broken that cover the remaining checks. */
-export function allCases(manifestPath = "conformance/manifest.json", extraPath = "examples/checks-broken/manifest.json"): Case[] {
-  const cases: Case[] = JSON.parse(readFileSync(manifestPath, "utf8")).cases;
-  const extra = JSON.parse(readFileSync(extraPath, "utf8"));
-  for (const c of extra.copies) {
-    const base = `examples/checks-broken/${c.name}`;
-    cases.push({ id: `checks-broken/${c.name}`, kind: "broken", disclosure: `${base}/disclosure.json`, result: `${base}/result.json`, ...(c.chain ? { chain: `${base}/${c.chain}` } : {}) });
-  }
-  return cases;
+export function allCases(manifestPath = "conformance/manifest.json"): { cases: Case[]; honest: number; broken: number } {
+  const m = JSON.parse(readFileSync(manifestPath, "utf8"));
+  return { cases: m.cases, honest: m.honest, broken: m.broken };
 }
 
 export function coverage(): CoverageRow[] {
   const rows = new Map<string, CoverageRow>();
   const dir = mkdtempSync(join(tmpdir(), "imani-coverage-"));
   try {
-    for (const c of allCases()) {
+    for (const c of allCases().cases) {
       const args = ["bin/imani.js", "check", "--disclosure", c.disclosure, "--result", c.result, ...(c.chain ? ["--scan", "--chain", c.chain] : []), "--out", dir];
       const r = spawnSync("node", ["--disable-warning=ExperimentalWarning", ...args], { encoding: "utf8", maxBuffer: 1 << 26 });
       if (r.status !== 0 && r.status !== 1) throw new Error(`${c.id}: the checker exited with ${r.status}\n${r.stderr}`);
@@ -55,11 +49,12 @@ export function coverage(): CoverageRow[] {
 }
 
 export function coverageMarkdown(rows: CoverageRow[]): string {
+  const { honest, broken } = allCases();
   const covered = rows.filter((r) => r.failsOn.length);
   const lines = [
     "# Every check can fail",
     "",
-    "A checker that never says FAIL proves nothing. This table is made by running Imani on every round in `conformance/manifest.json` (10 honest, 42 broken copies) and on the 6 extra broken copies in `examples/checks-broken`, and recording which broken copies each check catches. Rebuild it with `node --disable-warning=ExperimentalWarning tools/check-coverage.ts --write`. A test fails if this file is out of date.",
+    `A checker that never says FAIL proves nothing. This table is made by running Imani on every round in \`conformance/manifest.json\` (${honest} honest rounds, ${broken} broken copies) and recording which broken copies each check catches. Rebuild it with \`npm run coverage\`. A test fails if this file is out of date.`,
     "",
     `**${covered.length} of ${rows.length} checks have at least one broken copy that makes them fail.**`,
     "",

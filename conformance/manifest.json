@@ -1,8 +1,8 @@
 {
   "format": "imani-conformance/1",
   "about": "Every passing round and every broken copy in examples/. A correct checker must say PASS for each honest case, and FAIL for each broken case, naming every check in `failing`.",
-  "honest": 10,
-  "broken": 42,
+  "honest": 14,
+  "broken": 52,
   "cases": [
     {
       "id": "round-01",
@@ -74,6 +74,35 @@
       "disclosure": "examples/testnet-01/disclosure.json",
       "result": "examples/testnet-01/result.json",
       "chain": "examples/testnet-01/chain.json",
+      "expect": "PASS"
+    },
+    {
+      "id": "mainnet-01",
+      "kind": "honest",
+      "disclosure": "examples/mainnet-01/disclosure.json",
+      "result": "examples/mainnet-01/result.json",
+      "chain": "examples/mainnet-01/chain.json",
+      "expect": "PASS"
+    },
+    {
+      "id": "formats-01/second-price",
+      "kind": "honest",
+      "disclosure": "examples/formats-01/second-price/disclosure.json",
+      "result": "examples/formats-01/second-price/result.json",
+      "expect": "PASS"
+    },
+    {
+      "id": "formats-01/first-price",
+      "kind": "honest",
+      "disclosure": "examples/formats-01/first-price/disclosure.json",
+      "result": "examples/formats-01/first-price/result.json",
+      "expect": "PASS"
+    },
+    {
+      "id": "formats-01/top-up",
+      "kind": "honest",
+      "disclosure": "examples/formats-01/top-up/disclosure.json",
+      "result": "examples/formats-01/top-up/result.json",
       "expect": "PASS"
     },
     {
@@ -567,6 +596,129 @@
         "refund-total"
       ],
       "story": "The seller's result says the losing bidder got 1,400,000 back. The chain shows the real refund was 1,500,000, so the seller's sums are 100,000 out and the result contradicts itself."
+    },
+    {
+      "id": "mainnet-broken/01-hidden-losing-bid",
+      "kind": "broken",
+      "disclosure": "examples/mainnet-broken/01-hidden-losing-bid/disclosure.json",
+      "result": "examples/mainnet-broken/01-hidden-losing-bid/result.json",
+      "chain": "examples/mainnet-01/chain.json",
+      "expect": "FAIL",
+      "failing": [
+        "refunds-paid",
+        "scan-hidden-bids",
+        "scan-unlisted-payments"
+      ],
+      "story": "The seller leaves the losing bid of 300,000 zatoshis and its refund out of their files, then says that with only two bids the price falls to the reserve of 100,000. The refunds on the chain no longer match, and the scan of the real mainnet blocks finds the bid and the refund the seller left out."
+    },
+    {
+      "id": "checks-broken/01-block-height-is-zero",
+      "kind": "broken",
+      "disclosure": "examples/checks-broken/01-block-height-is-zero/disclosure.json",
+      "result": "examples/checks-broken/01-block-height-is-zero/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "close-height"
+      ],
+      "story": "One disclosed transaction is listed at block height 0, which is not a real block, so its timing cannot be checked."
+    },
+    {
+      "id": "checks-broken/02-same-transaction-listed-twice",
+      "kind": "broken",
+      "disclosure": "examples/checks-broken/02-same-transaction-listed-twice/disclosure.json",
+      "result": "examples/checks-broken/02-same-transaction-listed-twice/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "disclosure-txids-unique",
+        "bid-amounts",
+        "no-duplicate-bids",
+        "refunds-paid",
+        "refund-total"
+      ],
+      "story": "The seller lists the same bid transaction twice, so one payment is counted two times."
+    },
+    {
+      "id": "checks-broken/03-transaction-bytes-swapped",
+      "kind": "broken",
+      "disclosure": "examples/checks-broken/03-transaction-bytes-swapped/disclosure.json",
+      "result": "examples/checks-broken/03-transaction-bytes-swapped/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "txids-match-bytes"
+      ],
+      "story": "The seller swaps the raw bytes of two transactions, so the ids they publish no longer belong to the transactions behind them."
+    },
+    {
+      "id": "checks-broken/04-more-winners-than-items",
+      "kind": "broken",
+      "disclosure": "examples/checks-broken/04-more-winners-than-items/disclosure.json",
+      "result": "examples/checks-broken/04-more-winners-than-items/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "winner-count",
+        "winners-and-price",
+        "refund-total"
+      ],
+      "story": "The lot has 2 items but the seller names 3 winners."
+    },
+    {
+      "id": "checks-broken/05-key-shows-a-payment-that-is-not-a-bid",
+      "kind": "broken",
+      "disclosure": "examples/checks-broken/05-key-shows-a-payment-that-is-not-a-bid/disclosure.json",
+      "result": "examples/checks-broken/05-key-shows-a-payment-that-is-not-a-bid/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "key-hygiene"
+      ],
+      "story": "The lot's viewing key also shows a payment that is not a bid for this lot, so publishing the key would expose it. The seller should have used a fresh key for the lot."
+    },
+    {
+      "id": "checks-broken/06-one-block-missing-from-the-scan",
+      "kind": "broken",
+      "disclosure": "examples/checks-broken/06-one-block-missing-from-the-scan/disclosure.json",
+      "result": "examples/checks-broken/06-one-block-missing-from-the-scan/result.json",
+      "chain": "examples/checks-broken/06-one-block-missing-from-the-scan/chain.json",
+      "expect": "FAIL",
+      "failing": [
+        "scan-blocks-read"
+      ],
+      "story": "The block file leaves out block 4200070, so a hidden bid could sit in the one block nobody read. The scan refuses to pass."
+    },
+    {
+      "id": "formats-01/second-price-broken",
+      "kind": "broken",
+      "disclosure": "examples/formats-01/second-price-broken/disclosure.json",
+      "result": "examples/formats-01/second-price-broken/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "winners-and-price"
+      ],
+      "story": "The seller charges the second-price winner their whole bid, 3,000,000, and sends no change, instead of the highest losing bid, 1,500,000."
+    },
+    {
+      "id": "formats-01/first-price-broken",
+      "kind": "broken",
+      "disclosure": "examples/formats-01/first-price-broken/disclosure.json",
+      "result": "examples/formats-01/first-price-broken/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "clearing-range",
+        "winners-and-price"
+      ],
+      "story": "The seller charges the first-price winner only the highest losing bid, 1,500,000, instead of their own bid, 3,000,000."
+    },
+    {
+      "id": "formats-01/top-up-broken",
+      "kind": "broken",
+      "disclosure": "examples/formats-01/top-up-broken/disclosure.json",
+      "result": "examples/formats-01/top-up-broken/result.json",
+      "expect": "FAIL",
+      "failing": [
+        "bid-amounts",
+        "winners-and-price",
+        "refund-total"
+      ],
+      "story": "The seller counts only the first of Alice's two payments, so her bid looks like 3,000,000 instead of 6,000,000."
     }
   ]
 }
