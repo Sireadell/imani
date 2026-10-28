@@ -13,7 +13,7 @@ Imani is a Zcash tool: a TypeScript library and a command line that read shielde
 
 If a seller of something on Zcash runs a sealed auction, the bidders have to take the seller's word that the winner and price are right. Imani lets anyone recompute the result from the chain, using a read-only key the seller shares after the close. It answers PASS or FAIL, and names the check that failed.
 
-The checker page opens on a real auction on Zcash mainnet: a real wallet paid 3 bids and the lot paid 3 refunds back, with real ZEC (0.013 in all). Its lot name is `IMANI-M1`. The next round on the page, `DRY-01`, is the earlier dry run with test coins on the public Zcash test network. The other examples are made-up rounds built with throwaway keys.
+The checker page opens on a real auction: a real wallet paid its bids and refunds into the Ironwood pool on the public Zcash test network (test coins, no money). Its lot name, `DRY-01`, stands for dry run: a real round paid with test coins before any real money. A second real round, `examples/mainnet-01`, was paid with real ZEC on Zcash mainnet. In both, one wallet that we ran paid every bid. The other examples are made-up rounds built with throwaway keys.
 
 ## Try it in two minutes
 
@@ -75,7 +75,7 @@ The six broken copies in `examples/broken/` each fail on exactly one named check
 | A shared viewing key cannot be taken back | Each lot uses its own fresh key, so sharing one only exposes that lot. |
 | The refund address in a bid memo is public after the close | Use a fresh address for each auction. `imani linking` shows when an address was reused. |
 | The login proves "someone holding the account key who can spend shielded ZEC" | It does not prove control of one specific wallet. |
-| Our rounds are our own | The real round was paid by our own wallet on the test network and the rest are made-up, so they show the mechanism and not a real seller. |
+| Our rounds are our own | The two real rounds (test network and mainnet) had every bid paid by one wallet we ran, and we also ran the lot. The rest are made-up. So they show the checker on real chain data, not a real seller or independent bidders. |
 
 ## Where the code is
 

@@ -15,14 +15,14 @@
     <nav class="nav" aria-label="Pages"><a href="check.html">Check any round</a> <a href="rounds.html">Checked rounds</a></nav>
     <p class="pill" id="round-line">A real round on Zcash mainnet, checked in your browser</p>
     <h1>Prove a sealed Zcash auction was <em>fair</em>.</h1>
-    <p class="sub">Imani works the result out again from the chain: every bid counted, the right winner, every refund paid. It runs on your computer and shows nobody who bid.</p>
+    <p class="sub">Imani works the result out again from the chain: every bid counted, the right winner, every refund paid. It runs on your computer and shows nobody who bid. Once a lot's key is published, anyone holding it can read that lot's amounts and refund addresses. Bidders write their own refund address into their bid, and Imani checks, right in your browser with no server, that every refund landed there.</p>
     <div class="homegrid">
       <div class="hcard" id="home-round">
         <span class="tag">REAL ROUND</span>
         <h2 class="lot" id="home-lot">Lot</h2>
         <dl class="facts">
           <div><dt>Bids</dt><dd id="home-bids"></dd></div>
-          <div><dt>Winners</dt><dd id="home-winners"></dd></div>
+          <div><dt>Winner</dt><dd id="home-winners"></dd></div>
           <div><dt>Refunds paid</dt><dd id="home-refunds"></dd></div>
           <div><dt>Blocks read</dt><dd id="home-blocks"></dd></div>
           <div><dt>Network</dt><dd id="home-network"></dd></div>
@@ -47,8 +47,42 @@
       </div>
       <div class="hcard">
         <h3>What stayed private</h3>
-        <ul class="sq"><li>Who the bidders are</li><li>What else is in their wallets</li><li>Any payment outside this one lot</li><li>Every amount, from anyone without this lot's key</li></ul>
+        <ul class="sq"><li>Who the bidders are</li><li>What else is in their wallets</li><li>Any payment outside this one lot</li><li>Every amount, from anyone without this lot's key (the mainnet example publishes its key, so anyone can read that one)</li></ul>
       </div>
+    </div>
+    <section id="mainnet-round" class="hcard" aria-labelledby="mainnet-h">
+      <span class="tag">REAL ZEC</span>
+      <h2 id="mainnet-h">The round above, on Zcash mainnet</h2>
+      <p>The round above is a small round paid in real ZEC on Zcash mainnet: lot IMANI-M1, 3 bids and 3 refunds, with the bids adding up to 0.013 ZEC. The check reads every block from 3,532,593 to 3,532,653 (482 transactions) and passes 23 of 23 checks.</p>
+      <p class="small">All 3 bids came from one wallet we ran, and we ran the lot too. So this round shows the checker working on real chain data. It does not show independent bidders. The page above checks it in your browser from its saved blocks. The live answer below is the same check worked out on our server.</p>
+      <ul class="mainnet-links">
+        <li><a href="/api/check?round=mainnet-01">Live answer for this round</a></li>
+        <li><a href="https://github.com/Sireadell/imani/tree/main/examples/mainnet-01" target="_blank" rel="noopener noreferrer">The round's files on GitHub</a></li>
+      </ul>
+      <p class="small">To check it yourself, run this in a copy of the Imani repository. It should print <code>RESULT: PASS (23 of 23 checks passed)</code>.</p>
+      <pre><code>node bin/imani.js check --disclosure examples/mainnet-01/disclosure.json --result examples/mainnet-01/result.json --scan --chain examples/mainnet-01/chain.json</code></pre>
+      <p class="small">To download the same blocks again from two public mainnet servers instead of using the saved copy, put <code>--fetch</code> in place of <code>--chain examples/mainnet-01/chain.json</code>.</p>
+    </section>
+    <div class="homegrid">
+<section id="cheat-lab" class="hcard">
+  <h2>Cheat lab</h2>
+  <p>Pick a cheat. The page changes one fact in the seller's files and runs the same check again.</p>
+  <div class="cheat-row">
+    <button type="button" class="btn" data-cheat="testnet-broken/01-hidden-losing-bid">Hide a bid</button>
+    <p class="small">The seller drops a losing bid of 1,500,000 zat from the files, so the price can fall.</p>
+  </div>
+  <div class="cheat-row">
+    <button type="button" class="btn" data-cheat="broken/04-short-refund">Short a refund</button>
+    <p class="small">Carol lost and got 1,400,000 back, not her 1,500,000. The seller's file still says 1,500,000.</p>
+  </div>
+  <div class="cheat-row">
+    <button type="button" class="btn" data-cheat="pricing-broken/04-leaves-out-the-lowest-winner">Name the wrong winner</button>
+    <p class="small">Carol's 1,500,000 is on the chain but the seller's list leaves it out and raises the price to Bob's bid, 2,000,000.</p>
+  </div>
+  <p class="cheat-result" role="status" hidden></p>
+  <button type="button" class="btn cheat-reset" hidden>Undo the cheat</button>
+  <p class="small">Each cheat is a real file from our test kit. Your own copy of Imani fails it the same way.</p>
+</section>
     </div>
     <p class="servers" id="servers-home"><strong>Servers contacted: none.</strong> After this page loads it makes no network calls.</p>
     <p class="small more-line">Want to dig deeper? Check your own files, find your bid, or watch a cheat get caught.</p>
@@ -73,7 +107,7 @@
 
   <section aria-labelledby="pick-h">
     <h2 id="pick-h">1. Pick something to check</h2>
-    <p class="muted">The page opens on a real auction: a real Zcash wallet paid these bids and refunds on Zcash mainnet, with real ZEC (0.013 in all). Its lot name is IMANI-M1. The earlier dry run, DRY-01, was paid with test coins on the public Zcash test network and is still here as the next round.</p>
+    <p class="muted">The page opens on a real auction: a real Zcash wallet paid these bids and refunds on Zcash mainnet, in real ZEC. A second real round on the public Zcash test network, lot DRY-01, uses test coins that have no value.</p>
     <div class="chips" id="chips-real" role="group" aria-label="Real round and its tampered copies"></div>
     <div id="explorer-box"></div>
     <h3>Made-up rounds, one cheat at a time</h3>

@@ -2,7 +2,7 @@
 // same rows as the checked-rounds list (so the numbers come from the real checker, never typed in).
 // No script, no network, and no key of any kind appears on the page.
 import { readFileSync } from "node:fs";
-import { exampleData } from "./site-build.ts";
+import { exampleData, listOnlyData } from "./site-build.ts";
 import { roundRows, type RoundRow } from "./rounds-list.ts";
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
@@ -30,9 +30,12 @@ export interface CertificateFacts {
 
 /** Lot name and bid count for a row, read from the round's own files. */
 export function certificateFacts(rows: RoundRow[] = roundRows()): Map<string, CertificateFacts> {
-  const { entries, externals, blobs } = exampleData();
+  const data = exampleData();
+  const extra = listOnlyData();
+  const { externals } = data;
+  const blobs = { ...data.blobs, ...extra.blobs };
   const out = new Map<string, CertificateFacts>();
-  for (const e of entries) {
+  for (const e of [...data.entries, ...extra.entries]) {
     const d = JSON.parse(blobs[e.disclosure]);
     const r = JSON.parse(blobs[e.result]);
     out.set(e.id, { lot: String(d.lotId ?? "not stated"), bids: Number.isSafeInteger(r.bidCount) ? String(r.bidCount) : "not stated" });

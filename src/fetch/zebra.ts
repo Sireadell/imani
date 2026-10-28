@@ -114,8 +114,8 @@ export async function zebraTip(server: string, opts: ZebraCall): Promise<{ chain
 const HASH_RE = /^[0-9a-f]{64}$/i;
 
 /** One block: its hash, and every transaction as raw hex with the txid the node gave for it. */
-export async function zebraGetBlock(server: string, height: number, opts: ZebraCall): Promise<{ height: number; hash: string; txids: string[]; txs: { txid: string; hex: string }[] }> {
-  const r = (await rpc(server, "getblock", [String(height), 2], opts)) as { hash?: unknown; height?: unknown; tx?: unknown };
+export async function zebraGetBlock(server: string, height: number, opts: ZebraCall): Promise<{ height: number; hash: string; prevHash?: string; txids: string[]; txs: { txid: string; hex: string }[] }> {
+  const r = (await rpc(server, "getblock", [String(height), 2], opts)) as { hash?: unknown; height?: unknown; tx?: unknown; previousblockhash?: unknown };
   if (typeof r?.hash !== "string" || !HASH_RE.test(r.hash) || !Array.isArray(r.tx)) throw new Error("reply has no block hash or transaction list");
   const txs: { txid: string; hex: string }[] = [];
   for (const t of r.tx as { txid?: unknown; hex?: unknown }[]) {
@@ -124,7 +124,8 @@ export async function zebraGetBlock(server: string, height: number, opts: ZebraC
     }
     txs.push({ txid: t.txid.toLowerCase(), hex: t.hex.toLowerCase() });
   }
-  return { height: Number(r.height), hash: r.hash.toLowerCase(), txids: txs.map((t) => t.txid), txs };
+  const prevHash = typeof r.previousblockhash === "string" && HASH_RE.test(r.previousblockhash) ? r.previousblockhash.toLowerCase() : undefined;
+  return { height: Number(r.height), hash: r.hash.toLowerCase(), prevHash, txids: txs.map((t) => t.txid), txs };
 }
 
 /** One transaction by id, with its block height when the node reports one. */

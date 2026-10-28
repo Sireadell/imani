@@ -2,7 +2,7 @@
 
 Everything the command line and the checker page do is also a plain function you can call from your own code. `import { ... } from "@sireadell/imani"` gives you the names below. Only three of them, `fetchTransactions`, `fetchBlocks` and `fetchScan`, open a network connection, and only when you call them. No function takes a spending key or a seed phrase.
 
-imani is not on the npm registry yet. To use it in another project, run `npm pack` in this folder, then `npm install <path to the .tgz file>` in yours. It needs Node 22.18 or newer and installs with no other packages. The package is about 6 MB because it carries every example round and broken copy, so the commands in the README and the examples below run straight from the installed folder. For example, `npx @sireadell/imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json` works right after install, and the honest rounds and broken copies the conformance kit grades against travel with it, so the proof ships inside the package.
+Install it in your project with `npm install @sireadell/imani`, and run it with `npx @sireadell/imani check ...`. It needs Node 22.18 or newer and installs with no other packages. The package is about 6 MB because it carries every example round and broken copy, so the example files the README uses are inside the installed folder. For example, `npx @sireadell/imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json` works from there. The honest rounds and broken copies the conformance kit grades against travel with it, so the proof ships inside the package.
 
 ## Use it in a web page
 
@@ -87,6 +87,9 @@ Sealed lots (bidders pay a fixed deposit with a hidden price, then open it after
 | `fetchScan` | A disclosure file, and optionally `FetchScanOptions` (the same choices as `fetchBlocks`) | A `ScanInput` for `checkLot`'s `scan` option, with every block of the round downloaded. No key is sent | **yes**, through `fetchBlocks` |
 | `openSeals` | A sealed lot's name, its rules, the closing block, the last block for openings, the seals and the openings | Which seals count and at what opened price, which were never opened or opened wrongly, the penalties and how they are shared, the winners, and what every payment is owed back | none |
 | `sealHash` | A lot name, a secret word, a price in zatoshis, a random salt and an optional refund address | The 64-character hash a bidder puts in a seal memo, so the price stays hidden until the opening | none |
+| `sellerViewAt` | A disclosure file and a block number | What the holder of the lot's viewing key can read of each payment by that block: the kind (bid, seal, opening), the amount paid, and the price if one is readable. A sealed deposit shows no price before it is opened | none |
+| `pricesReadableAt` | A disclosure file and a block number | Only the payments whose price the lot's viewing key can read by that block | none |
+| `earlyOpenings` | A disclosure file | The openings that arrived at or before the closing block, which the rules do not count | none |
 | `DEFAULT_SERVERS` | | The public servers `fetchTransactions` asks when you give none, per network | none |
 | `FetchError` | | The error thrown when the downloads cannot be checked. It still carries the list of servers contacted | none |
 | `makeBidLink` | A lot name, the lot's address, an amount, and optionally a refund address or a ready-made memo | A ZIP 321 `zcash:` payment link, its memo and amount in ZEC. A wallet that reads the link fills in all three | none |

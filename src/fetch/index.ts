@@ -19,6 +19,7 @@ import {
 import { EXPLORER_PREFIX, explorerGetBlock, explorerGetTransaction } from "./explorer.ts";
 import { isZebra, zebraBase, zebraChain, zebraGetBlock, zebraGetTransaction, zebraTip } from "./zebra.ts";
 import { checkTxBytes, TXID_RE } from "./verify.ts";
+import { checkBlockLinks, type BlockLink } from "./links.ts";
 
 import { DEFAULT_SERVERS, type Network } from "./servers.ts";
 export { DEFAULT_SERVERS, type Network };
@@ -58,6 +59,8 @@ export interface FetchResult {
   transactions: FetchedTx[];
   /** Every server this call opened a connection to, in order. Print it to the user. */
   serversContacted: string[];
+  /** For each block asked for by height: its hash and the hash of the block before it, when the servers gave them. */
+  blockLinks?: BlockLink[];
   /** Non-fatal problems: servers that timed out, refused, or sent bytes that failed the txid check. */
   problems: { server: string; error: string }[];
 }
@@ -168,9 +171,10 @@ export async function fetchTransactions(opts: FetchOptions): Promise<FetchResult
 
   // ---- heights: list the block's txids, agreed by `need` operators ----
   const heightOf = new Map<string, number>();
+  const blockLinks: BlockLink[] = [];
   const wanted: string[] = [...txidsIn];
   for (const h of heights) {
-    const lists: { server: string; key: string; txids: string[] }[] = [];
+    const lists: { server: string; key: string; txids: string[]; hash: string; prevHash?: string }[] = [];
     const ops = new Set<string>();
     for (const server of servers) {
       if (lists.length >= need) break;
@@ -190,7 +194,7 @@ export async function fetchTransactions(opts: FetchOptions): Promise<FetchResult
           ? await withRetry(server, () => explorerGetBlock(server.slice(EXPLORER_PREFIX.length), h, call))
           : decodeCompactBlock(await withRetry(server, () => unary(server, "GetBlock", encodeBlockId(h), call)));
         if (b.height !== h || b.txids.length === 0) throw new Error(`block ${h} not returned`);
-        lists.push({ server, key: `${b.hash}:${b.txids.join(",")}`, txids: b.txids });
+        lists.push({ server, key: `${b.hash}:${b.txids.join(",")}`, txids: b.txids, hash: b.hash, prevHash: b.prevHash });
         ops.add(operatorOf(server));
       } catch (e) {
         problems.push({ server, error: `block ${h}: ${(e as Error).message}` });
@@ -201,11 +205,18 @@ export async function fetchTransactions(opts: FetchOptions): Promise<FetchResult
       fail(`could not get block ${h} from ${need} independent servers${why.length ? ` (${why.join("; ")})` : ""}`);
     }
     if (lists.some((l) => l.key !== lists[0].key)) fail(`servers disagree about block ${h}: ${lists.map((l) => l.server).join(" vs ")}`);
+    // Two servers that both give a previous-block hash must give the same one.
+    const prevs = [...new Set(lists.map((l) => l.prevHash).filter((p): p is string => p !== undefined))];
+    if (prevs.length > 1) fail(`servers disagree about which block comes before block ${h}: ${lists.map((l) => l.server).join(" vs ")}`);
+    blockLinks.push({ height: h, hash: lists[0].hash, prevHash: prevs[0] });
     for (const t of lists[0].txids) {
       heightOf.set(t, h);
       if (!wanted.includes(t)) wanted.push(t);
     }
   }
+
+  const unlinked = checkBlockLinks(blockLinks);
+  if (unlinked) fail(unlinked);
 
   // ---- transactions: walk servers in order; each one is asked only for what is still missing ----
   const copies = new Map<string, { server: string; hex: string; height?: number }[]>();
@@ -273,7 +284,7 @@ export async function fetchTransactions(opts: FetchOptions): Promise<FetchResult
     if (fromBlock !== undefined && height === undefined && reported.length === 0) height = fromBlock;
     return { txid: t, hex: list[0].hex, height, server: list[0].server, confirmedBy: list.map((c) => c.server) };
   });
-  return { transactions, serversContacted: contacted, problems };
+  return { transactions, serversContacted: contacted, blockLinks, problems };
 }
 
 export interface ChainTipOptions {

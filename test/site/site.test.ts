@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { run } from "../../src/cli.ts";
 import { createHash as shimHash, sha256Hex } from "../../src/site/crypto-shim.ts";
-import { buildEngine, buildSite } from "../../tools/site-build.ts";
+import { buildEngine, buildSite, exampleData } from "../../tools/site-build.ts";
 
 const root = new URL("../../", import.meta.url);
 const rd = (p: string) => readFileSync(new URL(p, root), "utf8");
@@ -178,6 +178,24 @@ function codeOnly(js: string): string {
   return js.replace(/"(?:[^"\\\n]|\\.){1500,}"/g, '""');
 }
 
+const MAINNET_FILES = "https://github.com/Sireadell/imani/tree/main/examples/mainnet-01";
+
+test("the home page shows the real mainnet round with its live answer, its files and the re-check command", () => {
+  const html = readFileSync(join(siteDir, "index.html"), "utf8");
+  const box = html.slice(html.indexOf('<section id="mainnet-round"'), html.indexOf("</section>", html.indexOf('<section id="mainnet-round"')));
+  assert.ok(box.length > 0, "mainnet section");
+  assert.ok(html.indexOf('id="mainnet-round"') < html.indexOf("</header>"), "it sits near the real round, above the long sections");
+  assert.ok(box.includes('<a href="/api/check?round=mainnet-01">'));
+  assert.ok(box.includes(`<a href="${MAINNET_FILES}"`));
+  for (const s of ["IMANI-M1", "0.013 ZEC", "3,532,593 to 3,532,653", "482 transactions", "23 of 23", "one wallet we ran", "--fetch"]) assert.ok(box.includes(s), s);
+  // The command is the one the round's README gives.
+  const readme = rd("examples/mainnet-01/README.md");
+  const cmd = /node bin\/imani\.js check [^\n]*--chain examples\/mainnet-01\/chain\.json/.exec(readme)![0];
+  assert.ok(box.includes(cmd), "same command as examples/mainnet-01/README.md");
+  // The page opens on the mainnet round and checks it in the browser.
+  assert.ok(readFileSync(join(siteDir, "app.js"), "utf8").includes("IMANI-M1"));
+});
+
 test("the built page makes no network calls and has no external hosts", () => {
   const js = codeOnly(readFileSync(join(siteDir, "app.js"), "utf8"));
   const html = readFileSync(join(siteDir, "index.html"), "utf8");
@@ -192,11 +210,13 @@ test("the built page makes no network calls and has no external hosts", () => {
   assert.deepEqual(urls.sort(), explorer.payments.map((p: { txid: string }) => `${explorer.explorer}${p.txid}`).sort(), "no URLs in the code except the explorer links");
   for (const u of urls) assert.match(u, /^https:\/\/testnet\.zecblock\.com\/tx\/[0-9a-f]{64}$/);
   assert.match(rd("src/site/app.ts"), /a\.rel = "noopener noreferrer"/);
-  assert.deepEqual((html + css).match(/https?:\/\/[^\s"'`)]+/g) ?? [], [], "no URLs in html or css");
+  // The one address in the html is a plain link to the mainnet round's files, opened in a new tab with no referrer.
+  assert.deepEqual((html + css).match(/https?:\/\/[^\s"'`)]+/g) ?? [], [MAINNET_FILES], "no URLs in html or css except the mainnet files link");
+  assert.ok(html.includes(`<a href="${MAINNET_FILES}" target="_blank" rel="noopener noreferrer">`));
   assert.match(html, /connect-src 'none'/);
   assert.match(html, /default-src 'none'/);
   assert.doesNotMatch(css, /@import|url\(/);
-  assert.deepEqual([...html.matchAll(/\b(?:src|href)="([^"]+)"/g)].map((m) => m[1]).sort(), ["app.js", "check.html", "data:,", "rounds.html", "style.css"]);
+  assert.deepEqual([...html.matchAll(/\b(?:src|href)="([^"]+)"/g)].map((m) => m[1]).sort(), ["/api/check?round=mainnet-01", MAINNET_FILES, "app.js", "check.html", "data:,", "rounds.html", "style.css"].sort());
   // check.html, check.js and check.css are the referee page, which has its own policy (see referee.test.ts); the offline page above never loads them.
   // certificate-<round>.html and certificate.css are the printable certificates (certificate.test.ts holds their own rules).
   assert.deepEqual([...siteFiles].filter((f) => !/^certificate-[A-Za-z0-9_-]+\.html$/.test(f)).sort(), ["SHA256SUMS", "app.js", "certificate.css", "check.css", "check.html", "check.js", "index.html", "rounds.html", "style.css"]);
@@ -305,9 +325,12 @@ test("the first screen runs the real round to PASS and the cheated copy to FAIL,
   const page = engine.runPage({ disclosure: ex(`${round}/disclosure.json`), result: ex(`${round}/result.json`), chain: ex(`${round}/chain.json`), chainLabel: "chain.json" });
   assert.equal(page.verdict.result, "PASS");
   assert.equal(honest.verdict.result, "PASS");
-  const bad = engine.runPage({ disclosure: ex(`${cheat}/disclosure.json`), result: ex(`${cheat}/result.json`) });
+  const data = exampleData();
+  const entry = data.entries.find((e: any) => e.id === cheat)!;
+  assert.ok(entry, "the cheated copy is bundled");
+  const bad = engine.runPage({ disclosure: JSON.parse(data.blobs[entry.disclosure]), result: JSON.parse(data.blobs[entry.result]), chain: JSON.parse(data.blobs[entry.chain]), chainLabel: "chain.json" });
   assert.equal(bad.verdict.result, "FAIL");
-  assert.ok(bad.verdict.failed.includes("refunds-paid"));
+  assert.ok(bad.verdict.failed.includes("scan-hidden-bids"));
   const ids = new Set(page.verdict.checks.map((c: any) => c.id));
   const lines = [...app.matchAll(/ids: \[([^\]]*)\] \}/g)].flatMap((m) => [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]));
   assert.ok(lines.length >= 5);

@@ -16,10 +16,10 @@ npm run test:all
 |---|---|---|---|
 | `npm run test` | The checker: reading payments with a viewing key, the auction rules, each check level, the bidder's own check, refusing spending keys, the packed package, the leak scanner | 245 | 0 |
 | `npm run test:login` | Sign-in with a private wallet: one-time codes, expiry, replays, copied links, wrong sites, the receipt, a real test-network payment | 76 | 0 |
-| `npm run test:fetch` | Downloading blocks from two public servers and checking they agree | 35 | 2 (live, needs `LIVE=1`) |
+| `npm run test:fetch` | Downloading blocks from two public servers and checking they agree | 42 | 2 (live, needs `LIVE=1`) |
 | `npm run test:demo` | The auction shop demo, from sign-in to the checked result | 11 | 0 |
 | `npm run test:scan` | The scan that reads every block of an auction to find bids the seller left out | 32 | 1 (live, needs `LIVE=1`) |
-| `npm run test:site` | The browser page and the page that checks any round: same answers as the command line, no network call until the reader says yes, and a saved-file check with none | 80 | 0 |
+| `npm run test:site` | The browser page and the page that checks any round: same answers as the command line, no network call until the reader says yes, and a saved-file check with none | 88 | 0 |
 | `npm run test:tamper` | Change one fact at a time in every example round; none of the changed copies may pass | 1127 | 0 |
 | `npm run test:external` | Rounds another auction project published, read from their own files | 25 | 0 |
 | `npm run test:privacy` | Refund linking, the who-learns-what table, keys never printed or saved | 27 | 0 |
@@ -38,7 +38,7 @@ It also checks the opposite: reordering lists or fields changes nothing, and the
 | Check the real round from the saved blocks | `node bin/imani.js check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --chain examples/testnet-01/chain.json` | `PASS (21 of 21)`. The scan reads all 34 blocks (80 transactions) and the lot key sees exactly 6: 3 bids and 3 refunds |
 | Fetch the same blocks from public servers instead of trusting the file | `LIVE=1 npm run test:scan` | Two independent servers must agree on every block, then the same `PASS` |
 | Look up a payment yourself | The explorer links in `examples/testnet-01/README.md` | Each of the 6 transactions exists at the block the checker reports |
-| A bidder checks their own bid | `npx @sireadell/imani check ... --mine 2f5e8f4f37` | Counted, did not win, full refund owed, refund reached the address in the bid memo |
+| A bidder checks their own bid | `node bin/imani.js check ... --mine 2f5e8f4f37` | Counted, did not win, full refund owed, refund reached the address in the bid memo |
 | Sign in with a real wallet | `npx tsx --test test/login/real-wallet.test.ts` | One real test-network payment logs in. A second use, a missing proof, an expired code and a different site are all refused |
 
 The second live test, `LIVE=1 npm run test:fetch`, reads a main-network transaction from two public servers and checks they agree.
