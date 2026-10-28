@@ -4,14 +4,6 @@
 
 *Imani means "trust" in Swahili.*
 
-**What is new here**
-
-- Your refund address goes in your own bid memo, and Imani checks the seller's refund went there, not somewhere else.
-- A 52-round test kit grades any checker. Ours gets 52 of 52 on answers we wrote. A separate Python checker agrees on all 37 it decides.
-- Show one bid to anyone with a small file, no viewing key needed. Not yet made from a bidder's own wallet.
-- Sealed lots: before the close, the lot key shows same-size deposits and no price. Tested on built examples, no real wallet yet.
-- The browser page checks a whole round on your own computer, with no server and no network after it loads.
-
 Imani is a Zcash tool: a TypeScript library and a command line that read shielded Zcash payments with a read-only viewing key and check them against what someone published about them.
 
 | Part | What it is |
@@ -142,6 +134,14 @@ The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs
 | Scale test | 19,000 payments generated to the published size (made-up amounts from a fixed seed), more than the 16,971 bids reported for a big public sealed auction on Zcash this year: the seller-file checks take well under a second (about 50 ms in the scale notes, 143 ms on our last run). Reading real transactions with a key measured 16.8 ms each, so about 5 minutes for 19,000. That second figure is an estimate, not a run | `npx tsx --test test/scale.test.ts`, notes in [docs/SCALE.md](docs/SCALE.md) |
 
 The 19,000 payments are made-up amounts built from a fixed seed. Imani has not been run on that real auction's data.
+
+## What is new here
+
+- Your refund address goes in your own bid memo, and Imani checks the seller's refund went there, not somewhere else.
+- A 52-round test kit grades any checker. Ours gets 52 of 52 on answers we wrote. A separate Python checker agrees on all 37 it decides.
+- Show one bid to anyone with a small file, no viewing key needed. Not yet made from a bidder's own wallet.
+- Sealed lots: before the close, the lot key shows same-size deposits and no price. Tested on built examples, no real wallet yet.
+- The browser page checks a whole round on your own computer, with no server and no network after it loads.
 
 ## Zcash pieces it uses
 
