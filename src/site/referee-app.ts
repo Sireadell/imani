@@ -80,8 +80,8 @@ function showError(kind: string, message: string) {
   out.appendChild(b);
 }
 
-function row(table: HTMLTableElement, cells: string[], head = false) {
-  const tr = el("tr");
+function row(table: HTMLTableElement, cells: string[], head = false, cls = "") {
+  const tr = el("tr", cls || undefined);
   for (const c of cells) tr.appendChild(el(head ? "th" : "td", undefined, c));
   table.appendChild(tr);
 }
@@ -180,8 +180,8 @@ function render(o: Extract<RefereeOutcome, { ok: true }>, replies: BlockReply[] 
   row(t, ["Bids counted", `${r.bidCount}${r.lateBids ? ` (and ${r.lateBids} late or repeated, owed back in full)` : ""}`]);
   row(t, ["Reserve met", r.reserveMet ? "yes" : "no, so there are no winners"]);
   row(t, ["Clearing price", r.reserveMet ? `${zat(r.clearingPriceZat)} for each item` : "none"]);
-  for (const w of r.winners) row(t, [`Winner`, `bid ${short(w.txid)} of ${zat(w.amountZat)}: pays ${zat(w.paysZat)}, gets back ${zat(w.refundZat)}`]);
-  for (const l of r.losers) row(t, [`Did not win`, `bid ${short(l.txid)} of ${zat(l.amountZat)}: gets back all of it`]);
+  for (const w of r.winners) row(t, [`Winner`, `bid ${short(w.txid)} of ${zat(w.amountZat)}: pays ${zat(w.paysZat)}, gets back ${zat(w.refundZat)}`], false, "winner");
+  for (const l of r.losers) row(t, [`Did not win`, `bid ${short(l.txid)} of ${zat(l.amountZat)}: gets back all of it`], false, "loser");
   out.appendChild(t);
 
   out.appendChild(el("h3", undefined, "Refunds: owed by the rules, paid on the chain"));
