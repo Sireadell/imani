@@ -360,3 +360,9 @@ footer { margin-top: 24px; padding-bottom: 24px; }
 .step3 .n { margin-bottom: 6px; }
 .panel { padding: 14px 22px; }
 .hero .acts { margin: 16px 0 10px; }
+
+/* "Prove your own bid" answer: the same solid block, with the tag turned dark so it shows on white or red */
+#mine-out .banner { margin: 14px 0 0; }
+#mine-out .banner .big { font-size: 20px; letter-spacing: -0.3px; font-weight: 700; }
+#mine-out .banner p { white-space: pre-wrap; }
+#mine-out .banner .tag { background: #000; color: #fff; margin-right: 6px; vertical-align: 3px; }

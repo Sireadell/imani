@@ -371,7 +371,20 @@ function findMine(): void {
   }
   try {
     const text = lookupBid(last.result, last.verdict, $<HTMLInputElement>("mine-id").value);
-    for (const line of text.split("\n")) out.appendChild(el("p", undefined, line));
+    const lines = text.split("\n");
+    const counted = lines[0].startsWith("Your bid: counted");
+    const notCounted = !counted && !/counted bids start with/.test(lines[0]);
+    if (!counted && !notCounted) {
+      for (const line of lines) out.appendChild(el("p", undefined, line));
+      return;
+    }
+    const box = el("div", `banner ${counted ? "pass" : "fail"}`);
+    const head = el("p", "big");
+    head.appendChild(el("span", `tag ${counted ? "pass" : "fail"}`, counted ? "PASS" : "FAIL"));
+    head.appendChild(document.createTextNode(" " + lines[0]));
+    box.appendChild(head);
+    for (const line of lines.slice(1)) box.appendChild(el("p", undefined, line));
+    out.appendChild(box);
   } catch (e) {
     out.appendChild(el("p", "notice bad", e instanceof Error ? e.message : "Could not look that up."));
   }
