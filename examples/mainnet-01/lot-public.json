@@ -1,0 +1,9 @@
+{
+  "format": "imani-lot-public/1",
+  "lotId": "IMANI-M1",
+  "network": "main",
+  "openHeight": 3532593,
+  "closeHeight": 3532613,
+  "refundByHeight": 3532653,
+  "reserveZat": 100000
+}
