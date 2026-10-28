@@ -42,6 +42,23 @@ Before you start: `npm install`, `npm run build`, and clear the terminal.
 **Say:** "We re-read a real lot from Blind Bazaar and got the winner and price they published. We are not connected to them, and this is a re-read, not an audit. Refunds are outside what their key shows."
 **Say:** "Imani can't force a seller to open up. It makes opening up cheap, and it makes a refusal visible. Next: bidder tools on a real wallet, a live Zebra node, and readers for more projects."
 
+## Optional shots (every command below was run and gave the output shown)
+
+Cut these first if you need to stay near 2:00. Each takes about 10 seconds.
+
+**More ways a seller can cheat.** Run each, show only the last line:
+- `node bin/imani.js check --disclosure examples/broken/01-extra-fake-bid/disclosure.json --result examples/broken/01-extra-fake-bid/result.json --offline` gives `RESULT: FAIL (1 of 15 checks failed: bid-count)`.
+- The same command with `05-wrong-clearing-price` gives `FAIL ... winners-and-price`.
+- The same with `06-late-bid-counted` gives `FAIL ... no-late-bids`.
+**Say:** "Each cheat changes one fact. Imani names the exact check that caught it and says what to do next."
+
+**A leaky round.** `node bin/imani.js linking examples/memo-01/disclosure.json`
+**Show:** `note: 8 payment(s) use a transparent input or output`, and the timing note.
+**Say:** "Here the privacy checks flag a round that leaks: payments with public parts, and refunds a stranger could pair with bids by order."
+
+**The browser page.** Open https://imani-check.vercel.app. It opens on the real mainnet round.
+**Say:** "The same check runs in the browser, on the real mainnet auction."
+
 ## Don't say
 
 - That we read other projects' auctions in general.
