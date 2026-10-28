@@ -370,3 +370,13 @@ footer { margin-top: 24px; padding-bottom: 24px; }
 /* Home screens: one shared width so the nav bar and the content line up */
 body[data-screen] .wrap { max-width: 1080px; }
 body[data-screen] .bar { max-width: 1080px; }
+
+/* More screen: each block gets a numbered header, and the cheat lab is marked as the "break it" area */
+.sechead h3 { margin: 0; font-size: 12px; font-weight: 400; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+.sechead.cheathead .num { background: var(--fail); }
+.sechead.cheathead h3 { color: var(--fail); }
+#cheat-lab { border-color: var(--fail); border-left-width: 4px; margin-top: 0; }
+#cheat-lab h2 { font-size: 22px; }
+#cheat-lab .cheat-row .btn { background: #fff; color: #000; border-color: #fff; font-weight: 700; }
+#external-box { border: 1px solid #fff; border-radius: 4px; background: var(--panel); padding: 8px 18px 18px; margin-top: 0; }
+#external-box h2 { font-size: 22px; }
