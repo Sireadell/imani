@@ -13,7 +13,7 @@
 <header class="top hero">
   <div class="wrap">
     <nav class="nav" aria-label="Pages"><a href="check.html">Check any round</a> <a href="rounds.html">Checked rounds</a></nav>
-    <p class="pill" id="round-line">A real round on the Zcash test network, checked in your browser</p>
+    <p class="pill" id="round-line">A real round on Zcash mainnet, checked in your browser</p>
     <h1>Prove a sealed Zcash auction was <em>fair</em>.</h1>
     <p class="sub">Imani works the result out again from the chain: every bid counted, the right winner, every refund paid. It runs on your computer and shows nobody who bid. Once a lot's key is published, anyone holding it can read that lot's amounts and refund addresses. Bidders write their own refund address into their bid, and Imani checks, right in your browser with no server, that every refund landed there.</p>
     <div class="homegrid">
@@ -52,9 +52,9 @@
     </div>
     <section id="mainnet-round" class="hcard" aria-labelledby="mainnet-h">
       <span class="tag">REAL ZEC</span>
-      <h2 id="mainnet-h">A small round on Zcash mainnet</h2>
-      <p>The round above uses test coins. There is also a small round paid in real ZEC on Zcash mainnet: lot IMANI-M1, 3 bids and 3 refunds, with the bids adding up to 0.013 ZEC. The check reads every block from 3,532,593 to 3,532,653 (482 transactions) and passes 23 of 23 checks.</p>
-      <p class="small">All 3 bids came from one wallet we ran, and we ran the lot too. So this round shows the checker working on real chain data. It does not show independent bidders. Its saved blocks are 3.8 MB, too large to put in this page, so the live answer below is worked out on our server from those saved blocks.</p>
+      <h2 id="mainnet-h">The round above, on Zcash mainnet</h2>
+      <p>The round above is a small round paid in real ZEC on Zcash mainnet: lot IMANI-M1, 3 bids and 3 refunds, with the bids adding up to 0.013 ZEC. The check reads every block from 3,532,593 to 3,532,653 (482 transactions) and passes 23 of 23 checks.</p>
+      <p class="small">All 3 bids came from one wallet we ran, and we ran the lot too. So this round shows the checker working on real chain data. It does not show independent bidders. The page above checks it in your browser from its saved blocks. The live answer below is the same check worked out on our server.</p>
       <ul class="mainnet-links">
         <li><a href="/api/check?round=mainnet-01">Live answer for this round</a></li>
         <li><a href="https://github.com/Sireadell/imani/tree/main/examples/mainnet-01" target="_blank" rel="noopener noreferrer">The round's files on GitHub</a></li>
@@ -107,7 +107,7 @@
 
   <section aria-labelledby="pick-h">
     <h2 id="pick-h">1. Pick something to check</h2>
-    <p class="muted">The page opens on a real auction: a real Zcash wallet paid these bids and refunds on the public Zcash test network. Test coins have no value. Its lot name, DRY-01, stands for dry run: a real round paid with test coins before any real money.</p>
+    <p class="muted">The page opens on a real auction: a real Zcash wallet paid these bids and refunds on Zcash mainnet, in real ZEC. A second real round on the public Zcash test network, lot DRY-01, uses test coins that have no value.</p>
     <div class="chips" id="chips-real" role="group" aria-label="Real round and its tampered copies"></div>
     <div id="explorer-box"></div>
     <h3>Made-up rounds, one cheat at a time</h3>

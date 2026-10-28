@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { run } from "../../src/cli.ts";
 import { createHash as shimHash, sha256Hex } from "../../src/site/crypto-shim.ts";
-import { buildEngine, buildSite } from "../../tools/site-build.ts";
+import { buildEngine, buildSite, exampleData } from "../../tools/site-build.ts";
 
 const root = new URL("../../", import.meta.url);
 const rd = (p: string) => readFileSync(new URL(p, root), "utf8");
@@ -192,8 +192,8 @@ test("the home page shows the real mainnet round with its live answer, its files
   const readme = rd("examples/mainnet-01/README.md");
   const cmd = /node bin\/imani\.js check [^\n]*--chain examples\/mainnet-01\/chain\.json/.exec(readme)![0];
   assert.ok(box.includes(cmd), "same command as examples/mainnet-01/README.md");
-  // The mainnet blocks are not shipped inside the page.
-  assert.ok(!readFileSync(join(siteDir, "app.js"), "utf8").includes("IMANI-M1"));
+  // The page opens on the mainnet round and checks it in the browser.
+  assert.ok(readFileSync(join(siteDir, "app.js"), "utf8").includes("IMANI-M1"));
 });
 
 test("the built page makes no network calls and has no external hosts", () => {
@@ -325,9 +325,12 @@ test("the first screen runs the real round to PASS and the cheated copy to FAIL,
   const page = engine.runPage({ disclosure: ex(`${round}/disclosure.json`), result: ex(`${round}/result.json`), chain: ex(`${round}/chain.json`), chainLabel: "chain.json" });
   assert.equal(page.verdict.result, "PASS");
   assert.equal(honest.verdict.result, "PASS");
-  const bad = engine.runPage({ disclosure: ex(`${cheat}/disclosure.json`), result: ex(`${cheat}/result.json`) });
+  const data = exampleData();
+  const entry = data.entries.find((e: any) => e.id === cheat)!;
+  assert.ok(entry, "the cheated copy is bundled");
+  const bad = engine.runPage({ disclosure: JSON.parse(data.blobs[entry.disclosure]), result: JSON.parse(data.blobs[entry.result]), chain: JSON.parse(data.blobs[entry.chain]), chainLabel: "chain.json" });
   assert.equal(bad.verdict.result, "FAIL");
-  assert.ok(bad.verdict.failed.includes("refunds-paid"));
+  assert.ok(bad.verdict.failed.includes("scan-hidden-bids"));
   const ids = new Set(page.verdict.checks.map((c: any) => c.id));
   const lines = [...app.matchAll(/ids: \[([^\]]*)\] \}/g)].flatMap((m) => [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]));
   assert.ok(lines.length >= 5);
