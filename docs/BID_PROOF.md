@@ -68,7 +68,7 @@ The report also prints what the seller's result says about the bid (won or not, 
 `examples/bid-proof-01/` holds a proof of a real bid: 3,000,000 zatoshis in lot DRY-01 on the Zcash test network (transaction `b76cd31fa4...`, block 4,489,081), made by the lot owner with the round's published lot key. Checked on 2026-10-27 against the live test network, with no key:
 
 ```text
-$ npx @sireadell/imani bid-proof check --proof examples/bid-proof-01/proof.json --facts examples/bid-proof-01/lot-public.json --result examples/testnet-01/result.json --fetch
+$ node bin/imani.js bid-proof check --proof examples/bid-proof-01/proof.json --facts examples/bid-proof-01/lot-public.json --result examples/testnet-01/result.json --fetch
   [PROVEN] mined-height: Transaction b76cd31fa4 is in block 4489081, read from testnet.zec.rocks and api.testnet.cipherscan.app.
 RESULT: PASS (9 of 9 lines proven)
 Servers contacted: https://testnet.zec.rocks:443, cipherscan:https://api.testnet.cipherscan.app

@@ -35,7 +35,7 @@ It also checks the opposite: reordering lists or fields changes nothing, and the
 
 | What | Command | Result |
 |---|---|---|
-| Check the real round from the saved blocks | `npx @sireadell/imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --chain examples/testnet-01/chain.json` | `PASS (21 of 21)`. The scan reads all 34 blocks (80 transactions) and the lot key sees exactly 6: 3 bids and 3 refunds |
+| Check the real round from the saved blocks | `node bin/imani.js check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --chain examples/testnet-01/chain.json` | `PASS (21 of 21)`. The scan reads all 34 blocks (80 transactions) and the lot key sees exactly 6: 3 bids and 3 refunds |
 | Fetch the same blocks from public servers instead of trusting the file | `LIVE=1 npm run test:scan` | Two independent servers must agree on every block, then the same `PASS` |
 | Look up a payment yourself | The explorer links in `examples/testnet-01/README.md` | Each of the 6 transactions exists at the block the checker reports |
 | A bidder checks their own bid | `npx @sireadell/imani check ... --mine 2f5e8f4f37` | Counted, did not win, full refund owed, refund reached the address in the bid memo |
@@ -50,7 +50,7 @@ The second live test, `LIVE=1 npm run test:fetch`, reads a main-network transact
 | No secrets in the files | `npm run leak-scan` | No tracked file holds something shaped like a viewing key, spending key or seed phrase, except public test keys listed with a reason in `tools/leak-scan.allow.json` |
 | No secrets in the history | `npm run leak-scan:history` | The same scan over every file of every commit |
 | The checker page stays offline | `npm run test:site` | The built checker page contains no network call, and its security policy forbids one (`connect-src 'none'`). The "Check any round" page is tested to send nothing until the reader says yes |
-| Refunds that can be followed | `npx @sireadell/imani linking examples/testnet-01/disclosure.json` | 0 links that reach outside the real round |
+| Refunds that can be followed | `node bin/imani.js linking examples/testnet-01/disclosure.json` | 0 links that reach outside the real round |
 | Who learns what | `npm run who-learns` | Rebuilds `docs/WHO_LEARNS_WHAT.md` from the real round; a test fails if the table drifts |
 
 ## Install from scratch
