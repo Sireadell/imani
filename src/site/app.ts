@@ -467,9 +467,12 @@ async function homeShow(which: "honest" | "cheat"): Promise<void> {
   const passed = v.checks.filter((c) => c.status === "PASS").length;
   const pass = v.result === "PASS";
   verdictEl.className = "hverdict " + (pass ? "pass" : "fail");
-  verdictEl.textContent = pass
-    ? "FAIR · " + passed + " of " + v.checks.length + " checks passed"
-    : "NOT FAIR · " + v.failed.length + " of " + v.checks.length + " checks failed: " + v.failed.join(", ");
+  verdictEl.textContent = "";
+  verdictEl.appendChild(el("span", "vword", pass ? "FAIR" : "NOT FAIR"));
+  const vcount = el("span", "vcount");
+  vcount.appendChild(el("span", "vn", pass ? passed + " of " + v.checks.length : v.failed.length + " of " + v.checks.length));
+  vcount.appendChild(el("span", "vsub", pass ? "checks passed" : "checks failed"));
+  verdictEl.appendChild(vcount);
 }
 
 function homeStart(): void {

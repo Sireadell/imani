@@ -92,8 +92,12 @@ label { display: block; font-size: 12px; letter-spacing: 0.6px; text-transform: 
 .hchecks li.dim { color: var(--muted); }
 .stamp { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
 .stamp .k { display: block; margin-bottom: 4px; }
-.hverdict { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.5px; color: #fff; }
-.hverdict.fail { color: var(--fail); }
+.hverdict { margin: 0; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; color: #fff; }
+.hverdict .vword { font-size: 48px; font-weight: 700; letter-spacing: -2px; line-height: 1; }
+.hverdict .vcount { text-align: right; }
+.hverdict .vn { display: block; font-size: 22px; font-weight: 600; }
+.hverdict .vsub { display: block; font-size: 13px; color: var(--muted); }
+.hverdict.fail .vword { color: var(--fail); }
 #home-note { margin: 16px 0 0; color: var(--muted); font-size: 13px; }
 .acts { display: flex; gap: 12px; margin: 22px 0 14px; flex-wrap: wrap; }
 .switch { display: contents; }
@@ -228,7 +232,7 @@ footer { padding-bottom: 96px; margin-top: 40px; border-top: 1px solid var(--lin
   .pill { margin-top: 24px; }
   .doc { padding: 20px 18px; }
   .facts > div { font-size: 14px; }
-  .hverdict { font-size: 20px; }
+  .hverdict .vword { font-size: 36px; }
   .acts { flex-direction: column; gap: 10px; }
   .acts .btn, .switch button { width: 100%; }
   .grid2 { grid-template-columns: 1fr; }
