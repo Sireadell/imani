@@ -81,6 +81,7 @@ export function certificatePage(r: RoundRow, f: CertificateFacts): string {
   <table>
 ${trs}
   </table>
+  <div class="stamp ${pass ? "pass" : "fail"}"><div><div class="k">Verdict</div><div class="big">${pass ? "FAIR" : "NOT FAIR"}</div></div><div class="count"><div class="n">${esc(`${r.passed} of ${r.total}`)}</div><div>checks passed</div></div></div>
   <h2>How to re-check</h2>
   <p>To check it again yourself, open <strong>imani-check.vercel.app/?round=${esc(q)}</strong> and press "Check it yourself". It runs on your computer and sends nothing. Or, with Node 22 installed and this project downloaded, run: <code>node bin/imani.js check --disclosure examples/${esc(r.id)}/disclosure.json --result examples/${esc(r.id)}/result.json</code>.</p>
   <p class="foot">Imani checks the result. It never holds money and does not run auctions. It can't prove the seller didn't look at bids as they arrived.</p>

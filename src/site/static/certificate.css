@@ -34,3 +34,10 @@ code { font: 13px/1.4 var(--mono); overflow-wrap: anywhere; background: var(--ca
   th::after { border-bottom-color: #8a8f96; }
   code { background: #fff; border-color: #cfd3d8; }
 }
+
+.stamp { display: flex; justify-content: space-between; align-items: flex-end; margin: 24px 0; padding-top: 18px; border-top: 1px solid var(--line, #2f2f2f); }
+.stamp .k { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+.stamp .big { font-size: 40px; font-weight: 700; letter-spacing: -2px; line-height: 1.1; }
+.stamp.fail .big { color: #ff6b6b; }
+.stamp .count { text-align: right; }
+.stamp .n { font-size: 20px; font-weight: 600; }
