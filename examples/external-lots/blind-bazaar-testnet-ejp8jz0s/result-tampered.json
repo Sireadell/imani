@@ -1,0 +1,78 @@
+{
+  "auction_id": "ejp8jz0s",
+  "status": "closed",
+  "format": "first_price",
+  "units": 1,
+  "units_sold": 1,
+  "units_settled": 0,
+  "clearing_zats": 2500000,
+  "winning_amount_zats": 3000000,
+  "winning_txid": "59ec5bba2a68480f4456a728059db45623c7e9285c9b6e81301c9cc2863e431b",
+  "winning_txids": [
+    "3bf92156f95bedca7b85d6f99a3301c610fdc16ad9890a16a9c2bb58e9072e2b"
+  ],
+  "ledger_hash": "cc67e1ddb780137c783c99687d1f295deb7a42a84b25d37a9fcde2043d64d17c",
+  "valid_bid_count": 2,
+  "refund_latency_secs": null,
+  "refunds_sent": 0,
+  "refunds_pending": 1,
+  "settlement_txid": null,
+  "payout_txid": null,
+  "refunds": [
+    {
+      "kind": "sweep",
+      "status": "sent",
+      "txid": "9c5ffe254bddabb99d812a0fe9dd0697698b02856ff1ed1ce48e8693ada4cd8b"
+    },
+    {
+      "kind": "refund",
+      "status": "queued",
+      "txid": null
+    }
+  ],
+  "disclosure": [
+    {
+      "action_index": 1,
+      "cmx": "7c37512b98b2ad8af190907e54f0816a242fe6440964ef119d8132dcb5c5e819",
+      "memo": null,
+      "network": "test",
+      "note_version": 3,
+      "orchard_receiver": "90869eea8a2544c3189c048a36fb768ef3f2cdfcf06855d4599b21c975ddda198d719ce4bd0c6eeb068881",
+      "pool": "ironwood",
+      "recipient_address": "utest16ncsujeg0fjf2et3hkltgm7masedvdv05dsvslnhhvjtmej9lr7x5ar4sltfryj2jpx5ty79jcw4zyetjwjvkrtyzw6l7ysq0v6cch2y",
+      "rho": "11c28c8ac8f42fb269a87b01769a96bfa64bff0b4b0ba1cbc940143ba055623f",
+      "rseed": "1041d528b121fb2c93624edfd18834c78ebfa51ce23c00ca9356cb062b508c5b",
+      "txid": "59ec5bba2a68480f4456a728059db45623c7e9285c9b6e81301c9cc2863e431b",
+      "value_zats": 1000000,
+      "verified_against_chain": true,
+      "version": "bb-note-opening-1"
+    }
+  ],
+  "price_source": "own_bid",
+  "sealed": {
+    "sealed": 0,
+    "revealed": 2,
+    "unrevealed": 0,
+    "reveal_until": 1792701098,
+    "commit_hash": "88b2377b8e7adddb575b8225e9ecdb86ef9f009fc37c52753395b07a32317549"
+  },
+  "audit": {
+    "ufvk": "uviewtest12uu78qcwlrtvae98na4cj0eamvpphdmdn0jcv4ggksavzm944hah4q0pexy9atpj069uelupmuka6lwxmq82xrmjtnd4vxf6qj2vpf3akvw07pasvjg3mklpfgkc0cd9y3adnltf6e0e3erh3c6vxlmn47z0ha3f4wp8jlr8yuvzzt5z02ryhgzerx6gdx7jwse06rgn9aa3ne8psnz9gt94etzq306u300mvl85m7rzxrnxts6y0ek6zltfmlcglnc45j844ay2qtr937ugrz63spk7fq37ks06fwjxknuj79h2adxdxmf5v8wwcd4zpfmr60sf7kwrkjfs3zmay0dpp8v7ly27zf8vmup94q6dp3y5qaahcs0ydk6q8gzrlwuzpgqsyvcsq2jr9hpk8p8jmhmx4xw2lq37z2djfdxvc08cvmvehqx9vnjracga0jhcj5k5ycsmxkpkrr0pekxa7c6qhw3dlj7k8aapte7szwckwyjfmk3p",
+    "birthday": 4530063,
+    "address": "utest16ncsujeg0fjf2et3hkltgm7masedvdv05dsvslnhhvjtmej9lr7x5ar4sltfryj2jpx5ty79jcw4zyetjwjvkrtyzw6l7ysq0v6cch2y",
+    "reveals": [
+      {
+        "receipt": "d8999b381b7e2f305f4df4ac3bb230c59b4dda62096e665246bf7c5933152f4d",
+        "bid_zats": 3000000,
+        "salt": "69de83bc0397246a7097f2eb590e0cad"
+      },
+      {
+        "receipt": "6e81a7be83ab1849f98f85ade95eb6fda09523b35ca344d2ef5f7ebe077b9e52",
+        "bid_zats": 2500000,
+        "salt": "d63bb7c2fa348503fadef71688c775c1"
+      }
+    ],
+    "command": "bb-auction audit --ufvk uviewtest12uu78qcwlrtvae98na4cj0eamvpphdmdn0jcv4ggksavzm944hah4q0pexy9atpj069uelupmuka6lwxmq82xrmjtnd4vxf6qj2vpf3akvw07pasvjg3mklpfgkc0cd9y3adnltf6e0e3erh3c6vxlmn47z0ha3f4wp8jlr8yuvzzt5z02ryhgzerx6gdx7jwse06rgn9aa3ne8psnz9gt94etzq306u300mvl85m7rzxrnxts6y0ek6zltfmlcglnc45j844ay2qtr937ugrz63spk7fq37ks06fwjxknuj79h2adxdxmf5v8wwcd4zpfmr60sf7kwrkjfs3zmay0dpp8v7ly27zf8vmup94q6dp3y5qaahcs0ydk6q8gzrlwuzpgqsyvcsq2jr9hpk8p8jmhmx4xw2lq37z2djfdxvc08cvmvehqx9vnjracga0jhcj5k5ycsmxkpkrr0pekxa7c6qhw3dlj7k8aapte7szwckwyjfmk3p --birthday 4530063 --lot https://HOST/bb/auctions/ejp8jz0s --result https://HOST/bb/auctions/ejp8jz0s/result"
+  },
+  "price_proof": null
+}

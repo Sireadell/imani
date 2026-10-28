@@ -73,6 +73,7 @@
     "examples:sealed": "node --disable-warning=ExperimentalWarning tools/make-sealed-examples.ts",
     "examples:receivers": "node --disable-warning=ExperimentalWarning tools/make-receiver-examples.ts",
     "test:tamper": "tsx --test test/tamper/*.test.ts",
+    "check:blind-bazaar": "node --disable-warning=ExperimentalWarning tools/check-blind-bazaar.ts",
     "check:external": "tsx tools/external-check.ts",
     "test:external": "tsx --test test/external/*.test.ts",
     "test:privacy": "tsx --test test/privacy/*.test.ts",
