@@ -219,6 +219,31 @@ export function exampleData(): { entries: any[]; externals: { id: string; title:
   return { entries, externals, blobs };
 }
 
+/** Rounds shown on rounds.html only. Their files are too large to ship inside the checker page, so the
+ *  list reads them at build time and its link opens the live check instead of the in-page checker. */
+export function listOnlyData(): { entries: any[]; blobs: Record<string, string> } {
+  const blobs: Record<string, string> = {};
+  const store = (path: string) => {
+    const text = readText(path);
+    const id = sha(text).slice(0, 16);
+    blobs[id] = text;
+    return id;
+  };
+  const entries = [
+    {
+      id: "mainnet-01",
+      group: "real-honest",
+      title: "Real round on Zcash mainnet (IMANI-M1)",
+      expectedFailingCheck: null,
+      link: "/api/check?round=mainnet-01",
+      disclosure: store(p("examples", "mainnet-01", "disclosure.json")),
+      result: store(p("examples", "mainnet-01", "result.json")),
+      chain: store(p("examples", "mainnet-01", "chain.json")),
+    },
+  ];
+  return { entries, blobs };
+}
+
 export function examplesModule(): string {
   const { entries, externals, blobs } = exampleData();
   return `export const examples = ${JSON.stringify(entries)};\nexport const externals = ${JSON.stringify(externals)};\nexport const blobs = ${JSON.stringify(blobs)};\n`;

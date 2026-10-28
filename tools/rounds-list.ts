@@ -5,7 +5,7 @@ import { checkLot } from "../src/check.ts";
 import { checkExternalRound } from "../src/external/published-round.ts";
 import { blocksInRange } from "../src/scan/chain.ts";
 import { DEFAULT_GRACE_BLOCKS, scanRange } from "../src/scan/scan.ts";
-import { exampleData } from "./site-build.ts";
+import { exampleData, listOnlyData } from "./site-build.ts";
 import { certificateFile } from "./certificate.ts";
 
 export type RoundKind = "real" | "honest" | "tampered" | "published";
@@ -35,9 +35,12 @@ export function checkedDate(): string {
 }
 
 export function roundRows(date = checkedDate()): RoundRow[] {
-  const { entries, externals, blobs } = exampleData();
+  const data = exampleData();
+  const extra = listOnlyData();
+  const { externals } = data;
+  const blobs = { ...data.blobs, ...extra.blobs };
   const rows: RoundRow[] = [];
-  for (const e of entries) {
+  for (const e of [...data.entries, ...extra.entries]) {
     const d = JSON.parse(blobs[e.disclosure]);
     const r = JSON.parse(blobs[e.result]);
     let scan;
@@ -65,7 +68,7 @@ export function roundRows(date = checkedDate()): RoundRow[] {
       failing,
       expected,
       checked: date,
-      link: `index.html#round=${encodeURIComponent(e.id)}`,
+      link: e.link ?? `index.html#round=${encodeURIComponent(e.id)}`,
     });
   }
   for (const x of externals) {
@@ -93,7 +96,7 @@ export function roundRows(date = checkedDate()): RoundRow[] {
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
 const SECTIONS: [RoundKind, string, string][] = [
-  ["real", "Real round", "Paid and refunded on the public Zcash test network."],
+  ["real", "Real round", "Paid and refunded for real: one round on the public Zcash test network, one on Zcash mainnet."],
   ["published", "Rounds published by other projects", "Read from the files those projects published. The last one has one refund changed on purpose. The settlement file's 3 payments are on Zcash mainnet: two independent servers returned the same bytes for each, mined in blocks 3,499,413 and 3,499,451. Their amounts stay unread, because no key for that round was published."],
   ["honest", "Example rounds", "Made for testing. Every file is right, so each should PASS."],
   ["tampered", "Examples with one deliberate change", "Examples, not real auctions. Each has one thing changed on purpose, so each should FAIL."],
