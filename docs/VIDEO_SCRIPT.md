@@ -40,7 +40,7 @@ Before you start: `npm install`, `npm run build`, and clear the terminal.
 **Run:** `npm run check:blind-bazaar`
 **Show:** `RESULT: PASS (6 of 6 checks passed)`.
 **Say:** "We re-read a real lot from Blind Bazaar and got the winner and price they published. We are not connected to them, and this is a re-read, not an audit. Refunds are outside what their key shows."
-**Say:** "Imani can't force a seller to open up. It makes opening up cheap, and it makes a refusal visible. Next: bidder tools on a real wallet, a live Zebra node, and readers for more projects."
+**Say:** "Imani can't force a seller to open up. It makes opening up cheap, and it makes a refusal visible. Next: a live Zebra node, and readers for more projects."
 
 ## Extra shots, to bring it to about 3 minutes (every command below was run and gave the output shown)
 
@@ -51,6 +51,11 @@ Place them like this: the three cheats right after the `npm run demo` part, the 
 - The same command with `05-wrong-clearing-price` gives `FAIL ... winners-and-price`.
 - The same with `06-late-bid-counted` gives `FAIL ... no-late-bids`.
 **Say:** "Each cheat changes one fact. Imani names the exact check that caught it and says what to do next."
+
+**A bidder checks their own bid on real money.** Run this on the machine with the bidder wallet's read-only key file. Never show the file's contents.
+`node bin/imani.js bidder-check --facts examples/mainnet-01/lot-public.json --key-file ~/bidder-ufvk.txt --fetch --bid a41364b6cf4d426c3a6bea2092f9365534a2f79c1f28ec9b29a2e6a3b46b7b43:600000`
+**Show:** `RESULT: PASS` and the amount line `PROVEN`.
+**Say:** "A bidder, using only their own read-only key and public chain data, confirms their bid landed and their refund is right. We ran this on the three bidder wallets of our real mainnet auction, offline and live, and all six runs passed." (Run it once yourself before recording, and say only what the screen shows.)
 
 **A leaky round.** `node bin/imani.js linking examples/memo-01/disclosure.json`
 **Show:** `note: 8 payment(s) use a transparent input or output`, and the timing note.
@@ -64,4 +69,4 @@ Place them like this: the three cheats right after the `npm run demo` part, the 
 - That we read other projects' auctions in general.
 - That Imani is the most tested entry in the track.
 - That it matches LeakBench. We cover six auction-specific leak checks (no fee check), not 15.
-- That `bidder-check` has been run on a real wallet. It has not.
+- That the clearing price can be proven from one bidder's key. It can't, and `NOT PROVEN` on that point is correct.
