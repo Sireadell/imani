@@ -1,4 +1,5 @@
 import type { Check, Verdict } from "./check.ts";
+import { nextStepsText } from "./next-steps.ts";
 
 const LEVEL_NAME = {
   1: "Basic level (no key needed)",
@@ -57,6 +58,7 @@ export function toText(v: Verdict): string {
   lines.push("Bid list, winners, clearing price and refund list come from the seller's result file. Block heights and rules come from the disclosure file.");
   if (v.scanLevel !== "not run") lines.push("Scan level: every block in the range was read with the lot key, and the block heights were checked against the blocks the transactions were found in.");
   lines.push("");
+  if (v.result !== "PASS") lines.push(...nextStepsText(v.failed));
   lines.push(
     v.result === "PASS"
       ? `RESULT: PASS (${v.checks.length} of ${v.checks.length} checks passed${v.keyLevel === "not run" ? ", basic level only" : ""})`

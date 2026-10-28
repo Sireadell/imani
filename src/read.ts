@@ -71,8 +71,14 @@ interface DecodedOutput {
   recipientHex: string;
 }
 
+export interface TxShape {
+  transparentInputs: number;
+  transparentOutputs: number;
+}
+
 interface DecodedTx {
   txid: string;
+  shape?: TxShape;
   txVersion: number;
   branchId: string;
   upgrade: string;
@@ -92,7 +98,7 @@ export function readTransaction(txHex: string, viewingKey: string): ReadOutput[]
 }
 
 /** Same as readTransaction, plus the transaction id computed from the bytes. */
-export function readTransactionWithId(txHex: string, viewingKey: string): { txid: string; outputs: ReadOutput[] } {
+export function readTransactionWithId(txHex: string, viewingKey: string): { txid: string; outputs: ReadOutput[]; shape?: TxShape } {
   const result = decoder.decryptTx(txHex, viewingKey);
   const outputs: ReadOutput[] = [];
   for (const pool of ["orchard", "ironwood", "sapling"] as const) {
@@ -100,5 +106,5 @@ export function readTransactionWithId(txHex: string, viewingKey: string): { txid
       outputs.push({ pool, amountZat: o.amountZat, memo: o.memo, transferType: o.transferType, recipientHex: o.recipientHex });
     }
   }
-  return { txid: result.txid, outputs };
+  return { txid: result.txid, outputs, shape: result.shape };
 }

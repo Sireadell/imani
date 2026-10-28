@@ -23,7 +23,7 @@ function readTransactionWithId(txHex, viewingKey) {
       outputs.push({ pool, amountZat: o.amountZat, memo: o.memo, transferType: o.transferType, recipientHex: o.recipientHex });
     }
   }
-  return { txid: result.txid, outputs };
+  return { txid: result.txid, outputs, shape: result.shape };
 }
 
 // src/rules.ts

@@ -12,7 +12,7 @@ Before you start: `npm install`, `npm run build`, and clear the terminal.
 
 **Run:** `npm run demo`
 **Show:** three results, one after another.
-**Say:** "Three versions of one small auction. The honest one passes. In the second, the seller refunded a loser 100,000 zatoshis short, and Imani fails it and names the check, `refunds-paid`. In the third, the seller left a 3,000,000 bid out of their files. Imani reads every block of the auction and finds it: `scan-hidden-bids`."
+**Say:** "Three versions of one small auction. The honest one passes. In the second, the seller refunded a loser 100,000 zatoshis short, and Imani fails it, names the check, `refunds-paid`, and prints what to do next. In the third, the seller left a 3,000,000 bid out of their files. Imani reads every block of the auction and finds it: `scan-hidden-bids`."
 
 ## 0:45 to 1:10, a real round, and privacy
 
@@ -21,7 +21,7 @@ Before you start: `npm install`, `npm run build`, and clear the terminal.
 **Say:** "A real round on the Zcash test network. No servers, no amounts, no memos or addresses printed, and the key is read-only."
 **Run:** `node bin/imani.js linking examples/testnet-01/disclosure.json`
 **Show:** `RESULT: NO LINKS OUTSIDE THE ROUND`.
-**Say:** "It also checks that the auction did not leak. No refund can be followed past its own bid. It notes memos that give too much away and refunds that a stranger could match by timing."
+**Say:** "It also checks that the auction did not leak. No refund can be followed past its own bid. It notes memos that give too much away, refunds a stranger could match by timing, transparent parts and tied bids."
 
 ## 1:10 to 1:30, bidders and real money
 
@@ -46,5 +46,5 @@ Before you start: `npm install`, `npm run build`, and clear the terminal.
 
 - That we read other projects' auctions in general.
 - That Imani is the most tested entry in the track.
-- That it matches LeakBench. We cover four auction-specific leak checks, not 15.
+- That it matches LeakBench. We cover six auction-specific leak checks (no fee check), not 15.
 - That `bidder-check` has been run on a real wallet. It has not.

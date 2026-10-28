@@ -6,7 +6,9 @@
 //           the lot's payments, not who sent them, how much or what the memo says. Refunds that follow
 //           their bids by the same delay, or in the same order, let that stranger guess which refund
 //           belongs to which bid.
-// Both are notes, not failures: they never change the exit code of `imani linking`.
+//   Public parts and amounts: does a payment use a transparent input or output (public on the chain), do
+//           bids tie on the same amount, or is a bid an exact whole number of ZEC?
+// All are notes, not failures: they never change the exit code of `imani linking`.
 import type { Disclosure } from "../files.ts";
 import { refundMemoPrefix } from "../files.ts";
 import { readTransactionWithId } from "../read.ts";
@@ -26,6 +28,10 @@ export interface TimingFinding {
 
 export interface LotExposure {
   lotId: string;
+  /** Lot payments that have a transparent input or output (public on the chain). */
+  transparentTxs: string[];
+  /** Notes on bid amounts: ties and exact whole-ZEC bids. */
+  amountNotes: string[];
   memosChecked: number;
   memoNotes: MemoNote[];
   bidBlocks: number;
@@ -59,6 +65,20 @@ export function refundMemoNote(rest: string): MemoNoteKind | null {
   return HEX64.test(rest) ? null : "extra-text";
 }
 
+const ZEC = 100_000_000;
+
+/** Notes from the bid amounts alone (zatoshis). */
+export function amountFindings(amounts: number[]): string[] {
+  const notes: string[] = [];
+  const seen = new Map<number, number>();
+  for (const a of amounts) seen.set(a, (seen.get(a) ?? 0) + 1);
+  const ties = [...seen.values()].filter((n) => n >= 2);
+  if (ties.length) notes.push(`${ties.reduce((a, b) => a + b, 0)} bids share an amount with another bid, so the order between them rests on the tie rule and a stranger who learns one amount learns the other`);
+  const whole = amounts.filter((a) => a > 0 && a % ZEC === 0).length;
+  if (whole) notes.push(`${whole} bid(s) are an exact whole number of ZEC, the first amount anyone would guess`);
+  return notes;
+}
+
 const clean = (m: string) => m.replace(/\0+$/, "").trim();
 
 /** Timing notes from block heights alone: each pair is a bid's height and its refund's height. */
@@ -84,20 +104,24 @@ export function timingFindings(pairs: { bid: number; refund: number }[], refundH
 }
 
 export function lotExposure(d: Disclosure): LotExposure {
-  if (!d.ufvk) return { lotId: d.lotId, memosChecked: 0, memoNotes: [], bidBlocks: 0, refundBlocks: 0, timing: [] };
+  if (!d.ufvk) return { lotId: d.lotId, transparentTxs: [], amountNotes: [], memosChecked: 0, memoNotes: [], bidBlocks: 0, refundBlocks: 0, timing: [] };
   const bidPrefix = `bid:${d.lotId}:`;
   const refPrefix = refundMemoPrefix(d.lotId);
   const memoNotes: MemoNote[] = [];
   let memosChecked = 0;
   const bidHeight = new Map<string, number>();
   const refunds: { bid: string; height: number }[] = [];
+  const transparentTxs: string[] = [];
+  const bidAmounts: number[] = [];
   for (const t of d.transactions) {
-    const { txid, outputs } = readTransactionWithId(t.txHex, d.ufvk);
+    const { txid, outputs, shape } = readTransactionWithId(t.txHex, d.ufvk);
+    if (shape && (shape.transparentInputs > 0 || shape.transparentOutputs > 0)) transparentTxs.push(txid);
     for (const o of outputs) {
       const memo = clean(o.memo);
       if (o.transferType === "incoming" && memo.startsWith(bidPrefix)) {
         memosChecked++;
         bidHeight.set(txid, t.height);
+        bidAmounts.push(o.amountZat);
         const kind = bidMemoNote(memo.slice(bidPrefix.length));
         if (kind) memoNotes.push({ where: "bid", txid, kind });
       } else if (o.transferType === "outgoing" && memo.startsWith(refPrefix)) {
@@ -115,7 +139,7 @@ export function lotExposure(d: Disclosure): LotExposure {
   const bidBlocks = new Set(pairs.map((p) => p.bid)).size;
   const refundBlockSet = new Set(refunds.map((r) => r.height));
   const timing = timingFindings(pairs, refunds.map((r) => r.height));
-  return { lotId: d.lotId, memosChecked, memoNotes, bidBlocks, refundBlocks: refundBlockSet.size, timing };
+  return { lotId: d.lotId, transparentTxs, amountNotes: amountFindings(bidAmounts), memosChecked, memoNotes, bidBlocks, refundBlocks: refundBlockSet.size, timing };
 }
 
 const short = (h: string) => `${h.slice(0, 8)}…`;
@@ -127,7 +151,7 @@ const WHY: Record<MemoNoteKind, string> = {
 
 /** The notes number counts memo notes plus timing notes that are warnings. */
 export function exposureNotes(ex: LotExposure[]): number {
-  return ex.reduce((n, e) => n + e.memoNotes.length + e.timing.filter((t) => t.kind !== "one-refund-block").length, 0);
+  return ex.reduce((n, e) => n + e.memoNotes.length + e.amountNotes.length + (e.transparentTxs.length ? 1 : 0) + e.timing.filter((t) => t.kind !== "one-refund-block").length, 0);
 }
 
 export function exposureText(ex: LotExposure[]): string[] {
@@ -143,6 +167,10 @@ export function exposureText(ex: LotExposure[]): string[] {
       const hits = e.memoNotes.filter((n) => n.kind === k);
       if (hits.length) lines.push(`    ${hits.length} ${k}: ${WHY[k]} (${hits.map((h) => `${h.where} ${short(h.txid)}`).join(", ")})`);
     }
+    if (e.transparentTxs.length) lines.push(`  note: ${e.transparentTxs.length} payment(s) use a transparent input or output (${e.transparentTxs.map(short).join(", ")}). Those parts, including their amounts, are public on the chain`);
+    else lines.push("  Public parts: none of the lot's payments has a transparent input or output");
+    if (e.amountNotes.length) for (const n of e.amountNotes) lines.push(`  note: ${n}`);
+    else lines.push("  Amounts: no ties and no exact whole-ZEC bids");
     lines.push(`  What a stranger sees by block: bids in ${e.bidBlocks} block(s), refunds in ${e.refundBlocks} block(s)`);
     if (e.timing.length === 0) lines.push("    No timing pattern that lets a stranger pair a refund with a bid");
     for (const t of e.timing) lines.push(`    ${t.kind === "one-refund-block" ? "ok" : "note"}: ${t.detail}`);

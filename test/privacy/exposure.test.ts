@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
-import { bidMemoNote, refundMemoNote, timingFindings } from "../../src/privacy/exposure.ts";
+import { amountFindings, bidMemoNote, refundMemoNote, timingFindings } from "../../src/privacy/exposure.ts";
 import { run } from "../../src/cli.ts";
 
 const path = (p: string) => fileURLToPath(new URL(`../../examples/${p}/disclosure.json`, import.meta.url));
@@ -74,4 +74,30 @@ test("the extra checks never print a viewing key or a memo's text", () => {
   const r = run(["linking", path("testnet-01")]);
   assert.doesNotMatch(r.stdout, /uviewtest1|uview1/);
   assert.doesNotMatch(r.stdout, /bid:DRY-01:/);
+});
+
+test("bids that share an amount are noted as a tie", () => {
+  const n = amountFindings([1_500_000, 3_000_000, 1_500_000]);
+  assert.equal(n.length, 1);
+  assert.match(n[0], /2 bids share an amount/);
+});
+
+test("an exact whole-ZEC bid is noted, a plain amount is not", () => {
+  assert.equal(amountFindings([100_000_000, 150_000_000]).length, 1);
+  assert.deepEqual(amountFindings([1_500_000, 3_000_000, 1_000_000]), []);
+});
+
+test("a round with no bids has no amount notes", () => {
+  assert.deepEqual(amountFindings([]), []);
+});
+
+test("imani linking reports payments with a transparent part, and none on the real rounds", () => {
+  const memo = run(["linking", path("memo-01")]);
+  assert.match(memo.stdout, /note: 8 payment\(s\) use a transparent input or output/);
+  for (const round of ["testnet-01", "mainnet-01"]) {
+    const r = run(["linking", path(round)]);
+    assert.equal(r.code, 0, r.stderr);
+    assert.match(r.stdout, /none of the lot's payments has a transparent input or output/);
+    assert.match(r.stdout, /Amounts: no ties and no exact whole-ZEC bids/);
+  }
 });
