@@ -4,6 +4,24 @@
 
 *Imani means "trust" in Swahili.*
 
+**A sealed-bid auction on Zcash is private. So how does a bidder know the seller counted their bid and paid their refund? Today they take the seller's word.**
+
+Imani lets them check. When bidding closes, the seller shares a read-only viewing key for that one lot. It can show the lot's payments but can never spend them. Imani reads the bids and refunds with that key and public chain data, works out the winners, the price and every refund again, and compares them with the seller's published result. You get PASS or FAIL, with the failed check named. Anyone can run it, in a browser or on the command line.
+
+> A seller leaves one 3,000,000 bid out of their files. Imani reads every block of the auction and finds it: `RESULT: FAIL (1 of 20 checks failed: scan-hidden-bids)`.
+
+**Try it in under a minute:** https://imani-theta.vercel.app opens on a real auction from the Zcash test network and checks it on your own computer.
+
+## What we claim, and where to check it
+
+| Claim | Check it | You will see |
+|---|---|---|
+| A bidder can check their own bid | `node bin/imani.js check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --mine 2f5e8f4f37` | `Your bid: counted, 1,500,000 zat.` |
+| A real round passes against the chain | `node bin/imani.js check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --fetch` | `RESULT: PASS (21 of 21 checks passed)` |
+| A cheating seller is caught | `npm run demo` | A short refund and a hidden bid each fail, with the check named |
+| Nothing private is printed | `node bin/imani.js check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --offline --discreet` | `Servers contacted: none`, and no amount, memo or address |
+| Any checker can be graded | `npm run conformance -- --cmd "node bin/imani.js check"` | `52 of 52 verdicts right` |
+
 Imani is a Zcash tool: a TypeScript library and a command line that read shielded Zcash payments with a read-only viewing key and check them against what someone published about them.
 
 | Part | What it is |
