@@ -425,12 +425,13 @@ function homeFacts(): void {
   const r = parseJsonText(blobs[entry.result], "result") as { bidCount: number; winners: string[]; refunds: { reason: string }[] };
   const d = parseJsonText(blobs[entry.disclosure], "disclosure") as { lotId: string; network: string; openHeight: number; closeHeight: number };
   const heights = entry.chain ? (parseJsonText(blobs[entry.chain], "chain") as { blocks: { height: number }[] }).blocks.map((b) => b.height) : [d.openHeight, d.closeHeight];
-  const owed = r.bidCount - r.winners.length;
-  const paid = r.refunds.filter((x) => x.reason === "loser").length;
+  // Every bid is refunded: a winner gets the change above the clearing price, a loser gets the full amount.
+  const owed = r.bidCount;
+  const paid = r.refunds.length;
   $("home-lot").textContent = "Lot " + d.lotId;
   $("home-bids").textContent = r.bidCount + ", names never shown";
   $("home-winners").textContent = String(r.winners.length);
-  $("home-refunds").textContent = paid + " of " + owed;
+  $("home-refunds").textContent = paid + " of " + owed + " paid";
   $("home-blocks").textContent = nf(Math.min(...heights)) + " to " + nf(Math.max(...heights));
   $("home-network").textContent = d.network === "main" ? "Zcash mainnet" : "Zcash test network";
 }
