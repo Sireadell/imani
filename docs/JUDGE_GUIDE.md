@@ -1,10 +1,19 @@
 # Judge guide
 
+**The 60-second path** (Node 22.18 or newer, nothing else):
+
+1. Open https://imani-check.vercel.app. It checks a real Zcash mainnet auction in your browser and says FAIR. Press "Cheated copy" and the same page says NOT FAIR and names the checks that failed.
+2. Or in this folder: `npm install && npm run demo`. It checks one small auction three ways (honest, a short refund, a hidden bid) in about two seconds with no internet.
+3. Check the real mainnet round yourself from the saved blocks: `node bin/imani.js check --disclosure examples/mainnet-01/disclosure.json --result examples/mainnet-01/result.json --scan --chain examples/mainnet-01/chain.json` ends with `RESULT: PASS (23 of 23 checks passed)`.
+4. See that every check can fail: [docs/CHECK_COVERAGE.md](CHECK_COVERAGE.md) lists all 27 checks, each with a broken copy that makes it fail.
+
+The rest of this page has more detail.
+
 Imani is a Zcash tool: a TypeScript library and a command line that read shielded payments with librustzcash (compiled to WebAssembly, so it runs in Node and in a browser), check a whole round from one read-only viewing key plus public chain data, and can download every block from two independent block servers that must agree. Its job today is checking that a sealed-bid auction on Zcash was run fairly. A smaller second tool lets people sign in to a website by paying from a private Zcash wallet. The short version, one command per judging line, is at the top of the [README](../README.md). This page shows you how to try it in two minutes and how to test our privacy claim yourself.
 
 If a seller of something on Zcash runs a sealed auction, the bidders have to take the seller's word that the winner and price are right. Imani lets anyone recompute the result from the chain, using a read-only key the seller shares after the close. It answers PASS or FAIL, and names the check that failed.
 
-The checker page opens on a real auction: a real wallet paid its bids and refunds into the Ironwood pool on the public Zcash test network (test coins, no money). Its lot name, `DRY-01`, stands for dry run: a real round paid with test coins before any real money. The other examples are made-up rounds built with throwaway keys.
+The checker page opens on a real auction on Zcash mainnet: a real wallet paid 3 bids and the lot paid 3 refunds back, with real ZEC (0.013 in all). Its lot name is `IMANI-M1`. The next round on the page, `DRY-01`, is the earlier dry run with test coins on the public Zcash test network. The other examples are made-up rounds built with throwaway keys.
 
 ## Try it in two minutes
 
@@ -17,7 +26,7 @@ npm run demo
 
 You will see three checks of the same small auction. The honest round ends with `RESULT: PASS`. A copy where the seller refunded one loser 100,000 zatoshis too little ends with `RESULT: FAIL (1 of 15 checks failed: refunds-paid)`. A copy where the seller left a 3,000,000 bid out of their files ends with `RESULT: FAIL (1 of 20 checks failed: scan-hidden-bids)`. It takes about two seconds and needs no internet.
 
-Prefer a page? Open https://imani-check.vercel.app, or run `npm run site:serve` and open http://localhost:8788 for the same page built from your own copy. It opens on the real test-network round (PASS, 21 of 21). Press "The seller hides a bid" to see the scan catch it, or "Try a tampered copy" for the 6 made-up broken copies. The memo examples add two more. Paste a bid's transaction id into "Was my bid counted?" to see what a bidder would see.
+Prefer a page? Open https://imani-check.vercel.app, or run `npm run site:serve` and open http://localhost:8788 for the same page built from your own copy. It opens on the real mainnet round (PASS, 23 of 23). Press "Cheated copy" to see the scan catch a seller who left a bid out, or "Try a tampered copy" for the 6 made-up broken copies. The memo examples add two more. Paste a bid's transaction id into "Was my bid counted?" to see what a bidder would see.
 
 Prefer to see the whole shop? Run `npm run demo:app` and open the address it prints (usually http://localhost:8787, a free port if that one is taken). It is a small auction shop where you sign in by paying from a private wallet, place a bid, skip to the close, and check the result (8 broken copies there). A yellow banner says it is simulated, because the payments go to a pretend network.
 

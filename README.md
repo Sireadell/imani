@@ -39,7 +39,7 @@ There's a smaller second tool in the box: a sign-in button any website can add, 
 
 ## Try it in under a minute
 
-In your browser: **https://imani-check.vercel.app** opens on a real auction from the Zcash test network and checks it on your own computer. After it loads, that page makes no network requests.
+In your browser: **https://imani-check.vercel.app** opens on a real auction from Zcash mainnet (lot `IMANI-M1`, paid with real ZEC) and checks it on your own computer. The earlier test-network dry run, `DRY-01`, is the next round on the page. After it loads, that page makes no network requests.
 
 For an answer a script can read, the same site has a web link that checks the real round and returns JSON:
 

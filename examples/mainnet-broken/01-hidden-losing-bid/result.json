@@ -1,0 +1,39 @@
+{
+  "format": "imani-lot-result/1",
+  "lotId": "IMANI-M1",
+  "rules": {
+    "itemCount": 2,
+    "reserveZat": 100000
+  },
+  "bidCount": 2,
+  "bids": [
+    {
+      "txid": "25296f4012e9bd160d315f4ebef421ee0852718d08731d020510319fdd9b0f4f",
+      "amountZat": 400000
+    },
+    {
+      "txid": "a41364b6cf4d426c3a6bea2092f9365534a2f79c1f28ec9b29a2e6a3b46b7b43",
+      "amountZat": 600000
+    }
+  ],
+  "winners": [
+    "a41364b6cf4d426c3a6bea2092f9365534a2f79c1f28ec9b29a2e6a3b46b7b43",
+    "25296f4012e9bd160d315f4ebef421ee0852718d08731d020510319fdd9b0f4f"
+  ],
+  "clearingPriceZat": 100000,
+  "reserveMet": true,
+  "refunds": [
+    {
+      "bidTxid": "25296f4012e9bd160d315f4ebef421ee0852718d08731d020510319fdd9b0f4f",
+      "amountZat": 300000,
+      "reason": "change",
+      "memo": "refund:IMANI-M1:25296f4012e9bd160d315f4ebef421ee0852718d08731d020510319fdd9b0f4f"
+    },
+    {
+      "bidTxid": "a41364b6cf4d426c3a6bea2092f9365534a2f79c1f28ec9b29a2e6a3b46b7b43",
+      "amountZat": 500000,
+      "reason": "change",
+      "memo": "refund:IMANI-M1:a41364b6cf4d426c3a6bea2092f9365534a2f79c1f28ec9b29a2e6a3b46b7b43"
+    }
+  ]
+}

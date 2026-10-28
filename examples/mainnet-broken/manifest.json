@@ -1,0 +1,16 @@
+{
+  "about": "Copies of examples/mainnet-01, the real round on Zcash mainnet, where the seller changed their own files. The chain cannot be changed, so every copy is checked against the real chain.json. Run with --scan --chain examples/mainnet-01/chain.json.",
+  "copies": [
+    {
+      "name": "01-hidden-losing-bid",
+      "changed": "disclosure.json and result.json",
+      "expectedFailingCheck": "scan-hidden-bids",
+      "expectedFailingChecks": [
+        "refunds-paid",
+        "scan-hidden-bids",
+        "scan-unlisted-payments"
+      ],
+      "story": "The seller leaves the losing bid of 300,000 zatoshis and its refund out of their files, then says that with only two bids the price falls to the reserve of 100,000. The refunds on the chain no longer match, and the scan of the real mainnet blocks finds the bid and the refund the seller left out."
+    }
+  ]
+}
