@@ -155,7 +155,7 @@ The 19,000 payments are made-up amounts built from a fixed seed. Imani has not b
 ## What this is not
 
 - In a plain lot it doesn't prove the seller never looked at bids as they came in. It proves the counting, price and refunds are right. Sealed lots close that gap.
-- It needs the seller to publish the lot's viewing key. A seller who never does can't be checked past the basic level.
+- It needs the seller to publish the lot's viewing key. A seller who never does can't be checked past the basic level. Imani can't force a seller to open up. It makes opening up cheap (one read-only key and two files), and it makes a refusal visible. A bidder who wants an answer without the seller's help can still run `imani bidder-check` with their own key, but that only covers their own bids.
 - It isn't a zero-knowledge proof. You work the result out yourself from data the seller chose to share.
 - A payment sent through a NEAR Intents route carries no memo, so it can't be a bid and can't name a refund address. We haven't tested that route.
 - No PCZT and no FROST.
@@ -164,6 +164,13 @@ The 19,000 payments are made-up amounts built from a fixed seed. Imani has not b
 - The 19,000-payment scale round is generated to the published size, with made-up amounts from a fixed seed. It is not real.
 - The Zebra node route has been tested only against a fake node that answers in the shape of Zebra's own code, filled with real test-network blocks. It has not yet been run against a live Zebra node.
 - <!-- MAINNET-LINE -->Our mainnet round is small on purpose: 3 bids and 3 refunds of real ZEC (0.013 ZEC bid in total) on 2026-10-27, paid into the Ironwood pool in blocks 3,532,597 to 3,532,624, and checked at scan level from two public mainnet servers. Files and the command to re-check it: [examples/mainnet-01](examples/mainnet-01/README.md).<!-- /MAINNET-LINE -->
+
+## Next steps
+
+- Try `bidder-check` and `bid-proof` from a bidder's own wallet on a real round. The code is the same as the lot-owner way, which has run on a real round.
+- Run the Zebra route against a live Zebra node.
+- Add readers for other projects' rounds, one per project. Blind Bazaar is the first. Projects that hide bids with threshold encryption or zero-knowledge proofs need their own reader, and it depends on what each one publishes.
+- A seller who shares nothing can't be checked from the chain alone, because the payments are shielded. Checking such a seller is not on the list: it can't be done.
 
 Every check and every known limit is in [SPEC.md](SPEC.md).
 
