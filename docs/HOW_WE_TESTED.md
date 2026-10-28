@@ -55,4 +55,4 @@ The second live test, `LIVE=1 npm run test:fetch`, reads a main-network transact
 
 ## Install from scratch
 
-`test/pack.test.ts` packs the package, installs it in an empty folder and runs a check, inside 120 seconds. From a fresh copy, `npm ci` and `npm run demo` each take a few seconds and the demo prints the same PASS and two FAILs the judge guide describes.
+`test/pack.test.ts` packs the package, installs it in an empty folder and runs a check, inside 240 seconds. From a fresh copy, `npm ci` and `npm run demo` each take a few seconds and the demo prints the same PASS and two FAILs the judge guide describes.

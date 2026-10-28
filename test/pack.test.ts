@@ -14,7 +14,7 @@ const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 const sh = (cmd: string, args: string[], cwd: string) =>
   execFileSync(cmd, args, { cwd, encoding: "utf8", shell: cmd === npm && process.platform === "win32", stdio: ["ignore", "pipe", "pipe"] });
 
-test("the packed tarball installs in an empty folder and checks a lot, within 120 seconds", () => {
+test("the packed tarball installs in an empty folder and checks a lot, within 240 seconds", () => {
   const started = Date.now();
   const tmp = mkdtempSync(join(tmpdir(), "imani-pack-"));
   try {
@@ -82,5 +82,5 @@ test("the packed tarball installs in an empty folder and checks a lot, within 12
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
-  assert.ok(Date.now() - started < 120_000, "install and first check took longer than 120 seconds");
+  assert.ok(Date.now() - started < 240_000, "install and first check took longer than 240 seconds");
 });

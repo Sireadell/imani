@@ -1,12 +1,22 @@
 {
   "name": "@sireadell/imani",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Check that a sealed-bid auction on Zcash was fair, and sign in by paying from a private Zcash wallet.",
   "type": "module",
   "license": "MIT",
   "homepage": "https://imani-check.vercel.app",
-  "repository": { "type": "git", "url": "git+https://github.com/Sireadell/imani.git" },
-  "keywords": ["zcash", "auction", "sealed-bid", "verification", "viewing-key", "shielded"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sireadell/imani.git"
+  },
+  "keywords": [
+    "zcash",
+    "auction",
+    "sealed-bid",
+    "verification",
+    "viewing-key",
+    "shielded"
+  ],
   "files": [
     "bin",
     "dist",
