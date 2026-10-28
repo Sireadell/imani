@@ -1,4 +1,4 @@
-# Demo video script (about 2 minutes)
+# Demo video script (about 3 minutes)
 
 Record the terminal full screen, font large. Every command below was run and gave the output shown. Say the quoted lines; the rest is what to do on screen.
 Before you start: `npm install`, `npm run build`, and clear the terminal.
@@ -42,9 +42,9 @@ Before you start: `npm install`, `npm run build`, and clear the terminal.
 **Say:** "We re-read a real lot from Blind Bazaar and got the winner and price they published. We are not connected to them, and this is a re-read, not an audit. Refunds are outside what their key shows."
 **Say:** "Imani can't force a seller to open up. It makes opening up cheap, and it makes a refusal visible. Next: bidder tools on a real wallet, a live Zebra node, and readers for more projects."
 
-## Optional shots (every command below was run and gave the output shown)
+## Extra shots, to bring it to about 3 minutes (every command below was run and gave the output shown)
 
-Cut these first if you need to stay near 2:00. Each takes about 10 seconds.
+Place them like this: the three cheats right after the `npm run demo` part, the leaky round after the `linking` part, the browser page just before the 1:50 part. Each takes about 10 to 20 seconds. If you are running long, cut the browser page first, then the cheats.
 
 **More ways a seller can cheat.** Run each, show only the last line:
 - `node bin/imani.js check --disclosure examples/broken/01-extra-fake-bid/disclosure.json --result examples/broken/01-extra-fake-bid/result.json --offline` gives `RESULT: FAIL (1 of 15 checks failed: bid-count)`.
