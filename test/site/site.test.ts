@@ -215,8 +215,8 @@ test("the built page makes no network calls and has no external hosts", () => {
   assert.ok(html.includes(`<a href="${MAINNET_FILES}" target="_blank" rel="noopener noreferrer">`));
   assert.match(html, /connect-src 'none'/);
   assert.match(html, /default-src 'none'/);
-  assert.doesNotMatch(css, /@import|url\(/);
-  assert.deepEqual([...html.matchAll(/\b(?:src|href)="([^"]+)"/g)].map((m) => m[1]).sort(), ["/api/check?round=mainnet-01", MAINNET_FILES, "app.js", "check.html", "data:,", "rounds.html", "style.css"].sort());
+  assert.doesNotMatch(css.replace(/url\(data:font\/woff2;base64,[A-Za-z0-9+\/=]+\)/, ""), /@import|url\(/, "the only url in the stylesheet is the embedded font");
+  assert.deepEqual([...html.matchAll(/\b(?:src|href)="([^"]+)"/g)].map((m) => m[1]).sort(), ["/api/check?round=mainnet-01", MAINNET_FILES, "app.js", "check.html", "data:,", "rounds.html", "style.css", "#top", "#top", "#bid-box", "#bid-box", "#own-h", "#own-h", "#pick-h", "#pick-h"].sort());
   // check.html, check.js and check.css are the referee page, which has its own policy (see referee.test.ts); the offline page above never loads them.
   // certificate-<round>.html and certificate.css are the printable certificates (certificate.test.ts holds their own rules).
   assert.deepEqual([...siteFiles].filter((f) => !/^certificate-[A-Za-z0-9_-]+\.html$/.test(f)).sort(), ["SHA256SUMS", "app.js", "certificate.css", "check.css", "check.html", "check.js", "index.html", "rounds.html", "style.css"]);
@@ -304,7 +304,7 @@ test("the page has one button per example, a nav slot for Check any round, and a
 test("the first screen: the real round, one check button, an honest or cheated switch, and the private box", () => {
   const html = readFileSync(join(siteDir, "index.html"), "utf8");
   const hero = html.slice(html.indexOf('<header class="top hero">'), html.indexOf("</header>"));
-  assert.match(hero, /<h1>Prove a sealed Zcash auction was <em>fair<\/em>\.<\/h1>/);
+  assert.match(hero, /<h1>A fairness certificate for every sealed Zcash auction\.<\/h1>/);
   assert.equal((hero.match(/>Check it yourself<\/button>/g) ?? []).length, 1);
   assert.match(hero, />Honest round<\/button>/);
   assert.match(hero, />Cheated copy<\/button>/);
