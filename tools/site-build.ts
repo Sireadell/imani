@@ -89,6 +89,34 @@ export function exampleData(): { entries: any[]; externals: { id: string; title:
     return t[0].toUpperCase() + t.slice(1);
   };
   const entries: any[] = [];
+  const storeText = (text: string) => {
+    const id = sha(text).slice(0, 16);
+    blobs[id] = text;
+    return id;
+  };
+  // A seller can only change their own two files, never the chain: this copy of the mainnet round
+  // leaves the losing bid out of both files and keeps the real blocks.
+  const mainnetCheat = () => {
+    const LOSER = "ded6553a396bc4f76938cd59e8c14fb684f2298e1d98897d098b497929b81c22";
+    const d = JSON.parse(readText(p("examples", "mainnet-01", "disclosure.json")));
+    d.transactions = d.transactions.filter((t: { txid: string }) => t.txid !== LOSER);
+    const r = JSON.parse(readText(p("examples", "mainnet-01", "result.json")));
+    r.bids = r.bids.filter((b: { txid: string }) => b.txid !== LOSER);
+    r.bidCount = r.bids.length;
+    r.refunds = r.refunds.filter((x: { bidTxid: string }) => x.bidTxid !== LOSER);
+    r.clearingPriceZat = r.rules.reserveZat;
+    entries.push({
+      id: "mainnet-broken/01-hidden-losing-bid",
+      group: "real-tampered",
+      title: "Hidden losing bid",
+      story: "The seller leaves the losing bid of 300,000 and its refund out of their files, then says that with only two bids the price falls to the reserve of 100,000. The scan of the real blocks finds the bid the seller left out.",
+      expectedFailingCheck: "scan-hidden-bids",
+      expectedFailingChecks: ["scan-hidden-bids"],
+      disclosure: storeText(JSON.stringify(d, null, 1) + "\n"),
+      result: storeText(JSON.stringify(r, null, 1) + "\n"),
+      chain: store(p("examples", "mainnet-01", "chain.json")),
+    });
+  };
   const honest = (id: string, dir: string, title: string, story: string, scan: boolean, groupName?: "real-honest" | "receivers-honest" | "memo-honest" | "goal-honest" | "pricing-honest" | "totals-honest" | "sealed-honest") =>
     entries.push({
       id,
@@ -118,7 +146,17 @@ export function exampleData(): { entries: any[]; externals: { id: string; title:
       });
     }
   };
-  // The real round goes at the top: the page opens on it.
+  // The real rounds go at the top: the page opens on the mainnet one.
+  honest(
+    "mainnet-01",
+    "mainnet-01",
+    "Real round on Zcash mainnet (IMANI-M1)",
+    "A real wallet paid 3 bids in real ZEC into a fresh lot account on Zcash mainnet, and the lot paid 3 refunds back. 2 items, reserve 100,000 zatoshis. The scan reads all 61 real blocks of the auction (482 transactions) with the lot key and finds exactly the 6 payments of this lot.",
+    true,
+    "real-honest",
+  );
+  (entries[entries.length - 1] as Record<string, unknown>).link = "/api/check?round=mainnet-01";
+  mainnetCheat();
   honest(
     "testnet-01",
     "testnet-01",
@@ -229,18 +267,7 @@ export function listOnlyData(): { entries: any[]; blobs: Record<string, string> 
     blobs[id] = text;
     return id;
   };
-  const entries = [
-    {
-      id: "mainnet-01",
-      group: "real-honest",
-      title: "Real round on Zcash mainnet (IMANI-M1)",
-      expectedFailingCheck: null,
-      link: "/api/check?round=mainnet-01",
-      disclosure: store(p("examples", "mainnet-01", "disclosure.json")),
-      result: store(p("examples", "mainnet-01", "result.json")),
-      chain: store(p("examples", "mainnet-01", "chain.json")),
-    },
-  ];
+  const entries: any[] = [];
   return { entries, blobs };
 }
 

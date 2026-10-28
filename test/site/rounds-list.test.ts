@@ -58,8 +58,8 @@ test("the real mainnet round is on the list, passes 23 of 23, and has its re-che
   assert.ok(html.includes("23 of 23"));
   assert.ok(html.includes('<a href="/api/check?round=mainnet-01">Re-check it yourself</a>'));
   assert.ok(readFileSync(join(tmp, "site", "certificate-mainnet-01.html"), "utf8").includes("mainnet-01"));
-  assert.ok(!exampleData().entries.some((e) => e.id === "mainnet-01"), "its files are not bundled into the checker page");
-  assert.ok(!readFileSync(join(tmp, "site", "app.js"), "utf8").includes("IMANI-M1"), "app.js carries nothing of mainnet-01");
+  assert.ok(exampleData().entries.some((e) => e.id === "mainnet-01"), "its files are bundled, so the page checks it in the browser");
+  assert.ok(readFileSync(join(tmp, "site", "app.js"), "utf8").includes("IMANI-M1"), "app.js carries mainnet-01");
 });
 
 test("every example row has the result its own files were built to give", () => {

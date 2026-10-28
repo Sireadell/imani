@@ -20,7 +20,7 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: 
 
 type Selection = { kind: "example"; id: string } | { kind: "own" };
 
-let selection: Selection = { kind: "example", id: "testnet-01" };
+let selection: Selection = { kind: "example", id: "mainnet-01" };
 let ready = false;
 const own: { disclosure?: unknown; result?: unknown; chain?: unknown; chainName?: string; bidderKeys?: unknown; names: string[] } = { names: [] };
 
@@ -409,8 +409,8 @@ async function takeFiles(files: FileList | File[]): Promise<void> {
 
 
 // ---- Top of the page: the real round, an honest or cheated switch, and a one-click check. ----
-const HOME_ROUND = "testnet-01";
-const HOME_CHEAT = "testnet-broken/01-hidden-losing-bid";
+const HOME_ROUND = "mainnet-01";
+const HOME_CHEAT = "mainnet-broken/01-hidden-losing-bid";
 const HOME_LINES: { text: string; ids: string[] }[] = [
   { text: "Every bid on the chain is in the seller's list", ids: ["bid-count", "bid-amounts", "scan-hidden-bids"] },
   { text: "No bid was added after the close", ids: ["no-late-bids"] },
