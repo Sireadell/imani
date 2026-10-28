@@ -9,15 +9,16 @@
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-screen="check">
 <header class="top hero">
   <div class="bar" id="top">
-    <a class="logo" href="#top">Imani</a>
-    <nav class="nav" aria-label="Pages"><a href="#bid-box">Bid in a round</a> <a href="#own-h">Your own files</a> <a href="#pick-h">More ways</a> <a href="check.html">Check any round</a> <a href="rounds.html">Checked rounds</a></nav>
+    <a class="logo" href="#check">Imani</a>
+    <nav class="nav" aria-label="Screens"><a href="#check">Check</a><a href="#bid">Bid</a><a href="#files">Files</a><a href="#more">More</a></nav>
+    <nav class="nav links" aria-label="Pages"><a href="check.html">Check any round</a> <a href="rounds.html">Checked rounds</a></nav>
   </div>
-  <div class="wrap">
+  <div class="wrap screen" data-screen="check">
     <p class="pill" id="round-line">A real round on Zcash mainnet, checked in your browser</p>
-    <h1>A fairness certificate for every sealed Zcash auction.</h1>
+    <h1>A <span class="hl">fairness</span> certificate for every sealed Zcash auction.</h1>
     <p class="sub">Anyone can produce one in their browser, without seeing a single price.</p>
     <div class="doc" id="home-round">
       <div class="k">Fairness certificate &middot; <span id="home-lot">Lot</span></div>
@@ -44,6 +45,31 @@
       </div>
     </div>
     <p class="small muted">No account. Nothing about you leaves this page.</p>
+    <p class="servers" id="servers-home"><strong>Servers contacted: none.</strong> After this page loads it makes no network calls.</p>
+    <div class="sechead"><span class="num">01</span><h2>How it works</h2><span class="rule"></span></div>
+    <div class="steps3">
+      <div class="step3"><span class="n">1</span><b>Get the files</b><p>The seller's files, exactly as published.</p></div>
+      <div class="step3"><span class="n">2</span><b>Run 23 checks</b><p>Imani works the result out again from the chain.</p></div>
+      <div class="step3"><span class="n">3</span><b>Read the stamp</b><p>FAIR if every check passes, NOT FAIR if one fails.</p></div>
+    </div>
+    <div class="sechead"><span class="num">02</span><h2>Check it yourself</h2><span class="rule"></span></div>
+    <div class="panel">
+      <p>Drop the seller's files here. Imani works out which file is which. They are read on this device and never uploaded.</p>
+      <button type="button" class="btn primary" id="open-checker">Open checker</button>
+    </div>
+    <div class="sechead"><span class="num">03</span><h2>Kinds of round</h2><span class="rule"></span></div>
+    <div class="kgrid">
+        <button type="button" class="kcard" data-open="kind-live"><span class="ktag live">LIVE</span><span class="ktitle">A real round on Zcash mainnet</span></button>
+        <button type="button" class="kcard" data-open="kind-tampered"><span class="ktag cheat">CHEAT</span><span class="ktitle">Made-up rounds, one cheat at a time</span></button>
+        <button type="button" class="kcard" data-open="kind-scan"><span class="ktag demo">DEMO</span><span class="ktitle">With a full scan of every block</span></button>
+        <button type="button" class="kcard" data-open="kind-sealed"><span class="ktag demo">DEMO</span><span class="ktitle">Sealed lots: the seller cannot read the prices</span></button>
+        <button type="button" class="kcard" data-open="kind-goal"><span class="ktag demo">DEMO</span><span class="ktitle">Beyond auctions: a fundraiser or group buy</span></button>
+        <button type="button" class="kcard" data-open="more"><span class="ktag plus">+</span><span class="ktitle">More kinds of round</span></button>
+    </div>
+    <div class="sechead"><span class="num">04</span><h2>Read more</h2><span class="rule"></span></div>
+    <details class="more-row">
+      <summary>What the check proved and what stayed private</summary>
+      <div class="more-body">
     <div class="homegrid">
       <div class="hcard">
         <h3>What the check proved</h3>
@@ -54,51 +80,19 @@
         <ul class="sq"><li>Who the bidders are</li><li>What else is in their wallets</li><li>Any payment outside this one lot</li><li>Every amount, from anyone without this lot's key (the mainnet example publishes its key, so anyone can read that one)</li></ul>
       </div>
     </div>
-<section id="mainnet-round" class="hcard" aria-labelledby="mainnet-h">
-      <span class="tag">REAL ZEC</span>
-      <h2 id="mainnet-h">The round above, on Zcash mainnet</h2>
-      <p>The round above is a small round paid in real ZEC on Zcash mainnet: lot IMANI-M1, 3 bids and 3 refunds, with the bids adding up to 0.013 ZEC. The check reads every block from 3,532,593 to 3,532,653 (482 transactions) and passes 23 of 23 checks.</p>
-      <p class="small">All 3 bids came from 3 separate wallets that we ran, and we ran the lot too. So this round shows the checker working on real chain data. It does not show independent bidders. The page above checks it in your browser from its saved blocks. The live answer below is the same check worked out on our server.</p>
-      <ul class="mainnet-links">
-        <li><a href="/api/check?round=mainnet-01">Live answer for this round</a></li>
-        <li><a href="https://github.com/Sireadell/imani/tree/main/examples/mainnet-01" target="_blank" rel="noopener noreferrer">The round's files on GitHub</a></li>
-      </ul>
-      <p class="small">To check it yourself, run this in a copy of the Imani repository. It should print <code>RESULT: PASS (23 of 23 checks passed)</code>.</p>
-      <pre><code>node bin/imani.js check --disclosure examples/mainnet-01/disclosure.json --result examples/mainnet-01/result.json --scan --chain examples/mainnet-01/chain.json</code></pre>
-      <p class="small">To download the same blocks again from two public mainnet servers instead of using the saved copy, put <code>--fetch</code> in place of <code>--chain examples/mainnet-01/chain.json</code>.</p>
-    </section>
-    <div class="homegrid">
-<section id="cheat-lab" class="hcard">
-  <h2>Cheat lab</h2>
-  <p>Pick a cheat. The page changes one fact in the seller's files and runs the same check again.</p>
-  <div class="cheat-row">
-    <button type="button" class="btn" data-cheat="testnet-broken/01-hidden-losing-bid">Hide a bid</button>
-    <p class="small">The seller drops a losing bid of 1,500,000 zat from the files, so the price can fall.</p>
-  </div>
-  <div class="cheat-row">
-    <button type="button" class="btn" data-cheat="broken/04-short-refund">Short a refund</button>
-    <p class="small">Carol lost and got 1,400,000 back, not her 1,500,000. The seller's file still says 1,500,000.</p>
-  </div>
-  <div class="cheat-row">
-    <button type="button" class="btn" data-cheat="pricing-broken/04-leaves-out-the-lowest-winner">Name the wrong winner</button>
-    <p class="small">Carol's 1,500,000 is on the chain but the seller's list leaves it out and raises the price to Bob's bid, 2,000,000.</p>
-  </div>
-  <p class="cheat-result" role="status" hidden></p>
-  <button type="button" class="btn cheat-reset" hidden>Undo the cheat</button>
-  <p class="small">Each cheat is a real file from our test kit. Your own copy of Imani fails it the same way.</p>
-</section>
-    </div>
-    <p class="servers" id="servers-home"><strong>Servers contacted: none.</strong> After this page loads it makes no network calls.</p>
-    <p class="small muted more-line">Want to dig deeper? Check your own files, find your bid, or watch a cheat get caught.</p>
+      </div>
+    </details>
   </div>
 </header>
 
 <noscript><div class="wrap"><p class="notice bad">This page needs JavaScript to run the checks. It still sends nothing anywhere.</p></div></noscript>
 
 <main class="wrap">
-  <section aria-labelledby="about-h" class="about">
-    <h2 id="about-h">What Imani is</h2>
-    <p class="lead">Imani works the result out again from the chain: every bid counted, the right winner, every refund paid. It runs on your computer and shows nobody who bid. Once a lot's key is published, anyone holding it can read that lot's amounts and refund addresses. Bidders write their own refund address into their bid, and Imani checks, right in your browser with no server, that every refund landed there.</p>
+  <div class="screen" data-screen="check" id="screen-read">
+    <details class="more-row">
+      <summary id="about-h">What Imani is</summary>
+      <div class="more-body">
+<p class="lead">Imani works the result out again from the chain: every bid counted, the right winner, every refund paid. It runs on your computer and shows nobody who bid. Once a lot's key is published, anyone holding it can read that lot's amounts and refund addresses. Bidders write their own refund address into their bid, and Imani checks, right in your browser with no server, that every refund landed there.</p>
     <p class="lead">Imani is a Zcash library and command line. It reads shielded payments with librustzcash, Zcash's own code, built to WebAssembly so it runs right here in your browser. It checks a whole round from one read-only viewing key plus public chain data, and its command line can download every block from two independent block servers that must agree.</p>
     <p class="lead">This page puts it to work on one question: was this sealed-bid auction on Zcash run fairly? It works the result out again from the seller's own files. It runs in your browser and uploads nothing.</p>
     <ul class="adds">
@@ -108,87 +102,57 @@
       <li><strong>Can re-read the chain from two separate operators.</strong> The command line tool downloads every block again and accepts it only when both agree.</li>
     </ul>
     <p class="servers" id="servers-top"><strong>Servers contacted: none.</strong> This page makes no network calls after it loads. Your files stay on your device.</p>
-  </section>
-
-  <section aria-labelledby="pick-h">
-    <h2 id="pick-h">The same check, more kinds of round.</h2>
-    <p class="sub">Each one is a ready-made example. Open it, run the check, then flip to the cheated copy to see it fail.</p>
-    <p class="muted">The page opens on a real auction: a real Zcash wallet paid these bids and refunds on Zcash mainnet, in real ZEC. A second real round on the public Zcash test network, lot DRY-01, uses test coins that have no value.</p>
-    <div class="chips" id="chips-real" role="group" aria-label="Real round and its tampered copies"></div>
-    <div id="explorer-box"></div>
-    <h3>Made-up rounds, one cheat at a time</h3>
-    <p class="muted small">These are built offline with throwaway keys. Each tampered copy changes one thing and fails on exactly the check built to catch it. The stories name the made-up bidders: Alice bids 3,000,000 zat, a second bidder 2,000,000, Carol 1,500,000, and Dave sends 1,200,000 after the close.</p>
-    <p class="muted small" id="tamper-count">Try a tampered copy: pick the honest round or any of the 6 tampered copies.</p>
-    <div class="chips" id="chips-tampered" role="group" aria-label="Tampered copies"></div>
-    <h3>With a full scan of every block</h3>
-    <p class="muted small">The scan also reads every block of the auction from a saved copy of the chain, so a payment the seller left out cannot hide.</p>
-    <div class="chips" id="chips-scan" role="group" aria-label="Scan examples"></div>
-    <h3>With a refund address for every bid</h3>
-    <p class="muted small">The seller lists the address each bid's refund must go to. The check reads where each refund really went and compares.</p>
-    <div class="chips" id="chips-receivers" role="group" aria-label="Refund address examples"></div>
-    <h3>With the refund address written by the bidder</h3>
-    <p class="muted small">Each bidder writes their own refund address at the end of their bid memo, so the seller cannot choose it. The check reads it from the chain and compares it with where each refund went.</p>
-    <div class="chips" id="chips-memo" role="group" aria-label="Bid memo address examples"></div>
-    <h3>Beyond auctions: a fundraiser or group buy</h3>
-    <p class="muted small">The same check works on any collection where the amounts stay hidden. Here the rule is a goal: if the payments reach it they are all kept, and if not every payment is refunded in full.</p>
-    <div class="chips" id="chips-goal" role="group" aria-label="Fundraiser examples"></div>
-    <h3>Sealed lots: the seller cannot read the prices</h3>
-    <p class="muted small">In a plain lot the seller holds the key and could read every bid as it arrives. In a sealed lot each bidder pays the same deposit with only a hash of their price in the memo, then opens it after the close. The check verifies every opened price against its seal, applies the same price rule, and refunds deposits, with a penalty for seals that were never opened.</p>
-    <div class="chips" id="chips-sealed" role="group" aria-label="Sealed lot examples"></div>
-    <h3>Another price rule: the lowest winning bid</h3>
-    <p class="muted small">A seller can choose what winners pay. By default it is the highest bid that lost. In this lot it is the lowest bid that won, so the last bidder in pays exactly what they bid. The lot's published rules say which one applies, and the check refuses a result that uses the other.</p>
-    <div class="chips" id="chips-pricing" role="group" aria-label="Lowest winning price examples"></div>
-    <h3>Headline numbers a seller publishes</h3>
-    <p class="muted small">Big auctions are reported as a few totals: how many bids, how much came in, how much was kept and how much went back. When a seller publishes them in the result file, the check adds them up (received = kept + refunded), compares them with the winners and the refund list, and with the chain.</p>
-    <div class="chips" id="chips-totals" role="group" aria-label="Published totals examples"></div>
-  </section>
-
-  <section aria-labelledby="own-h">
-    <h2 id="own-h">Check a round you were given.</h2>
-    <p class="sub">Drop the seller's files here. Imani works out which file is which. They are read on this device and never uploaded.</p>
-    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Drop your disclosure file and result file here, or press to choose files">
-      <p class="big"><strong>Drop your files here</strong></p>
-      <p class="muted small">or press to choose them</p>
-      <input type="file" id="files" accept=".json,application/json" multiple hidden>
+      </div>
+    </details>
+    <details class="more-row">
+      <summary id="who-h">Who learns what</summary>
+      <div class="more-body">
+<p class="muted small">Worked out from the round's own files when this page was built, not typed by hand.</p>
+    <div class="table-scroll">
+    <!-- who-learns:start -->
+    <table class="who">
+      <thead><tr><th scope="col">Who</th><th scope="col">Learns</th><th scope="col">Cannot learn</th></tr></thead>
+      <tbody>
+      <tr><th scope="row">Anyone, without the lot key</th><td>That 80 shielded transactions in 34 blocks happened, and their fees</td><td>Any amount, memo or address, or even which 6 belong to this auction</td></tr>
+      <tr><th scope="row">Anyone, once the seller publishes the lot key</th><td>The 3 bid amounts, their memos with each bidder's refund address, the 3 refunds and which bid each one pays back</td><td>Who the bidders are, what else is in their wallets, or any payment outside this auction. Refund links that reach outside the round: 0</td></tr>
+      <tr><th scope="row">The seller</th><td>Each bid as it arrives, because the lot key is the seller's</td><td>Anything else in the bidders' wallets. The seller can see bids early, which the check cannot rule out</td></tr>
+      <tr><th scope="row">Each bidder</th><td>Their own bid and refund, and after the close everything the lot key shows</td><td>Other bidders' wallets or identities</td></tr>
+      <tr><th scope="row">The checker page and its host</th><td>That the page was downloaded</td><td>Anything you check here: the checker page makes no network calls after it loads</td></tr>
+      <tr><th scope="row">The "Check any round" page, its host and two public Zcash servers</th><td>Only after you press the button that names them: which block numbers you asked for. The host also sees your IP address, as any website does</td><td>Your viewing key, or any amount, memo or address: the key never leaves your browser tab, and the blocks are read there. A saved block file sends nothing at all</td></tr>
+      </tbody>
+    </table>
+    <!-- who-learns:end -->
     </div>
-    <p class="muted small" id="own-status" aria-live="polite"></p>
-    <div class="steps">
-      <div class="k">The files Imani looks for</div>
-      <div class="row3"><span class="n">01</span><div><b>Seller's disclosure file <em>&middot; Needed</em></b><p>The lot's published rules and the key for this lot.</p></div></div>
-      <div class="row3"><span class="n">02</span><div><b>Seller's result file <em>&middot; Needed</em></b><p>Winners, price and refunds as the seller reports them.</p></div></div>
-      <div class="row3"><span class="n">03</span><div><b>Saved chain file <em>&middot; Optional</em></b><p>Adds the full scan of every block, so no payment can hide.</p></div></div>
-    </div>
-  </section>
+      </div>
+    </details>
+    <details class="more-row">
+      <summary id="lim-h">What this check cannot do</summary>
+      <div class="more-body">
+<ul>
+      <li>It only works when the seller shares the lot's one-time viewing key. A viewing key shows payments and can never spend them. Without it only the basic checks run.</li>
+      <li>The seller can see bids as they arrive. The check proves that the counting, amounts, price and refunds are right. It does not prove the seller never looked.</li>
+      <li>This is not a zero-knowledge proof. You recompute the result yourself from data the seller chose to share.</li>
+      <li>A shared viewing key cannot be taken back. Anyone who has it can see that lot's payments for good, so each lot needs its own fresh key.</li>
+      <li>Without the scan level, block heights and the list of payments come from the seller's files. With it, a saved chain file covers every block, but you still trust where that file came from.</li>
+      <li>A refund is shown to have left the lot with the right amount. Where it went is compared with the refund address the bidder wrote in their bid memo, which the seller cannot choose, or else with the list the seller gives. A seller's list is the seller's word: each bidder should check the address next to their bid is theirs. A refund is shown to have reached the bidder for certain only when that bidder supplies their own viewing key.</li>
+    </ul>
+      </div>
+    </details>
+    <details class="more-row">
+      <summary id="priv-h">About your files and keys</summary>
+      <div class="more-body">
+<ul>
+      <li>Nothing is uploaded. The page has no code that talks to a server, and its security policy forbids it (<code>connect-src 'none'</code>).</li>
+      <li>Keys are checked on this device. Seed phrases and spending keys are refused. The lot key is never shown on this page.</li>
+      <li>Nothing is saved in cookies or browser storage. Close the tab and it is gone.</li>
+    </ul>
+    <p class="muted small" id="reader-line"></p>
+      </div>
+    </details>
+  </div>
 
-  <section aria-labelledby="out-h" id="results">
-    <h2 id="out-h">Result</h2>
-    <p class="story" id="story"></p>
-    <p class="muted small">Amounts are in zatoshis, the smallest unit of ZEC: 100,000,000 zatoshis make 1 ZEC, so 2,000,000 zat is 0.02 ZEC. How many checks run depends on what the files allow. 5 basic checks need no key. The lot key adds 10, plus 1 when refund addresses are known. Reading every block adds 5, and bidders' own keys add 1.</p>
-    <div id="outcome" aria-live="polite"><p class="muted">Loading the reader...</p></div>
-    <label class="toggle"><input type="checkbox" id="discreet"> Discreet mode: hide amounts and memos</label>
-    <div id="share-out"></div>
-  </section>
-
-  <section aria-labelledby="mine-h" id="mine-box">
-    <h2 id="mine-h">Prove your own bid was counted.</h2>
-    <p class="sub">Check that your payment was counted at the right amount and your refund was paid, without showing anyone your wallet.</p>
-    <p class="muted">Paste the transaction id of your bid (the receipt your wallet showed). The lookup runs here on your device, against the result above, and nothing is sent anywhere.</p>
-    <div class="row">
-      <input id="mine-id" class="field" aria-label="Your bid's transaction id" autocomplete="off" spellcheck="false" placeholder="transaction id (10 characters or more)">
-      <button type="button" class="btn primary" id="mine-go">Find my bid</button>
-    </div>
-    <div id="mine-out" aria-live="polite"></div>
-    <div class="steps">
-      <div class="k">What you will see</div>
-      <div class="row3 tickrow"><span class="n">&#10003;</span><div><b>Your payment is on the chain, before the close</b><p>Found at the block it landed in.</p></div></div>
-      <div class="row3 tickrow"><span class="n">&#10003;</span><div><b>It was counted at the amount you paid</b><p>The seller's result lists your bid at the right amount.</p></div></div>
-      <div class="row3 tickrow"><span class="n">&#10003;</span><div><b>Your refund was paid</b><p>Full refund if you lost, or your bid minus the clearing price if you won.</p></div></div>
-      <div class="row3 tickrow"><span class="n">&#10003;</span><div><b>Refund went to the address you wrote</b></div></div>
-      <p class="hint">A proof shows a payment was made, not who made it. Anyone holding the file can show it, like a receipt.</p>
-    </div>
-  </section>
-
-  <section aria-labelledby="bid-h" id="bid-box">
+  <div class="screen" data-screen="bid" id="screen-bid">
+<section aria-labelledby="bid-h" id="bid-box">
     <h2 id="bid-h">Bid in a round from any Zcash wallet.</h2>
     <p class="sub">You pay a deposit to the round's address. Your bid stays hidden, and you can check later that it was counted.</p>
     <p class="muted">Fill in the lot's details and get a payment request: a link and a QR code. Scan it or open it in a Zcash wallet that reads payment requests, and the wallet fills in the lot address, the amount and the bid memo for you. This page only builds the request. It sends nothing and holds no money.</p>
@@ -212,14 +176,59 @@
     </div>
   </section>
 
-  <section aria-labelledby="ext-h" id="external-box">
-    <h2 id="ext-h">A round someone else published</h2>
-    <p class="muted">Drop a round file published by another sealed-bid auction project on Zcash, or try one of the three below. The page works the numbers out again under that file's own rules. It reads only what is in the file and does not look at the chain.</p>
-    <div class="chips" id="chips-external" role="group" aria-label="Published round files"></div>
-    <div id="external-out" aria-live="polite"></div>
+  
+<section aria-labelledby="mine-h" id="mine-box">
+    <h2 id="mine-h">Prove your own bid was counted.</h2>
+    <p class="sub">Check that your payment was counted at the right amount and your refund was paid, without showing anyone your wallet.</p>
+    <p class="muted">Paste the transaction id of your bid (the receipt your wallet showed). The lookup runs here on your device, against the result above, and nothing is sent anywhere.</p>
+    <div class="row">
+      <input id="mine-id" class="field" aria-label="Your bid's transaction id" autocomplete="off" spellcheck="false" placeholder="transaction id (10 characters or more)">
+      <button type="button" class="btn primary" id="mine-go">Find my bid</button>
+    </div>
+    <div id="mine-out" aria-live="polite"></div>
+    <div class="steps">
+      <div class="k">What you will see</div>
+      <div class="row3 tickrow"><span class="n">&#10003;</span><div><b>Your payment is on the chain, before the close</b><p>Found at the block it landed in.</p></div></div>
+      <div class="row3 tickrow"><span class="n">&#10003;</span><div><b>It was counted at the amount you paid</b><p>The seller's result lists your bid at the right amount.</p></div></div>
+      <div class="row3 tickrow"><span class="n">&#10003;</span><div><b>Your refund was paid</b><p>Full refund if you lost, or your bid minus the clearing price if you won.</p></div></div>
+      <div class="row3 tickrow"><span class="n">&#10003;</span><div><b>Refund went to the address you wrote</b></div></div>
+      <p class="hint">A proof shows a payment was made, not who made it. Anyone holding the file can show it, like a receipt.</p>
+    </div>
   </section>
 
-  <section aria-labelledby="src-h">
+  
+  </div>
+
+  <div class="screen" data-screen="files" id="screen-files">
+<section aria-labelledby="own-h">
+    <h2 id="own-h">Check a round you were given.</h2>
+    <p class="sub">Drop the seller's files here. Imani works out which file is which. They are read on this device and never uploaded.</p>
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Drop your disclosure file and result file here, or press to choose files">
+      <p class="big"><strong>Drop your files here</strong></p>
+      <p class="muted small">or press to choose them</p>
+      <input type="file" id="files" accept=".json,application/json" multiple hidden>
+    </div>
+    <p class="muted small" id="own-status" aria-live="polite"></p>
+    <div class="steps">
+      <div class="k">The files Imani looks for</div>
+      <div class="row3"><span class="n">01</span><div><b>Seller's disclosure file <em>&middot; Needed</em></b><p>The lot's published rules and the key for this lot.</p></div></div>
+      <div class="row3"><span class="n">02</span><div><b>Seller's result file <em>&middot; Needed</em></b><p>Winners, price and refunds as the seller reports them.</p></div></div>
+      <div class="row3"><span class="n">03</span><div><b>Saved chain file <em>&middot; Optional</em></b><p>Adds the full scan of every block, so no payment can hide.</p></div></div>
+    </div>
+  </section>
+
+  
+<section aria-labelledby="out-h" id="results">
+    <h2 id="out-h">Result</h2>
+    <p class="story" id="story"></p>
+    <p class="muted small">Amounts are in zatoshis, the smallest unit of ZEC: 100,000,000 zatoshis make 1 ZEC, so 2,000,000 zat is 0.02 ZEC. How many checks run depends on what the files allow. 5 basic checks need no key. The lot key adds 10, plus 1 when refund addresses are known. Reading every block adds 5, and bidders' own keys add 1.</p>
+    <div id="outcome" aria-live="polite"><p class="muted">Loading the reader...</p></div>
+    <label class="toggle"><input type="checkbox" id="discreet"> Discreet mode: hide amounts and memos</label>
+    <div id="share-out"></div>
+  </section>
+
+  
+<section aria-labelledby="src-h">
     <h2 id="src-h">Where each number comes from</h2>
     <div class="legend">
       <div class="src chain"><h3>From the chain</h3><p>Bid amounts, bid memos, refund amounts and refund memos. Read from the lot's transactions with the lot's one-time viewing key. Transaction ids are recomputed from the bytes.</p></div>
@@ -228,47 +237,122 @@
     </div>
   </section>
 
-  <section aria-labelledby="who-h">
-    <h2 id="who-h">Who learns what in the real round</h2>
-    <p class="muted small">Worked out from the round's own files when this page was built, not typed by hand.</p>
-    <div class="table-scroll">
-    <!-- who-learns:start -->
-    <table class="who">
-      <thead><tr><th scope="col">Who</th><th scope="col">Learns</th><th scope="col">Cannot learn</th></tr></thead>
-      <tbody>
-      <tr><th scope="row">Anyone, without the lot key</th><td>That 80 shielded transactions in 34 blocks happened, and their fees</td><td>Any amount, memo or address, or even which 6 belong to this auction</td></tr>
-      <tr><th scope="row">Anyone, once the seller publishes the lot key</th><td>The 3 bid amounts, their memos with each bidder's refund address, the 3 refunds and which bid each one pays back</td><td>Who the bidders are, what else is in their wallets, or any payment outside this auction. Refund links that reach outside the round: 0</td></tr>
-      <tr><th scope="row">The seller</th><td>Each bid as it arrives, because the lot key is the seller's</td><td>Anything else in the bidders' wallets. The seller can see bids early, which the check cannot rule out</td></tr>
-      <tr><th scope="row">Each bidder</th><td>Their own bid and refund, and after the close everything the lot key shows</td><td>Other bidders' wallets or identities</td></tr>
-      <tr><th scope="row">The checker page and its host</th><td>That the page was downloaded</td><td>Anything you check here: the checker page makes no network calls after it loads</td></tr>
-      <tr><th scope="row">The "Check any round" page, its host and two public Zcash servers</th><td>Only after you press the button that names them: which block numbers you asked for. The host also sees your IP address, as any website does</td><td>Your viewing key, or any amount, memo or address: the key never leaves your browser tab, and the blocks are read there. A saved block file sends nothing at all</td></tr>
-      </tbody>
-    </table>
-    <!-- who-learns:end -->
-    </div>
+  
+  </div>
+
+  <div class="screen" data-screen="more" id="screen-more">
+    <section aria-labelledby="pick-h">
+<h2 id="pick-h">The same check, more kinds of round.</h2>
+    <p class="sub">Each one is a ready-made example. Open it, run the check, then flip to the cheated copy to see it fail.</p>
+    <p class="muted">The page opens on a real auction: a real Zcash wallet paid these bids and refunds on Zcash mainnet, in real ZEC. A second real round on the public Zcash test network, lot DRY-01, uses test coins that have no value.</p>
+      <div class="kinds">
+      <details class="kind" id="kind-live">
+        <summary>The round above, on Zcash mainnet</summary>
+        <div class="kind-body">
+          <section id="mainnet-round" class="hcard" aria-labelledby="mainnet-h">
+                <span class="tag">REAL ZEC</span>
+                <h2 id="mainnet-h">The round above, on Zcash mainnet</h2>
+                <p>The round above is a small round paid in real ZEC on Zcash mainnet: lot IMANI-M1, 3 bids and 3 refunds, with the bids adding up to 0.013 ZEC. The check reads every block from 3,532,593 to 3,532,653 (482 transactions) and passes 23 of 23 checks.</p>
+                <p class="small">All 3 bids came from 3 separate wallets that we ran, and we ran the lot too. So this round shows the checker working on real chain data. It does not show independent bidders. The page above checks it in your browser from its saved blocks. The live answer below is the same check worked out on our server.</p>
+                <ul class="mainnet-links">
+                  <li><a href="/api/check?round=mainnet-01">Live answer for this round</a></li>
+                  <li><a href="https://github.com/Sireadell/imani/tree/main/examples/mainnet-01" target="_blank" rel="noopener noreferrer">The round's files on GitHub</a></li>
+                </ul>
+                <p class="small">To check it yourself, run this in a copy of the Imani repository. It should print <code>RESULT: PASS (23 of 23 checks passed)</code>.</p>
+                <pre><code>node bin/imani.js check --disclosure examples/mainnet-01/disclosure.json --result examples/mainnet-01/result.json --scan --chain examples/mainnet-01/chain.json</code></pre>
+                <p class="small">To download the same blocks again from two public mainnet servers instead of using the saved copy, put <code>--fetch</code> in place of <code>--chain examples/mainnet-01/chain.json</code>.</p>
+              </section>
+          <div class="chips" id="chips-real" role="group" aria-label="Real round and its tampered copies"></div>
+              <div id="explorer-box"></div>
+        </div>
+      </details>
+      <details class="kind" id="kind-tampered">
+        <summary>Made-up rounds, one cheat at a time</summary>
+        <div class="kind-body">
+          <p class="muted small">These are built offline with throwaway keys. Each tampered copy changes one thing and fails on exactly the check built to catch it. The stories name the made-up bidders: Alice bids 3,000,000 zat, a second bidder 2,000,000, Carol 1,500,000, and Dave sends 1,200,000 after the close.</p>
+              <p class="muted small" id="tamper-count">Try a tampered copy: pick the honest round or any of the 6 tampered copies.</p>
+              <div class="chips" id="chips-tampered" role="group" aria-label="Tampered copies"></div>
+        </div>
+      </details>
+      <details class="kind" id="kind-scan">
+        <summary>With a full scan of every block</summary>
+        <div class="kind-body">
+          <p class="muted small">The scan also reads every block of the auction from a saved copy of the chain, so a payment the seller left out cannot hide.</p>
+              <div class="chips" id="chips-scan" role="group" aria-label="Scan examples"></div>
+        </div>
+      </details>
+      <details class="kind" id="kind-receivers">
+        <summary>With a refund address for every bid</summary>
+        <div class="kind-body">
+          <p class="muted small">The seller lists the address each bid's refund must go to. The check reads where each refund really went and compares.</p>
+              <div class="chips" id="chips-receivers" role="group" aria-label="Refund address examples"></div>
+        </div>
+      </details>
+      <details class="kind" id="kind-memo">
+        <summary>With the refund address written by the bidder</summary>
+        <div class="kind-body">
+          <p class="muted small">Each bidder writes their own refund address at the end of their bid memo, so the seller cannot choose it. The check reads it from the chain and compares it with where each refund went.</p>
+              <div class="chips" id="chips-memo" role="group" aria-label="Bid memo address examples"></div>
+        </div>
+      </details>
+      <details class="kind" id="kind-goal">
+        <summary>Beyond auctions: a fundraiser or group buy</summary>
+        <div class="kind-body">
+          <p class="muted small">The same check works on any collection where the amounts stay hidden. Here the rule is a goal: if the payments reach it they are all kept, and if not every payment is refunded in full.</p>
+              <div class="chips" id="chips-goal" role="group" aria-label="Fundraiser examples"></div>
+        </div>
+      </details>
+      <details class="kind" id="kind-sealed">
+        <summary>Sealed lots: the seller cannot read the prices</summary>
+        <div class="kind-body">
+          <p class="muted small">In a plain lot the seller holds the key and could read every bid as it arrives. In a sealed lot each bidder pays the same deposit with only a hash of their price in the memo, then opens it after the close. The check verifies every opened price against its seal, applies the same price rule, and refunds deposits, with a penalty for seals that were never opened.</p>
+              <div class="chips" id="chips-sealed" role="group" aria-label="Sealed lot examples"></div>
+        </div>
+      </details>
+      <details class="kind" id="kind-pricing">
+        <summary>Another price rule: the lowest winning bid</summary>
+        <div class="kind-body">
+          <p class="muted small">A seller can choose what winners pay. By default it is the highest bid that lost. In this lot it is the lowest bid that won, so the last bidder in pays exactly what they bid. The lot's published rules say which one applies, and the check refuses a result that uses the other.</p>
+              <div class="chips" id="chips-pricing" role="group" aria-label="Lowest winning price examples"></div>
+        </div>
+      </details>
+      <details class="kind" id="kind-totals">
+        <summary>Headline numbers a seller publishes</summary>
+        <div class="kind-body">
+          <p class="muted small">Big auctions are reported as a few totals: how many bids, how much came in, how much was kept and how much went back. When a seller publishes them in the result file, the check adds them up (received = kept + refunded), compares them with the winners and the refund list, and with the chain.</p>
+              <div class="chips" id="chips-totals" role="group" aria-label="Published totals examples"></div>
+        </div>
+      </details>
+      </div>
+    </section>
+<section id="cheat-lab" class="hcard">
+  <h2>Cheat lab</h2>
+  <p>Pick a cheat. The page changes one fact in the seller's files and runs the same check again.</p>
+  <div class="cheat-row">
+    <button type="button" class="btn" data-cheat="testnet-broken/01-hidden-losing-bid">Hide a bid</button>
+    <p class="small">The seller drops a losing bid of 1,500,000 zat from the files, so the price can fall.</p>
+  </div>
+  <div class="cheat-row">
+    <button type="button" class="btn" data-cheat="broken/04-short-refund">Short a refund</button>
+    <p class="small">Carol lost and got 1,400,000 back, not her 1,500,000. The seller's file still says 1,500,000.</p>
+  </div>
+  <div class="cheat-row">
+    <button type="button" class="btn" data-cheat="pricing-broken/04-leaves-out-the-lowest-winner">Name the wrong winner</button>
+    <p class="small">Carol's 1,500,000 is on the chain but the seller's list leaves it out and raises the price to Bob's bid, 2,000,000.</p>
+  </div>
+  <p class="cheat-result" role="status" hidden></p>
+  <button type="button" class="btn cheat-reset" hidden>Undo the cheat</button>
+  <p class="small">Each cheat is a real file from our test kit. Your own copy of Imani fails it the same way.</p>
+</section>
+<section aria-labelledby="ext-h" id="external-box">
+    <h2 id="ext-h">A round someone else published</h2>
+    <p class="muted">Drop a round file published by another sealed-bid auction project on Zcash, or try one of the three below. The page works the numbers out again under that file's own rules. It reads only what is in the file and does not look at the chain.</p>
+    <div class="chips" id="chips-external" role="group" aria-label="Published round files"></div>
+    <div id="external-out" aria-live="polite"></div>
   </section>
 
-  <section class="limits" aria-labelledby="lim-h">
-    <h2 id="lim-h">What this check cannot do</h2>
-    <ul>
-      <li>It only works when the seller shares the lot's one-time viewing key. A viewing key shows payments and can never spend them. Without it only the basic checks run.</li>
-      <li>The seller can see bids as they arrive. The check proves that the counting, amounts, price and refunds are right. It does not prove the seller never looked.</li>
-      <li>This is not a zero-knowledge proof. You recompute the result yourself from data the seller chose to share.</li>
-      <li>A shared viewing key cannot be taken back. Anyone who has it can see that lot's payments for good, so each lot needs its own fresh key.</li>
-      <li>Without the scan level, block heights and the list of payments come from the seller's files. With it, a saved chain file covers every block, but you still trust where that file came from.</li>
-      <li>A refund is shown to have left the lot with the right amount. Where it went is compared with the refund address the bidder wrote in their bid memo, which the seller cannot choose, or else with the list the seller gives. A seller's list is the seller's word: each bidder should check the address next to their bid is theirs. A refund is shown to have reached the bidder for certain only when that bidder supplies their own viewing key.</li>
-    </ul>
-  </section>
-
-  <section aria-labelledby="priv-h">
-    <h2 id="priv-h">About your files and keys</h2>
-    <ul>
-      <li>Nothing is uploaded. The page has no code that talks to a server, and its security policy forbids it (<code>connect-src 'none'</code>).</li>
-      <li>Keys are checked on this device. Seed phrases and spending keys are refused. The lot key is never shown on this page.</li>
-      <li>Nothing is saved in cookies or browser storage. Close the tab and it is gone.</li>
-    </ul>
-    <p class="muted small" id="reader-line"></p>
-  </section>
+  
+  </div>
 </main>
 
 <div class="wrap cmd"><div class="k">Run it from the command line</div><code>npx -y @sireadell/imani check --disclosure disclosure.json --result result.json</code></div>
@@ -276,7 +360,7 @@
 <footer class="wrap muted small">
   <p>Imani is open source (MIT). The command line tool runs the same checks and also works offline.</p>
 </footer>
-<nav class="tabs" aria-label="Sections"><a href="#top">Check</a><a href="#bid-box">Bid</a><a href="#own-h">Files</a><a href="#pick-h">More</a></nav>
+<nav class="tabs" aria-label="Sections"><a href="#check">Check</a><a href="#bid">Bid</a><a href="#files">Files</a><a href="#more">More</a></nav>
 <script src="app.js" defer></script>
 </body>
 </html>

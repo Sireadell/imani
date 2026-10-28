@@ -274,3 +274,89 @@ table td.pass, table td.fail { color: inherit; }
 tr:has(td.fail) > td:nth-child(1) { box-shadow: inset 3px 0 0 var(--fail); padding-left: 10px; }
 tr:has(td.fail) { background: rgba(255, 107, 107, 0.14); }
 .tablewrap th:nth-child(4) { white-space: nowrap; }
+
+/* Home page: four screens, only one visible at a time. The URL hash picks it (#check, #bid, #files, #more). */
+.screen { display: none; }
+body[data-screen="check"] .screen[data-screen="check"],
+body[data-screen="bid"] .screen[data-screen="bid"],
+body[data-screen="files"] .screen[data-screen="files"],
+body[data-screen="more"] .screen[data-screen="more"] { display: block; }
+body[data-screen] .wrap { max-width: 900px; }
+.bar { gap: 28px; }
+.bar .nav { margin: 0; gap: 4px 28px; }
+.bar .nav:not(.links) { margin-right: auto; margin-left: 24px; font-size: 15px; }
+.bar .nav:not(.links) a { padding: 6px 0 4px; border-bottom: 2px solid transparent; }
+.bar .nav:not(.links) a[aria-current="page"] { color: #fff; border-bottom-color: #fff; }
+.nav.links a { font-size: 13px; }
+.hl { background: #fff; color: #000; padding: 0 0.2em; }
+.screen > section { margin-top: 28px; margin-bottom: 8px; }
+.screen > section + section { border-top: 1px solid var(--line); padding-top: 4px; margin-top: 40px; }
+.screen > section > h2 { margin-top: 24px; }
+.hero .pill { margin-top: 36px; }
+.hero .homegrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 36px; margin-top: 0; }
+.hero .homegrid .hcard { margin-top: 24px; }
+
+/* Section headers: white number tag, grey label, thin line to the right edge */
+.sechead { display: flex; align-items: center; gap: 12px; margin: 44px 0 16px; }
+.sechead .num { background: #fff; color: #000; font-size: 12px; font-weight: 700; letter-spacing: 0.6px; padding: 2px 8px; border-radius: 3px; }
+.sechead h2 { margin: 0; font-size: 12px; font-weight: 400; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+.sechead .rule { flex: 1; height: 1px; background: var(--line); }
+
+/* 01 How it works */
+.steps3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.step3 { border: 1px solid var(--line); border-radius: 4px; padding: 16px 18px; background: var(--panel); }
+.step3 .n { display: inline-block; background: #fff; color: #000; font-size: 12px; font-weight: 700; padding: 0 7px; border-radius: 3px; margin-bottom: 10px; }
+.step3 b { display: block; font-size: 15.5px; }
+.step3 p { margin: 4px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+
+/* 02 Check it yourself */
+.panel { display: flex; align-items: center; justify-content: space-between; gap: 24px; border: 1px solid #fff; border-radius: 4px; padding: 20px 24px; background: var(--panel); }
+.panel p { margin: 0; color: var(--soft); font-size: 14px; max-width: 560px; }
+.panel .btn { flex: none; background: #fff; color: #000; border-color: #fff; }
+
+/* 03 Kinds of round: a grid of cards that open the More screen */
+.kgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.kcard { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; text-align: left; font: inherit; color: #fff; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 16px 18px; min-height: 104px; cursor: pointer; }
+.kcard:hover, .kcard:focus-visible { border-color: #fff; }
+.ktag { background: #fff; color: #000; font-size: 11px; font-weight: 700; letter-spacing: 0.8px; padding: 1px 7px; border-radius: 3px; }
+.ktag.cheat { background: var(--fail); }
+.ktitle { font-size: 14.5px; font-weight: 600; line-height: 1.35; }
+
+/* 04 Read more: closed rows */
+.more-row, .kind { border: 1px solid var(--line); border-radius: 4px; background: var(--panel); margin: 0 0 10px; }
+.more-row summary, .kind summary { cursor: pointer; padding: 14px 18px; font-size: 15.5px; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+.more-row summary::-webkit-details-marker, .kind summary::-webkit-details-marker { display: none; }
+.more-row summary::after, .kind summary::after { content: "+"; color: var(--muted); font-weight: 400; }
+.more-row[open] summary::after, .kind[open] summary::after { content: "\2212"; color: #fff; }
+.more-row[open], .kind[open] { border-color: #666; }
+.more-body, .kind-body { padding: 0 18px 16px; }
+.more-body > p:nth-child(1) { margin-top: 0; }
+.more-body h2 { display: none; }
+.kind-body .hcard { margin-top: 0; border-top: 0; padding-top: 0; }
+.kind-body .chips { margin-top: 12px; }
+#cheat-lab { border: 1px solid var(--line); border-radius: 4px; background: var(--panel); padding: 8px 18px 16px; margin: 28px 0 0; }
+#external-box { margin-top: 28px; }
+.kinds { margin-top: 18px; }
+
+/* Check screen: certificate in two columns (facts left, checks and verdict right) to keep the screen short */
+body[data-screen] .wrap { max-width: 980px; }
+.hero .doc { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 40px; padding: 24px 30px; margin-top: 20px; align-items: start; }
+.hero .doc > .k, .hero .doc > .where, .hero .doc > .facts { grid-column: 1; }
+.hero .doc > #home-verdict-card { grid-column: 2; grid-row: 1 / span 3; }
+.hero .doc .where { margin-bottom: 10px; }
+.hero .doc .hchecks { margin-top: 0; }
+.hero .doc .stamp { margin-top: 14px; }
+.hero .pill { margin-top: 24px; }
+.hero h1 { margin-top: 12px; }
+.sechead { margin: 32px 0 14px; }
+.kcard { min-height: 0; padding: 14px 16px; gap: 10px; }
+.hero + main.wrap { margin-top: -10px; }
+.hero .homegrid .hcard:nth-child(1) { margin-top: 12px; }
+.hero .doc { grid-template-rows: auto auto 1fr; }
+.hero .doc .facts { align-self: start; }
+.cmd { margin-top: 24px; }
+footer { margin-top: 24px; padding-bottom: 24px; }
+.step3 { padding: 12px 16px; }
+.step3 .n { margin-bottom: 6px; }
+.panel { padding: 14px 22px; }
+.hero .acts { margin: 16px 0 10px; }

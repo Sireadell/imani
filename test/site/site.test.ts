@@ -184,7 +184,7 @@ test("the home page shows the real mainnet round with its live answer, its files
   const html = readFileSync(join(siteDir, "index.html"), "utf8");
   const box = html.slice(html.indexOf('<section id="mainnet-round"'), html.indexOf("</section>", html.indexOf('<section id="mainnet-round"')));
   assert.ok(box.length > 0, "mainnet section");
-  assert.ok(html.indexOf('id="mainnet-round"') < html.indexOf("</header>"), "it sits near the real round, above the long sections");
+  assert.ok(html.indexOf('id="mainnet-round"') > html.indexOf('id="screen-more"'), "it is the first kind of round on the More screen");
   assert.ok(box.includes('<a href="/api/check?round=mainnet-01">'));
   assert.ok(box.includes(`<a href="${MAINNET_FILES}"`));
   for (const s of ["IMANI-M1", "0.013 ZEC", "3,532,593 to 3,532,653", "482 transactions", "23 of 23", "3 separate wallets that we ran", "--fetch"]) assert.ok(box.includes(s), s);
@@ -216,7 +216,7 @@ test("the built page makes no network calls and has no external hosts", () => {
   assert.match(html, /connect-src 'none'/);
   assert.match(html, /default-src 'none'/);
   assert.doesNotMatch(css.replace(/url\(data:font\/woff2;base64,[A-Za-z0-9+\/=]+\)/, ""), /@import|url\(/, "the only url in the stylesheet is the embedded font");
-  assert.deepEqual([...html.matchAll(/\b(?:src|href)="([^"]+)"/g)].map((m) => m[1]).sort(), ["/api/check?round=mainnet-01", MAINNET_FILES, "app.js", "check.html", "data:,", "rounds.html", "style.css", "#top", "#top", "#bid-box", "#bid-box", "#own-h", "#own-h", "#pick-h", "#pick-h"].sort());
+  assert.deepEqual([...html.matchAll(/\b(?:src|href)="([^"]+)"/g)].map((m) => m[1]).sort(), ["/api/check?round=mainnet-01", MAINNET_FILES, "app.js", "check.html", "data:,", "rounds.html", "style.css", "#check", "#check", "#check", "#bid", "#bid", "#files", "#files", "#more", "#more"].sort());
   // check.html, check.js and check.css are the referee page, which has its own policy (see referee.test.ts); the offline page above never loads them.
   // certificate-<round>.html and certificate.css are the printable certificates (certificate.test.ts holds their own rules).
   assert.deepEqual([...siteFiles].filter((f) => !/^certificate-[A-Za-z0-9_-]+\.html$/.test(f)).sort(), ["SHA256SUMS", "app.js", "certificate.css", "check.css", "check.html", "check.js", "index.html", "rounds.html", "style.css"]);
@@ -304,7 +304,7 @@ test("the page has one button per example, a nav slot for Check any round, and a
 test("the first screen: the real round, one check button, an honest or cheated switch, and the private box", () => {
   const html = readFileSync(join(siteDir, "index.html"), "utf8");
   const hero = html.slice(html.indexOf('<header class="top hero">'), html.indexOf("</header>"));
-  assert.match(hero, /<h1>A fairness certificate for every sealed Zcash auction\.<\/h1>/);
+  assert.match(hero, /<h1>A <span class="hl">fairness<\/span> certificate for every sealed Zcash auction\.<\/h1>/);
   assert.equal((hero.match(/>Check it yourself<\/button>/g) ?? []).length, 1);
   assert.match(hero, />Honest round<\/button>/);
   assert.match(hero, />Cheated copy<\/button>/);

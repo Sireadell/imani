@@ -354,6 +354,7 @@ function showShareLink(target: ShareTarget): void {
 }
 
 async function choose(id: string, scroll = true): Promise<void> {
+  showScreen("files");
   selection = { kind: "example", id };
   showShareLink({ kind: "round", id });
   syncChips();
@@ -404,6 +405,7 @@ async function takeFiles(files: FileList | File[]): Promise<void> {
   status.textContent = `Loaded: ${have.length ? have.join(", ") : "nothing yet"}.${problems.length ? " " + problems.join(" ") : ""}`;
   if (own.disclosure === undefined && own.result === undefined && own.chain === undefined && own.bidderKeys === undefined) return;
   selection = { kind: "own" };
+  showScreen("files");
   syncChips();
   $("results").scrollIntoView({ behavior: "smooth", block: "start" });
   await checkWithNotice();
@@ -477,6 +479,48 @@ async function homeShow(which: "honest" | "cheat"): Promise<void> {
   verdictEl.appendChild(vcount);
 }
 
+/** The four screens of the home page. Only one shows at a time; the URL hash names it so Back and links work. */
+const SCREENS = ["check", "bid", "files", "more"];
+
+function showScreen(name: string): void {
+  if (!SCREENS.includes(name)) name = "check";
+  document.body.dataset.screen = name;
+  for (const a of document.querySelectorAll<HTMLAnchorElement>(".nav a[href^='#'], .tabs a")) {
+    if (a.getAttribute("href") === "#" + name) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
+  }
+}
+
+/** Switch screens from a click: show it, put the name in the URL and start at the top. */
+function goScreen(name: string): void {
+  showScreen(name);
+  if (location.hash !== "#" + name) history.pushState(null, "", "#" + name);
+  window.scrollTo(0, 0);
+}
+
+function screenFromHash(hash: string): string {
+  const name = hash.replace(/^#/, "");
+  if (SCREENS.includes(name)) return name;
+  const m = /^#(round|external)=/.exec(hash);
+  return m ? (m[1] === "external" ? "more" : "files") : "check";
+}
+
+function wireScreens(): void {
+  showScreen(screenFromHash(location.hash));
+  window.addEventListener("hashchange", () => { showScreen(screenFromHash(location.hash)); window.scrollTo(0, 0); });
+  $("open-checker").addEventListener("click", () => goScreen("files"));
+  for (const b of document.querySelectorAll<HTMLButtonElement>(".kcard")) {
+    b.addEventListener("click", () => {
+      goScreen("more");
+      const card = document.getElementById(b.dataset.open ?? "");
+      if (card instanceof HTMLDetailsElement) {
+        card.open = true;
+        card.scrollIntoView({ block: "start" });
+      }
+    });
+  }
+}
+
 function homeStart(): void {
   homeFacts();
   $("home-honest").addEventListener("click", () => void homeShow("honest"));
@@ -486,6 +530,7 @@ function homeStart(): void {
 }
 
 async function start(): Promise<void> {
+  wireScreens();
   for (const e of [...byGroup("real-honest"), ...byGroup("real-tampered")]) $("chips-real").appendChild(chip(e));
   renderExplorer();
   for (const x of externals) {
