@@ -24,7 +24,7 @@ What a small real-money round and a day-long auction cover. Sources: the small r
 
 | What | Blocks | Bids | Check time | Where the number comes from |
 |---|---|---|---|---|
-| Small mainnet round (lot IMANI-M1), run for real with real ZEC | 61 (3,532,593 to 3,532,653), holding 482 transactions | 3 bids, 3 refunds | 107 seconds to download every block from two public mainnet servers and check it, `RESULT: PASS (23 of 23 checks passed)`. About 6 seconds from the saved copy | [examples/mainnet-01](../examples/mainnet-01/README.md), one run on 2026-10-28 |
+| Small mainnet round (lot IMANI-M1), run for real with real ZEC | 61 (3,532,593 to 3,532,653), holding 482 transactions | 3 bids, 3 refunds | about 2 to 3 minutes (107 s and 179 s in two runs) to download every block from two public mainnet servers and check it, `RESULT: PASS (23 of 23 checks passed)`. About 6 seconds from the saved copy | [examples/mainnet-01](../examples/mainnet-01/README.md), one run on 2026-10-28 |
 | Measured real-block stretch | 500 | Not applicable (a stranger key, nothing decrypted) | 1,366 seconds to download (about 2.7 seconds per block), 27 seconds to read 2,893 transactions | SPEC.md, "Speed and cost" |
 | Day-long mainnet auction | About 1,150 (one block every 75 seconds) | Not measured | About 52 minutes and about 65 MB at the 500-block rate | SPEC.md, "Speed and cost" |
 | The basic level at 19,000 bid payments (generated) | Not applicable | 19,000 | About 50 milliseconds | The table above, `test/scale.test.ts` |

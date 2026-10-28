@@ -56,7 +56,7 @@ test("the real mainnet round is on the list, passes 23 of 23, and has its re-che
   assert.equal(row.total, 23);
   assert.equal(row.expected, true);
   assert.ok(html.includes("23 of 23"));
-  assert.ok(html.includes('<a href="/api/check?round=mainnet-01">Re-check it yourself</a>'));
+  assert.ok(html.includes('<a href="/api/check?round=mainnet-01">Check on our server</a>'));
   assert.ok(readFileSync(join(tmp, "site", "certificate-mainnet-01.html"), "utf8").includes("mainnet-01"));
   assert.ok(!exampleData().entries.some((e) => e.id === "mainnet-01"), "its files are not bundled into the checker page");
   assert.ok(!readFileSync(join(tmp, "site", "app.js"), "utf8").includes("IMANI-M1"), "app.js carries nothing of mainnet-01");
@@ -97,7 +97,7 @@ test("each re-check link opens a round the checker page knows", () => {
   const { entries, externals } = exampleData();
   const hrefs = [...html.matchAll(/<a href="(index\.html#(round|external)=[^"]+)">Re-check it yourself<\/a>/g)];
   assert.equal(hrefs.length, roundRows().length - 1, "every row but the live-check one");
-  assert.equal((html.match(/<a href="\/api\/check\?round=mainnet-01">Re-check it yourself<\/a>/g) ?? []).length, 1);
+  assert.equal((html.match(/<a href="\/api\/check\?round=mainnet-01">Check on our server<\/a>/g) ?? []).length, 1);
   for (const [, href, kind] of hrefs) {
     const id = decodeURIComponent(href.split("=").slice(1).join("="));
     const known = kind === "round" ? entries.some((e) => e.id === id) : externals.some((x) => x.id === id);

@@ -9,7 +9,7 @@ npm ci
 npm run test:all
 ```
 
-<!--count:total-->1651<!--/count--> tests in <!--count:groups-->9<!--/count--> groups. On a normal run <!--count:pass-->1645<!--/count--> pass and <!--count:skipped-->3<!--/count--> are skipped: the two live tests below, which read from public servers only when you ask. Expect about nine minutes on a laptop. GitHub runs the same suite on every push, on Windows and on Linux (`.github/workflows/ci.yml`), after a type check and both leak scans.
+<!--count:total-->1651<!--/count--> tests in <!--count:groups-->9<!--/count--> groups. On a normal run <!--count:pass-->1645<!--/count--> pass and <!--count:skipped-->3<!--/count--> are skipped: the 3 known crashes on malformed files (a null bid, a null refund, a missing price), marked as to-do in test/fuzz.test.ts. The live tests below read from public servers only when you set `LIVE=1`. Expect about nine minutes on a laptop. GitHub runs the same suite on every push to main and on pull requests, on Windows, macOS and Linux (Linux only on other branches) (`.github/workflows/ci.yml`), after a type check and both leak scans.
 
 <!-- test-groups:start -->
 | Command | What it covers | Tests | Skipped |

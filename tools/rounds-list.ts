@@ -109,7 +109,7 @@ export function roundsPage(rows: RoundRow[]): string {
     const trs = rs
       .map(
         (r) =>
-          `<tr><td>${esc(r.title)}<br><span class="muted small">${esc(r.id)}</span></td><td>${esc(r.network)}</td><td>${esc(r.blocks)}</td><td class="${r.result === "PASS" ? "pass" : "fail"}">${r.result}${r.result === "FAIL" ? ` (${esc(r.failing.join(", "))})` : ""}</td><td>${r.passed} of ${r.total}</td><td>${esc(r.checked)}</td><td><a href="${r.link}">Re-check it yourself</a> <a href="${certificateFile(r.id)}">Certificate</a></td></tr>`,
+          `<tr><td>${esc(r.title)}<br><span class="muted small">${esc(r.id)}</span></td><td>${esc(r.network)}</td><td>${esc(r.blocks)}</td><td class="${r.result === "PASS" ? "pass" : "fail"}">${r.result}${r.result === "FAIL" ? ` (${esc(r.failing.join(", "))})` : ""}</td><td>${r.passed} of ${r.total}</td><td>${esc(r.checked)}</td><td><a href="${r.link}">${r.link.startsWith("/api/") ? "Check on our server" : "Re-check it yourself"}</a> <a href="${certificateFile(r.id)}">Certificate</a></td></tr>`,
       )
       .join("\n");
     return `<section><h2>${h}</h2><p class="muted">${note}</p><div class="tablewrap"><table><thead><tr><th>Round</th><th>Network</th><th>Blocks</th><th>Result</th><th>Checks passed</th><th>Checked</th><th></th></tr></thead><tbody>\n${trs}\n</tbody></table></div></section>`;
@@ -129,7 +129,7 @@ export function roundsPage(rows: RoundRow[]): string {
   <div class="wrap">
     <nav class="nav" aria-label="Pages"><a href="index.html">Auction check</a> <a href="check.html">Check any round</a></nav>
     <h1>Checked rounds</h1>
-    <p class="lead">Every round Imani ships or has checked. This list was made when the site was built, by running the checker on each round's own files. No result is typed in by hand. "Re-check it yourself" opens the checker on that round, so your browser works it out again.</p>
+    <p class="lead">Every round Imani ships or has checked. This list was made when the site was built, by running the checker on each round's own files. No result is typed in by hand. "Re-check it yourself" opens the checker on that round, and your browser works it out again. The mainnet round is too large for that, so its link runs the check on our server, from the blocks we saved. To check it on your own computer, use the command line.</p>
     <p class="servers"><strong>Servers contacted: none.</strong> This page has no script and makes no network calls after it loads.</p>
   </div>
 </header>

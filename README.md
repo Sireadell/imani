@@ -92,7 +92,7 @@ The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs
 
 | What | Count | Where it comes from |
 |---|---|---|
-| Tests | <!--count:total-->1651<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1645<!--/count--> pass and 3 are skipped unless you ask for the live ones | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
+| Tests | <!--count:total-->1651<!--/count--> in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1645<!--/count--> pass and 3 are skipped: they are the 3 known crashes on malformed files (a null bid, a null refund, a missing price), marked as to-do in test/fuzz.test.ts | [docs/HOW_WE_TESTED.md](docs/HOW_WE_TESTED.md), rewritten by the test run itself |
 | Tests that change one fact at a time and must never pass | <!--count:test:tamper-->1127<!--/count--> | `npm run test:tamper` |
 | Example rounds | 11 that pass: 2 real (`testnet-01` and `mainnet-01`), 9 made up offline with throwaway keys | `examples/` |
 | Broken copies | 42 in 9 folders, each named for what the seller changed, and all 42 fail | `examples/*broken*/manifest.json` |
@@ -181,7 +181,7 @@ Your node's password is read from that file, never printed, and never sent unenc
 
 ## Also: sign in by paying from a private Zcash wallet
 
-You sign in by sending a tiny private payment from any shielded Zcash wallet. Your account is a random login key kept on your device, not a Zcash key, so it survives a change of wallet address. The kit is `src/login` (exported as `@sireadell/imani/login`), the format is in [LOGIN_SPEC.md](LOGIN_SPEC.md), and `npm run demo:app` runs a small auction shop that uses it. Seeing someone's sign-in link or QR doesn't let you log in as them, because the site also needs a proof only their login key can make. Its limits are in LOGIN_SPEC.md, section 9.
+You sign in by sending a tiny private payment from a shielded Zcash wallet. So far it has only been tried with zecd 0.9.0-rc1. Your account is a random login key kept on your device, not a Zcash key, so it survives a change of wallet address. The kit is `src/login` (exported as `@sireadell/imani/login`), the format is in [LOGIN_SPEC.md](LOGIN_SPEC.md), and `npm run demo:app` runs a small auction shop that uses it. Seeing someone's sign-in link or QR doesn't let you log in as them, because the site also needs a proof only their login key can make. Its limits are in LOGIN_SPEC.md, section 9.
 
 ## More
 

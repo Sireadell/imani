@@ -15,7 +15,7 @@ To check the whole table in one go: `node tools/proof-run.ts` runs every quick r
 | The browser build checks the real round and a changed copy with the same verdict as the command line (slow: builds the browser file first) | `npx tsx --test test/browser-bundle.test.ts` | `# pass 3` |
 | The leak scan is clean: no viewing key, spending key, seed phrase or .env in any tracked file | `npm run leak-scan --silent` | `leak-scan: clean. No viewing key, spending key, seed phrase or .env in any tracked file (10 allowlisted public test-key paths).` |
 | The leak scan is clean in the whole history, not only the current files (slow: reads every commit) | `npm run leak-scan:history --silent` | `leak-scan: clean. No viewing key, spending key, seed phrase or .env in any file of any commit in the history (10 allowlisted public test-key paths).` |
-| The test count in the README is the real count from a full run (slow: about 10 minutes) | `npm run test:all` | `test:all: 1630 tests in 9 groups, 1627 passed, 3 skipped, 0 failed.` |
+| The test count in the README is the real count from a full run (slow: about 10 minutes) | `npm run test:all` | `test:all: <!--count:total-->1651<!--/count--> tests in <!--count:groups-->9<!--/count--> groups, <!--count:pass-->1645<!--/count--> passed, <!--count:skipped-->3<!--/count--> skipped, 0 failed.` |
 
 ## What is not claimed here
 
