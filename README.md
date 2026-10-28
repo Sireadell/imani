@@ -4,6 +4,14 @@
 
 *Imani means "trust" in Swahili.*
 
+**What is new here**
+
+- Your refund address goes in your own bid memo, and Imani checks the seller's refund went there, not somewhere else.
+- A 52-round test kit grades any checker. Ours gets 52 of 52 on answers we wrote. A separate Python checker agrees on all 37 it decides.
+- Show one bid to anyone with a small file, no viewing key needed. Not yet made from a bidder's own wallet.
+- Sealed lots: before the close, the lot key shows same-size deposits and no price. Tested on built examples, no real wallet yet.
+- The browser page checks a whole round on your own computer, with no server and no network after it loads.
+
 Imani is a Zcash tool: a TypeScript library and a command line that read shielded Zcash payments with a read-only viewing key and check them against what someone published about them.
 
 | Part | What it is |
