@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://imani-check.vercel.app/schema/disclosure.schema.json",
+  "$id": "https://imani-theta.vercel.app/schema/disclosure.schema.json",
   "title": "imani-lot-disclosure/1",
   "description": "The file a seller publishes after the close: the lot's rules, its block heights, and every transaction of the round. See docs/FORMAT.md.",
   "type": "object",

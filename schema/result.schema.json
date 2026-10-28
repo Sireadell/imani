@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://imani-check.vercel.app/schema/result.schema.json",
+  "$id": "https://imani-theta.vercel.app/schema/result.schema.json",
   "title": "imani-lot-result/1",
   "description": "The file a seller publishes next to the disclosure: what the seller says happened. The checker recomputes every number. See docs/FORMAT.md.",
   "type": "object",

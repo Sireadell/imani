@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://imani-check.vercel.app/schema/bid-proof.schema.json",
+  "$id": "https://imani-theta.vercel.app/schema/bid-proof.schema.json",
   "title": "imani-bid-proof/1",
   "description": "Proof of one bid: the bid transaction and the opening key of the one payment in it that went to the lot. Holds no viewing key, and no field outside this list is allowed. See docs/BID_PROOF.md.",
   "type": "object",

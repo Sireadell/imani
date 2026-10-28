@@ -42,12 +42,12 @@ There's a smaller second tool in the box: a sign-in button any website can add, 
 
 ## Try it in under a minute
 
-In your browser: **https://imani-check.vercel.app** opens on a real auction from the Zcash test network and checks it on your own computer. After it loads, that page makes no network requests.
+In your browser: **https://imani-theta.vercel.app** opens on a real auction from the Zcash test network and checks it on your own computer. After it loads, that page makes no network requests.
 
 For an answer a script can read, the same site has a web link that checks the real round and returns JSON:
 
 ```sh
-curl "https://imani-check.vercel.app/api/check?round=testnet-01"
+curl "https://imani-theta.vercel.app/api/check?round=testnet-01"
 ```
 
 You get `verdict` (PASS or FAIL), `checks` (21 of 21 pass today), the `failed` list, the network, lot and block range (4,489,077 to 4,489,110, 34 blocks), `source` and `tookMs`. It runs the same every-block checker as the command line, on the saved blocks in `examples/testnet-01`, so it contacts no servers. To download the blocks again from public servers, use the command line with `--fetch`. It takes only a round name from a fixed list (`testnet-01` and `mainnet-01`), never a key or a file, and holds no key itself.
@@ -68,7 +68,7 @@ The commands on this page run from inside a copy of this repo, as `node bin/iman
 | Line | Run or open | What you will see |
 |---|---|---|
 | Privacy | `node bin/imani.js check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --offline --discreet` | Publishing a lot's read-only viewing key lets anyone read every bid amount and refund address in that lot, so a lot account should be fresh and used for one round only. The command prints `Servers contacted: none`, `RESULT: PASS (16 of 16 checks passed)`, and no amount, memo or address anywhere in the output. The key is accepted as read-only and is never printed or saved. Then `node bin/imani.js linking examples/testnet-01/disclosure.json` prints `RESULT: NO LINKS OUTSIDE THE ROUND`: no refund can be followed past the bid it pays back. Who can learn what: [docs/WHO_LEARNS_WHAT.md](docs/WHO_LEARNS_WHAT.md) |
-| Usefulness | `node bin/imani.js check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --mine 2f5e8f4f37` | One bidder's answer from the real round: `Your bid: counted, 1,500,000 zat.`, it did not win, the whole bid is owed back, and the refund went to the address that bidder wrote in their bid memo. For any round, open https://imani-check.vercel.app/check.html, paste its viewing key and blocks, and get PASS or FAIL from the chain alone |
+| Usefulness | `node bin/imani.js check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --mine 2f5e8f4f37` | One bidder's answer from the real round: `Your bid: counted, 1,500,000 zat.`, it did not win, the whole bid is owed back, and the refund went to the address that bidder wrote in their bid memo. For any round, open https://imani-theta.vercel.app/check.html, paste its viewing key and blocks, and get PASS or FAIL from the chain alone |
 | Execution | `node bin/imani.js check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --fetch` | Downloads the real round's 34 blocks from two public test-network servers run by different people, which must agree on every block, then `RESULT: PASS (21 of 21 checks passed)` in about a minute. Use `--chain examples/testnet-01/chain.json` instead of `--fetch` to read the saved copy offline in about 3 seconds |
 | Originality | [examples/testnet-01/README.md](examples/testnet-01/README.md), no git needed | The real round was paid on the public Zcash test network on 2026-10-11, and each payment's explorer link shows its block and date on the chain, which nobody can backdate. The build window opened on 2026-09-28. In a git clone, `git log --reverse --format="%ad %s" --date=short` also shows the first commit, dated 2026-10-07 (this needs the clone, a ZIP download has no history) |
 
@@ -112,7 +112,7 @@ The whole test suite is `npm run test:all` (about nine minutes). `npm test` runs
 | Bid links with QR codes | `imani bid-link` turns a bid into a ZIP 321 `zcash:` payment link and QR code, so a wallet fills in the address, amount and memo | [docs/BID_LINK.md](docs/BID_LINK.md) |
 | Seller kit | `imani lot-new` sets up a lot and `imani settle` works out every refund owed and writes the two files to publish. A seller can run `imani settle --fetch` right after the close, before the refund deadline: it reads up to the newest block, lists the refunds to pay, and says plainly which blocks are still to come, so it never passes early | [docs/SELLER_KIT.md](docs/SELLER_KIT.md), `npx tsx --test test/settle-early.test.ts` |
 | Proof of one bid | `imani bid-proof` lets a bidder or the seller show one bid to someone else (a friend, an arbiter, a judge) without handing over a viewing key. The other person sees that bid's amount, memo and block, and nothing about the other bids | `node bin/imani.js bid-proof check --proof examples/bid-proof-01/proof.json --facts examples/bid-proof-01/lot-public.json --result examples/testnet-01/result.json --chain examples/testnet-01/chain.json`, more in [docs/BID_PROOF.md](docs/BID_PROOF.md) |
-| Checked rounds list | One page with every round we ship or have checked, each with a button to re-check it in your browser | https://imani-check.vercel.app/rounds.html |
+| Checked rounds list | One page with every round we ship or have checked, each with a button to re-check it in your browser | https://imani-theta.vercel.app/rounds.html |
 | Scale test | 19,000 payments generated to the published size (made-up amounts from a fixed seed), more than the 16,971 bids reported for a big public sealed auction on Zcash this year: the seller-file checks take well under a second (about 50 ms in the scale notes, 143 ms on our last run). Reading real transactions with a key measured 16.8 ms each, so about 5 minutes for 19,000. That second figure is an estimate, not a run | `npx tsx --test test/scale.test.ts`, notes in [docs/SCALE.md](docs/SCALE.md) |
 
 The 19,000 payments are made-up amounts built from a fixed seed. Imani has not been run on that real auction's data.

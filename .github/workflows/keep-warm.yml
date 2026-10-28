@@ -15,4 +15,4 @@ jobs:
       - name: Wake the live checker
         run: |
           curl --silent --show-error --fail --max-time 30 -H "Cache-Control: no-cache" \
-            "https://imani-check.vercel.app/api/check?round=mainnet-01" > /dev/null
+            "https://imani-theta.vercel.app/api/check?round=mainnet-01" > /dev/null

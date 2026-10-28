@@ -18,7 +18,7 @@ const out = runPage({ disclosure, result });
 console.log(out.ok ? out.verdict.result : out.message); // "PASS", "FAIL", or a plain reason it could not run
 ```
 
-`runPage` also takes `chain` (a saved block file) to run the every-block scan, and `discreet: true` to hide amounts and memos. A spending key or seed phrase is refused with a plain message, and nothing from the input is echoed back. The file is the same code the checker page runs: [https://imani-check.vercel.app](https://imani-check.vercel.app).
+`runPage` also takes `chain` (a saved block file) to run the every-block scan, and `discreet: true` to hide amounts and memos. A spending key or seed phrase is refused with a plain message, and nothing from the input is echoed back. The file is the same code the checker page runs: [https://imani-theta.vercel.app](https://imani-theta.vercel.app).
 
 ## Check a round in 10 lines
 

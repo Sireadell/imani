@@ -24,7 +24,7 @@ On the first `settle` run a FAIL is expected. The refunds have not been paid yet
 Once your round passes, put the badge on your lot page: it shows the result of the latest check of your published files.
 
 ```html
-<img src="https://imani-check.vercel.app/api/check?round=testnet-01&format=svg" alt="Imani: testnet-01 checked fair, 21 of 21 checks passed" width="204" height="24">
+<img src="https://imani-theta.vercel.app/api/check?round=testnet-01&format=svg" alt="Imani: testnet-01 checked fair, 21 of 21 checks passed" width="204" height="24">
 ```
 
 The badge is a small picture made from the same check the page runs. It holds the result and the check count, nothing else. If a round fails, the same address returns a red badge that says FAIL. Today the address only answers for the rounds shipped with Imani, so a seller's own round gets a badge once it is added to that list. Anyone who clicks can open the checker and run the check themselves.

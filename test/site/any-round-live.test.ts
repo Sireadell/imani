@@ -37,9 +37,9 @@ const LOSER_REFUND = "cca33721ebe9a965850029aabb79301a9b7db33d02f6b82ec9f539b474
 // ---- 1. ask first ----
 
 test("the ask names this page's own site, the two public servers it may use, the block count, and says the key stays here", () => {
-  const t = askText("test", "imani-check.vercel.app", 4489077, 4489110);
+  const t = askText("test", "imani-theta.vercel.app", 4489077, 4489110);
   assert.match(t.button, /contact a public Zcash server/i);
-  assert.match(t.body, /imani-check\.vercel\.app/);
+  assert.match(t.body, /imani-theta\.vercel\.app/);
   assert.match(t.body, /testnet\.zec\.rocks/);
   assert.match(t.body, /api\.testnet\.cipherscan\.app/);
   assert.match(t.body, /34 blocks/);
@@ -47,7 +47,7 @@ test("the ask names this page's own site, the two public servers it may use, the
   assert.match(t.body, /key is not sent/i);
   assert.doesNotMatch(t.body + t.button, /https?:\/\//);
   assert.ok(!(t.body + t.button).includes(String.fromCharCode(0x2014)), "no long dash in the ask");
-  const m = askText("main", "imani-check.vercel.app", 100, 100);
+  const m = askText("main", "imani-theta.vercel.app", 100, 100);
   assert.match(m.body, /1 block\b/);
   for (const s of DEFAULT_SERVERS.main) assert.ok(m.body.includes(s.replace(/^cipherscan:/, "").replace(/^https?:\/\//, "").replace(/:\d+$/, "")), s);
 });

@@ -4,7 +4,7 @@
   "description": "Check that a sealed-bid auction on Zcash was fair, and sign in by paying from a private Zcash wallet.",
   "type": "module",
   "license": "MIT",
-  "homepage": "https://imani-check.vercel.app",
+  "homepage": "https://imani-theta.vercel.app",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Sireadell/imani.git"
