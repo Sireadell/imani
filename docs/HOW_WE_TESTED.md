@@ -9,7 +9,7 @@ npm ci
 npm run test:all
 ```
 
-<!--count:total-->1637<!--/count--> tests in <!--count:groups-->9<!--/count--> groups. On a normal run <!--count:pass-->1634<!--/count--> pass and <!--count:skipped-->3<!--/count--> are skipped: the two live tests below, which read from public servers only when you ask. Expect about nine minutes on a laptop. GitHub runs the same suite on every push, on Linux, and on Windows and macOS for main and pull requests to main (`.github/workflows/ci.yml`), after a type check and both leak scans.
+<!--count:total-->1649<!--/count--> tests in <!--count:groups-->9<!--/count--> groups. On a normal run <!--count:pass-->1646<!--/count--> pass and <!--count:skipped-->3<!--/count--> are skipped: the two live tests below, which read from public servers only when you ask. Expect about nine minutes on a laptop. GitHub runs the same suite on every push, on Linux, and on Windows and macOS for main and pull requests to main (`.github/workflows/ci.yml`), after a type check and both leak scans.
 
 <!-- test-groups:start -->
 | Command | What it covers | Tests | Skipped |
@@ -22,7 +22,7 @@ npm run test:all
 | `npm run test:site` | The browser page and the page that checks any round: same answers as the command line, no network call until the reader says yes, and a saved-file check with none | 80 | 0 |
 | `npm run test:tamper` | Change one fact at a time in every example round; none of the changed copies may pass | 1127 | 0 |
 | `npm run test:external` | Rounds another auction project published, read from their own files | 25 | 0 |
-| `npm run test:privacy` | Refund linking, the who-learns-what table, keys never printed or saved | 11 | 0 |
+| `npm run test:privacy` | Refund linking, the who-learns-what table, keys never printed or saved | 23 | 0 |
 <!-- test-groups:end -->
 
 ## Changing one fact at a time
