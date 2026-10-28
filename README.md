@@ -56,7 +56,6 @@ There's a smaller second tool in the box: a sign-in button any website can add, 
 | GitHub Action | Checks your round's files on every push and turns the build red if it does not add up | [docs/GITHUB_ACTION.md](docs/GITHUB_ACTION.md) |
 | Test kit | 52 rounds with known answers that grade a checker written in any language | [docs/FORMAT.md](docs/FORMAT.md) |
 | Network upgrades | Reads up to NU7 and says what to check at each upgrade | [docs/UPGRADES.md](docs/UPGRADES.md) |
-| Sign in by paying | A login button any site can add, using a tiny shielded payment | [LOGIN_SPEC.md](LOGIN_SPEC.md) |
 
 ## Try it in under a minute
 
