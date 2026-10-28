@@ -165,20 +165,20 @@ test("fuzz 2b: honest files with a random field replaced by the wrong type only 
   assert.ok(knownCrashes >= 0);
 });
 
-// REAL BUGS in src/check.ts (not fixed here). Each throws a TypeError instead of a FAIL verdict or an InputError.
+// Malformed result.json files that used to throw a TypeError. Each is now an input error or a verdict.
 // Minimal cases, all on examples/round-01:
 const round01 = () => ({ d: readJson("examples/round-01/disclosure.json"), r: readJson("examples/round-01/result.json") });
-test("fuzz 2d: result.json with no clearingPriceZat (also rules.reserveZat null) is an input error or a verdict", { todo: true }, () => {
+test("fuzz 2d: result.json with no clearingPriceZat (also rules.reserveZat null) is an input error or a verdict", () => {
   const { d, r } = round01();
   delete r.clearingPriceZat;
   outcome(d, r);
 });
-test("fuzz 2e: result.json with bids[0] = null is an input error or a verdict", { todo: true }, () => {
+test("fuzz 2e: result.json with bids[0] = null is an input error or a verdict", () => {
   const { d, r } = round01();
   r.bids[0] = null;
   outcome(d, r);
 });
-test("fuzz 2f: result.json with refunds[0] = null is an input error or a verdict", { todo: true }, () => {
+test("fuzz 2f: result.json with refunds[0] = null is an input error or a verdict", () => {
   const { d, r } = round01();
   r.refunds[0] = null;
   outcome(d, r);

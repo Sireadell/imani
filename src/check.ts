@@ -167,6 +167,8 @@ export function validateFiles(d: any, r: any): asserts d is Disclosure {
   if (!r || typeof r !== "object") bad("the result file is not a JSON object.");
   if (r.format !== "imani-lot-result/1") bad('the result file must have "format": "imani-lot-result/1".');
   if (!Array.isArray(r.bids) || !Array.isArray(r.winners) || !Array.isArray(r.refunds)) bad("the result file needs bids, winners and refunds lists.");
+  if (!r.bids.every((b: unknown) => b && typeof b === "object")) bad("every entry in bids needs to be an object with a txid and amountZat.");
+  if (!r.refunds.every((x: unknown) => x && typeof x === "object")) bad("every entry in refunds needs to be an object with a bidTxid and amountZat.");
   if (r.totals !== undefined) {
     const t = r.totals as unknown as Record<string, unknown>;
     if (!t || typeof t !== "object" || !(["payments", "receivedZat", "keptZat", "refundedZat"] as const).every((k) => isCount(t[k]))) bad("totals in the result file needs payments, receivedZat, keptZat and refundedZat, each a whole number from 0 up.");
@@ -178,7 +180,7 @@ export function validateFiles(d: any, r: any): asserts d is Disclosure {
 export function checkLot(d: Disclosure, r: SellerResult, opts: CheckOptions = {}): Verdict {
   validateFiles(d, r);
   const discreet = !!opts.discreet;
-  const zat = (n: number) => (discreet ? "[hidden]" : `${n.toLocaleString("en-US")} zat`);
+  const zat = (n: number) => (discreet ? "[hidden]" : typeof n === "number" ? `${n.toLocaleString("en-US")} zat` : `${String(n)} zat`);
   const memo = (m: string) => (discreet ? "[hidden]" : JSON.stringify(m));
   const short = (t: string) => (typeof t === "string" ? t.slice(0, 10) : String(t));
   const checks: Check[] = [];
