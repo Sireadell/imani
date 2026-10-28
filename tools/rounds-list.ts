@@ -93,7 +93,7 @@ export function roundRows(date = checkedDate()): RoundRow[] {
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
 const SECTIONS: [RoundKind, string, string][] = [
-  ["real", "Real round", "Paid and refunded on the public Zcash test network."],
+  ["real", "Real round", "Paid and refunded for real: one round on the public Zcash test network, one on Zcash mainnet."],
   ["published", "Rounds published by other projects", "Read from the files those projects published. The last one has one refund changed on purpose. The settlement file's 3 payments are on Zcash mainnet: two independent servers returned the same bytes for each, mined in blocks 3,499,413 and 3,499,451. Their amounts stay unread, because no key for that round was published."],
   ["honest", "Example rounds", "Made for testing. Every file is right, so each should PASS."],
   ["tampered", "Examples with one deliberate change", "Examples, not real auctions. Each has one thing changed on purpose, so each should FAIL."],

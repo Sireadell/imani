@@ -45,6 +45,21 @@ test("the list has one row per bundled round, and the page shows exactly those r
   assert.equal(real.result, "PASS");
 });
 
+test("the real mainnet round is on the list, passes 23 of 23, and has its re-check link and certificate", () => {
+  const row = roundRows().find((r) => r.id === "mainnet-01")!;
+  assert.ok(row, "mainnet-01 row");
+  assert.equal(row.kind, "real");
+  assert.equal(row.network, "main");
+  assert.equal(row.result, "PASS");
+  assert.equal(row.passed, 23);
+  assert.equal(row.total, 23);
+  assert.equal(row.expected, true);
+  assert.ok(html.includes("23 of 23"));
+  assert.ok(html.includes('<a href="index.html#round=mainnet-01">Re-check it yourself</a>'));
+  assert.ok(readFileSync(join(tmp, "site", "certificate-mainnet-01.html"), "utf8").includes("mainnet-01"));
+  assert.ok(exampleData().entries.some((e) => e.id === "mainnet-01"), "bundled so the checker page can open it");
+});
+
 test("every example row has the result its own files were built to give", () => {
   for (const r of roundRows()) assert.equal(r.expected, true, `${r.id} gave ${r.result} (${r.failing.join(", ")})`);
 });
@@ -108,7 +123,7 @@ test("the list page makes no network requests and shows no key", () => {
   assert.match(html, /connect-src 'none'/);
   assert.doesNotMatch(html, /script-src/);
   assert.doesNotMatch(html, /uview|uivk|uvf|uvi|secret-extended|ufvk/i, "no viewing key on the page");
-  for (const d of ["testnet-01", "round-01"]) {
+  for (const d of ["testnet-01", "round-01", "mainnet-01"]) {
     const ufvk = JSON.parse(readFileSync(new URL(`../../examples/${d}/disclosure.json`, import.meta.url), "utf8")).ufvk;
     assert.ok(!html.includes(ufvk), d);
   }

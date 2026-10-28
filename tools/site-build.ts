@@ -132,6 +132,14 @@ export function exampleData(): { entries: any[]; externals: { id: string; title:
     label: `${x.label}, block ${x.block.toLocaleString("en-US")} (${x.txid.slice(0, 10)})`,
     url: `${ex.explorer}${x.txid}`,
   }));
+  honest(
+    "mainnet-01",
+    "mainnet-01",
+    "Real round on Zcash mainnet (IMANI-M1)",
+    "A real wallet paid 3 bids into a fresh lot account on Zcash mainnet on 27 Oct 2026, and the lot paid 3 refunds back. 2 items, reserve 100,000 zatoshis. The scan reads all 61 real blocks of the auction (482 transactions) with the lot key and finds exactly the 6 payments of this lot.",
+    true,
+    "real-honest",
+  );
   group("testnet-broken", "testnet-01", "real-tampered");
   honest(
     "round-01",
