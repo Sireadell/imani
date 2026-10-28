@@ -109,7 +109,7 @@ export function roundsPage(rows: RoundRow[]): string {
     const trs = rs
       .map(
         (r) =>
-          `<tr><td>${esc(r.title)}<br><span class="muted small">${esc(r.id)}</span></td><td>${esc(r.network)}</td><td>${esc(r.blocks)}</td><td class="${r.result === "PASS" ? "pass" : "fail"}">${r.result}${r.result === "FAIL" ? ` (${esc(r.failing.join(", "))})` : ""}</td><td>${r.passed} of ${r.total}</td><td>${esc(r.checked)}</td><td><a href="${r.link}">${r.link.startsWith("/api/") ? "Check on our server" : "Re-check it yourself"}</a> <a href="${certificateFile(r.id)}">Certificate</a></td></tr>`,
+          `<tr><td>${esc(r.title)}<br><span class="muted small">${esc(r.id)}</span></td><td>${esc(r.network)}</td><td>${esc(r.blocks)}</td><td class="${r.result === "PASS" ? "pass" : "fail"}"><span class="tag">${r.result}</span>${r.result === "FAIL" ? ` <span class="small">${esc(r.failing.join(", "))}</span>` : ""}</td><td>${r.passed} of ${r.total}</td><td>${esc(r.checked)}</td><td><a href="${r.link}">${r.link.startsWith("/api/") ? "Check on our server" : "Re-check it yourself"}</a> <a href="${certificateFile(r.id)}">Certificate</a></td></tr>`,
       )
       .join("\n");
     return `<section><h2>${h}</h2><p class="muted">${note}</p><div class="tablewrap"><table><thead><tr><th>Round</th><th>Network</th><th>Blocks</th><th>Result</th><th>Checks passed</th><th>Checked</th><th></th></tr></thead><tbody>\n${trs}\n</tbody></table></div></section>`;

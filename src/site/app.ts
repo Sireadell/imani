@@ -187,7 +187,9 @@ function renderVerdict(v: Verdict, entry?: ExampleEntry): HTMLElement {
     const cs = v.checks.filter((c) => c.level === L.level);
     if (L.level === 3 && !v.scanSource) continue;
     const sec = el("div", "level");
-    sec.appendChild(el("h3", undefined, `${L.name}: ${L.status(v)}`));
+    const h = el("h3", undefined, `${L.name}: `);
+    h.appendChild(el("span", `tag ${L.status(v) === "FAIL" ? "fail" : L.status(v) === "PASS" ? "pass" : "off"}`, L.status(v)));
+    sec.appendChild(h);
     const note = L.note(v).trim();
     if (note && (L.level === 3 || !cs.length)) sec.appendChild(el("p", "note", note));
     for (const c of cs) sec.appendChild(checkCard(c));
