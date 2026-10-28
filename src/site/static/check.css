@@ -94,6 +94,27 @@ p.meta strong { color: var(--fg); }
 p.ok { color: var(--fg); font-weight: 600; }
 p.bad { color: var(--bad); font-weight: 600; }
 
+/* Result card: title, certificate lines, stamp, buttons, grouped checks */
+#result [hidden] { display: none; }
+h3.result-title { font-size: 28px; font-weight: 600; letter-spacing: -1px; color: var(--fg); margin: 6px 0 16px; }
+.banner .k { font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.banner.fail .k { color: var(--bad); }
+.banner p.sub { color: var(--muted); font-size: 14.5px; margin: 6px 0 0; }
+.banner .ln { display: flex; align-items: baseline; gap: 8px; margin: 14px 0 0; font-size: 15px; color: var(--soft); }
+.banner .ln .d { flex: 1; border-bottom: 1px dotted var(--dot); }
+.banner .ln span:last-child { color: var(--fg); }
+.banner .stamp { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--line); }
+.banner .stamp .big { font-size: 44px; font-weight: 700; letter-spacing: -2px; line-height: 1; margin-top: 6px; }
+.banner .stamp .count { text-align: right; }
+.banner .stamp .n { font-size: 22px; font-weight: 600; color: var(--fg); }
+.banner .small { font-size: 13px; color: var(--muted); }
+.acts { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 6px; }
+.gr { display: flex; justify-content: space-between; margin: 22px 0 4px; padding-bottom: 8px; border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
+details.check summary .mark { display: inline-block; width: 1.6em; font-weight: 600; }
+details.check.fail summary .mark { color: var(--bad); }
+button.more { background: transparent; border: 0; padding: 10px 0; font: inherit; font-size: 13px; color: var(--muted); text-decoration: underline; cursor: pointer; }
+p.private { color: var(--soft); font-size: 15px; white-space: pre-wrap; line-height: 1.9; }
+
 /* Every check, one under the other. A failed check goes first. */
 #result div:has(> details.check) { display: flex; flex-direction: column; }
 details.check.fail { order: -1; }
@@ -112,6 +133,8 @@ details > summary { cursor: pointer; color: var(--muted); font-size: 13px; paddi
   .top h1 { font-size: 24px; }
   .banner { padding: 22px 20px; }
   .banner .big { font-size: 22px; }
+  .banner .stamp .big { font-size: 34px; }
+  .acts .btn { flex: 1 1 100%; }
   .btn { width: 100%; }
   table.grid { font-size: 13.5px; }
 }

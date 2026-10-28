@@ -4,7 +4,7 @@
 // to the site it was loaded from. The saved-file path makes none. The lot key is never put in a
 // request. It is read from the box, used in this tab, and not stored.
 import { initReader } from "./engine.ts";
-import { refereeRound, networkOfKey, type RefereeOutcome } from "./referee.ts";
+import { refereeRound, networkOfKey, type RefereeOutcome, type RefereeRound } from "./referee.ts";
 import { askText } from "./ask.ts";
 import { checkSavedRound, type RoundFields } from "./saved-round.ts";
 import { savedRoundText } from "imani-saved-round";
@@ -35,6 +35,10 @@ const EXAMPLE = {
 };
 
 const CONCURRENCY = 8;
+
+/** What the last check was run on, so the result buttons can say it again or write it down. */
+let current: RoundFields | null = null;
+let lastFile: { text: string; name: string } | null = null;
 
 /** Checks that compare the rebuilt files with themselves here, so they match by construction. */
 const BY_CONSTRUCTION = new Set(["close-height", "disclosure-txids-unique", "result-consistent", "winner-count", "clearing-range", "bid-count", "bid-amounts", "winners-and-price", "reserve", "refund-total", "scan-hidden-bids", "scan-unlisted-payments", "scan-listed-in-range", "scan-heights", "no-late-bids"]);
@@ -82,23 +86,103 @@ function row(table: HTMLTableElement, cells: string[], head = false) {
   table.appendChild(tr);
 }
 
+const zatShort = (n: number) => `${n.toLocaleString("en-US")} zat`;
+
+/** The lines of the certificate card, all from the recomputed round. */
+function certificateRows(r: RefereeRound): [string, string][] {
+  const rows: [string, string][] = [
+    ["Bids counted", String(r.bidCount)],
+    ["Winners", String(r.winners.length)],
+    ["Clearing price", r.reserveMet ? zatShort(r.clearingPriceZat) : "none"],
+  ];
+  if (r.refunds.length) rows.push(["Refunds paid in full", `${r.refunds.filter((f) => f.owedZat === f.paidZat).length} of ${r.refunds.length}`]);
+  return rows;
+}
+
+function downloadCertificate(lot: string, pass: boolean, passed: number, total: number, network: string, rows: [string, string][], checks: Check[]) {
+  const lines = [
+    `Fairness certificate${pass ? "" : " (not issued)"}`,
+    `Lot: ${lot}`,
+    ...(network ? [`Network: ${network}`] : []),
+    ...(current ? [`Blocks: ${current.from} to ${current.to}`] : []),
+    ...rows.map(([k, v]) => `${k}: ${v}`),
+    `Verdict: ${pass ? "FAIR" : "NOT FAIR"}`,
+    `Checks passed: ${passed} of ${total}`,
+    "",
+    ...checks.map((c) => `${c.status}  ${c.title}`),
+    "",
+    "Anyone can run the same check and should get the same answer.",
+    "",
+  ];
+  const url = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/plain" }));
+  const a = el("a");
+  a.href = url;
+  a.download = `imani-certificate-${lot.replace(/[^A-Za-z0-9_-]+/g, "-")}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function render(o: Extract<RefereeOutcome, { ok: true }>, replies: BlockReply[] | null, ms: number, fileName = "") {
   const out = $("result");
   out.replaceChildren();
   const v = o.verdict;
   const r = o.round;
-  const banner = el("div", `banner ${v.result === "PASS" ? "pass" : "fail"}`);
-  banner.appendChild(el("div", "big", v.result === "PASS" ? "PASS: the round was run by the rules" : `FAIL: ${v.failed.length} check(s) found a problem`));
-  banner.appendChild(
+  const pass = v.result === "PASS";
+  const passed = v.checks.filter((c) => c.status === "PASS").length;
+  const total = v.checks.length;
+  const rows = certificateRows(r);
+  out.appendChild(el("h3", "result-title", `Result for lot ${r.lotId}`));
+  const card = el("div", `banner doc ${pass ? "pass" : "fail"}`);
+  const network = current ? (networkOfKey(current.key) === "main" ? "Zcash mainnet" : "Zcash test network") : "";
+  card.appendChild(el("div", "k", pass ? `Fairness certificate${network ? ` · ${network}` : ""}` : "Fairness certificate · not issued"));
+  if (current) card.appendChild(el("p", "sub", `Blocks ${current.from.toLocaleString("en-US")} to ${current.to.toLocaleString("en-US")} · ${(current.to - current.from + 1).toLocaleString("en-US")} blocks`));
+  card.appendChild(
     el(
       "p",
-      undefined,
-      v.result === "PASS"
-        ? `Lot ${r.lotId}. Every block was read with the lot key, and the refunds the lot paid match what the rules owe, to the zatoshi.`
-        : `Lot ${r.lotId}. Failed: ${v.failed.join(", ")}.`,
+      "sub",
+      pass
+        ? `Every block was read with the lot key, and the refunds the lot paid match what the rules owe, to the zatoshi.`
+        : `Failed: ${v.failed.join(", ")}.`,
     ),
   );
-  out.appendChild(banner);
+  for (const [k, val] of rows) {
+    const ln = el("div", "ln");
+    ln.appendChild(el("span", undefined, k));
+    ln.appendChild(el("span", "d"));
+    ln.appendChild(el("span", undefined, val));
+    card.appendChild(ln);
+  }
+  const stamp = el("div", "stamp");
+  const verdict = el("div");
+  verdict.appendChild(el("div", "k", "Verdict"));
+  verdict.appendChild(el("div", "big", pass ? "FAIR" : "NOT FAIR"));
+  stamp.appendChild(verdict);
+  const count = el("div", "count");
+  count.appendChild(el("div", "n", `${passed} of ${total}`));
+  count.appendChild(el("div", "small", "checks passed"));
+  stamp.appendChild(count);
+  card.appendChild(stamp);
+  out.appendChild(card);
+
+  const acts = el("div", "acts");
+  const copy = el("button", "btn primary", "Copy link");
+  copy.type = "button";
+  copy.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(location.origin + location.pathname);
+      copy.textContent = "Link copied";
+    } catch {
+      copy.textContent = "Could not copy";
+    }
+  });
+  const dl = el("button", "btn", "Download certificate");
+  dl.type = "button";
+  dl.addEventListener("click", () => downloadCertificate(r.lotId, pass, passed, total, network, rows, v.checks));
+  const again = el("button", "btn", "Run it again");
+  again.type = "button";
+  again.addEventListener("click", () => (lastFile ? void checkFile(lastFile.text, lastFile.name) : ask()));
+  acts.append(copy, dl, again);
+  out.appendChild(acts);
 
   out.appendChild(el("h3", undefined, "What the chain says, recomputed"));
   const t = el("table", "grid");
@@ -155,18 +239,58 @@ function renderServers(out: HTMLElement, replies: BlockReply[], ms: number) {
   out.appendChild(det);
 }
 
+const LEVELS: [Check["level"], string][] = [
+  [1, "Basic"],
+  [2, "With the lot key"],
+  [3, "Full scan"],
+];
+
+function checkItem(c: Check): HTMLDetailsElement {
+  const ok = c.status === "PASS";
+  const d = el("details", `check ${ok ? "pass" : "fail"}`);
+  if (!ok) d.open = true;
+  const sum = el("summary");
+  sum.appendChild(el("span", "visually-hidden", `${c.status} `));
+  sum.appendChild(el("b", "mark", ok ? "\u2713" : "\u2715"));
+  sum.appendChild(document.createTextNode(`${c.title}${BY_CONSTRUCTION.has(c.id) ? " (matches by construction here)" : ""}`));
+  d.appendChild(sum);
+  d.appendChild(el("p", undefined, c.reason));
+  return d;
+}
+
 function renderChecks(out: HTMLElement, o: Extract<RefereeOutcome, { ok: true }>) {
-  out.appendChild(el("h3", undefined, "Every check"));
-  const list = el("div");
-  const sorted: Check[] = [...o.verdict.checks];
-  for (const c of sorted) {
-    const d = el("details", `check ${c.status === "PASS" ? "pass" : "fail"}`);
-    if (c.status === "FAIL") d.open = true;
-    d.appendChild(el("summary", undefined, `${c.status}  ${c.title}${BY_CONSTRUCTION.has(c.id) ? " (matches by construction here)" : ""}`));
-    d.appendChild(el("p", undefined, c.reason));
-    list.appendChild(d);
+  const pass = o.verdict.result === "PASS";
+  out.appendChild(el("h3", undefined, pass ? "The checks, in three levels" : "Where it failed"));
+  for (const [level, name] of LEVELS) {
+    const group = o.verdict.checks.filter((c) => c.level === level);
+    if (!group.length) continue;
+    const fails = group.filter((c) => c.status === "FAIL");
+    const passes = group.filter((c) => c.status === "PASS");
+    const head = el("div", "gr");
+    head.appendChild(el("span", undefined, name));
+    head.appendChild(el("span", undefined, `${passes.length} of ${group.length}`));
+    out.appendChild(head);
+    // A failed check always shows, first. On a fair round the first passing check shows as a sample.
+    const shown = fails.length ? fails : pass ? passes.slice(0, 1) : [];
+    const rest = group.filter((c) => !shown.includes(c));
+    const list = el("div");
+    for (const c of shown) list.appendChild(checkItem(c));
+    out.appendChild(list);
+    if (!rest.length) continue;
+    const more = el("div");
+    more.hidden = true;
+    for (const c of rest) more.appendChild(checkItem(c));
+    const toggle = el("button", "more", shown.length ? `Show ${rest.length} more` : `Show ${rest.length} checks`);
+    toggle.type = "button";
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.addEventListener("click", () => {
+      more.hidden = !more.hidden;
+      toggle.setAttribute("aria-expanded", String(!more.hidden));
+      toggle.textContent = more.hidden ? (shown.length ? `Show ${rest.length} more` : `Show ${rest.length} checks`) : "Hide";
+    });
+    out.appendChild(toggle);
+    out.appendChild(more);
   }
-  out.appendChild(list);
 
   out.appendChild(el("h3", undefined, "What this check does not prove"));
   const ul = el("ul");
@@ -175,6 +299,11 @@ function renderChecks(out: HTMLElement, o: Extract<RefereeOutcome, { ok: true }>
   if (o.closeAssumed) ul.appendChild(el("li", undefined, "No close block was given, so every bid in the range counted as on time."));
   ul.appendChild(el("li", undefined, "Who a refund was sent to is not shown by the lot key alone, unless bidders wrote their refund address in the bid memo."));
   out.appendChild(ul);
+
+  if (pass) {
+    out.appendChild(el("h3", undefined, "What stayed private"));
+    out.appendChild(el("p", "private", "\u25a0 Every bid amount   \u25a0 Who bid   \u25a0 Every bidder's wallet"));
+  }
 }
 
 /** The boxes, checked before anything else happens. Returns null after showing a message. */
@@ -197,7 +326,7 @@ function readFields(): RoundFields | null {
     showError("error", "Input error: the block range must be two whole numbers, the first not after the last, at most 5000 blocks.");
     return null;
   }
-  return {
+  current = {
     key,
     from,
     to,
@@ -208,6 +337,7 @@ function readFields(): RoundFields | null {
     closeHeight: closeText === "" ? undefined : Number(closeText.replace(/[,\s]/g, "")),
     lotId: lotText === "" ? undefined : lotText,
   };
+  return current;
 }
 
 let pending: RoundFields | null = null;
@@ -235,6 +365,7 @@ async function fetchBlocks(f: RoundFields | null) {
   if (!f) return;
   const status = $("status");
   const button = $<HTMLButtonElement>("btn-run");
+  lastFile = null;
   const network = networkOfKey(f.key);
   button.disabled = true;
   const started = Date.now();
@@ -299,6 +430,7 @@ async function checkFile(text: string, name: string) {
   hideAsk();
   const f = readFields();
   if (!f) return;
+  lastFile = { text, name };
   const status = $("status");
   status.textContent = "Reading every block in the file with the lot key...";
   const started = Date.now();
