@@ -2,7 +2,7 @@
 
 This one used real ZEC. A real wallet paid 3 bids into a fresh lot account on Zcash mainnet on 2026-10-27, and the lot paid 3 refunds back. Lot id `IMANI-M1`, 2 items, reserve 100,000 zatoshis. The round is small on purpose: the bids add up to 0.013 ZEC. All six payments are in the Ironwood pool.
 
-All 3 bids were paid from that one wallet, which we ran ourselves, and we also ran the lot. So this round shows the checker working on real mainnet data. It does not show independent bidders.
+All 3 bids were paid from 3 separate wallets, which we ran ourselves, and we also ran the lot. So this round shows the checker working on real mainnet data. It does not show independent bidders.
 
 ```sh
 node bin/imani.js check --disclosure examples/mainnet-01/disclosure.json --result examples/mainnet-01/result.json --scan --chain examples/mainnet-01/chain.json

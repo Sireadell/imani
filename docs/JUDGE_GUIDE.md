@@ -66,7 +66,7 @@ The six broken copies in `examples/broken/` each fail on exactly one named check
 | A shared viewing key cannot be taken back | Each lot uses its own fresh key, so sharing one only exposes that lot. |
 | The refund address in a bid memo is public after the close | Use a fresh address for each auction. `imani linking` shows when an address was reused. |
 | The login proves "someone holding the account key who can spend shielded ZEC" | It does not prove control of one specific wallet. |
-| Our rounds are our own | The two real rounds (test network and mainnet) had every bid paid by one wallet we ran, and we also ran the lot. The rest are made-up. So they show the checker on real chain data, not a real seller or independent bidders. |
+| Our rounds are our own | The two real rounds (test network and mainnet) had every bid paid by wallets we ran, and we also ran the lot. The rest are made-up. So they show the checker on real chain data, not a real seller or independent bidders. |
 
 ## Where the code is
 

@@ -187,7 +187,7 @@ test("the home page shows the real mainnet round with its live answer, its files
   assert.ok(html.indexOf('id="mainnet-round"') < html.indexOf("</header>"), "it sits near the real round, above the long sections");
   assert.ok(box.includes('<a href="/api/check?round=mainnet-01">'));
   assert.ok(box.includes(`<a href="${MAINNET_FILES}"`));
-  for (const s of ["IMANI-M1", "0.013 ZEC", "3,532,593 to 3,532,653", "482 transactions", "23 of 23", "one wallet we ran", "--fetch"]) assert.ok(box.includes(s), s);
+  for (const s of ["IMANI-M1", "0.013 ZEC", "3,532,593 to 3,532,653", "482 transactions", "23 of 23", "3 separate wallets that we ran", "--fetch"]) assert.ok(box.includes(s), s);
   // The command is the one the round's README gives.
   const readme = rd("examples/mainnet-01/README.md");
   const cmd = /node bin\/imani\.js check [^\n]*--chain examples\/mainnet-01\/chain\.json/.exec(readme)![0];

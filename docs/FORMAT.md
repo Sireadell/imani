@@ -365,7 +365,7 @@ A checker that says FAIL to everything scores 42 of 52 verdicts and names 0 of 4
 
 **Who wrote the kit.** We built the kit ourselves, next to our own checker, and wrote the expected answers in `conformance/manifest.json` ourselves. A full score from Imani's checker shows that it agrees with those written answers. It is not a review by anyone else. To cross-check the answers we wrote a second checker in Python, `tools/second-checker/check.py`, separately from the main one and from the rules in `SPEC.md` and this page. It does not open payments, so it can decide 37 of the 52 cases from the numbers in the files, and it agrees on all 37. The other 15 can only be seen in the payments or on the chain.
 
-Only one honest round in the kit, `testnet-01`, holds real payments. The other 9 were made up offline with throwaway keys. In `testnet-01`, and in the mainnet round in `examples/mainnet-01`, every bid was paid from one wallet that we ran ourselves, and we also ran the lot. Those rounds show the checker on real chain data, not on independent bidders.
+Only one honest round in the kit, `testnet-01`, holds real payments. The other 9 were made up offline with throwaway keys. In `testnet-01`, and in the mainnet round in `examples/mainnet-01`, every bid was paid from wallets that we ran ourselves, and we also ran the lot. Those rounds show the checker on real chain data, not on independent bidders.
 
 ## 6. Versions, and how to ask for a new field
 
