@@ -147,3 +147,16 @@ input.field { width: 100%; }
 @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
 label.btn.file { display: inline-flex; align-items: center; margin: 0; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+
+/* Results stand apart from the facts around them: a filled block, white for pass, red for fail. */
+.banner.pass:not(:has(.stamp)) { background: #fff; border-color: #fff; }
+.banner.fail:not(:has(.stamp)), .banner.refused:not(:has(.stamp)), .banner.error:not(:has(.stamp)) { background: var(--bad); border-color: var(--bad); }
+.banner.pass:not(:has(.stamp)) .big, .banner.pass:not(:has(.stamp)) p, .banner.pass:not(:has(.stamp)) a,
+.banner.fail:not(:has(.stamp)) .big, .banner.fail:not(:has(.stamp)) p, .banner.fail:not(:has(.stamp)) a,
+.banner.refused:not(:has(.stamp)) .big, .banner.refused:not(:has(.stamp)) p, .banner.error:not(:has(.stamp)) .big, .banner.error:not(:has(.stamp)) p { color: #000; }
+.banner .stamp { margin: 26px 0 0; padding: 20px 24px; background: #fff; border: 0; border-radius: 4px; }
+.banner.fail .stamp { background: var(--bad); }
+.banner .stamp .k, .banner .stamp .big, .banner .stamp .n, .banner.fail .stamp .k, .banner.fail .stamp .big { color: #000; }
+.banner .stamp .small { color: #000; opacity: 0.7; }
+details.check .badge { display: inline-block; margin-right: 10px; padding: 1px 7px; border-radius: 3px; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; background: #fff; color: #000; }
+details.check.fail .badge { background: var(--bad); }

@@ -248,3 +248,11 @@ footer { padding-bottom: 96px; margin-top: 40px; border-top: 1px solid var(--lin
   table.who td:nth-of-type(1)::before { content: "Learns: "; font-weight: 600; color: #fff; }
   table.who td:nth-of-type(2)::before { content: "Cannot learn: "; font-weight: 600; color: #fff; }
 }
+
+/* Results stand apart from the facts around them: a filled block, white for fair, red for not fair. */
+.stamp { margin-top: 22px; padding: 20px 24px; background: #fff; color: #000; border: 0; border-radius: 4px; }
+.stamp:has(.hverdict.fail) { background: var(--fail); }
+.stamp .k { color: #000; opacity: 0.7; }
+.stamp .hverdict, .stamp .hverdict .vword, .stamp .hverdict .vn { color: #000; }
+.stamp .hverdict .vsub { color: #000; opacity: 0.7; }
+.hchecks li.bad { background: rgba(255, 107, 107, 0.14); border-left: 3px solid var(--fail); margin-left: -12px; padding-left: 9px; font-weight: 600; }
