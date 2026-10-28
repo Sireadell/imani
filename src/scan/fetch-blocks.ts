@@ -9,6 +9,7 @@
 // (`concurrency`) and progress is reported after each group.
 
 import { fetchTransactions, FetchError, type Network } from "../fetch/index.ts";
+import { checkBlockLinks, type BlockLink } from "../fetch/links.ts";
 import { EXPLORER_PREFIX } from "../fetch/explorer.ts";
 import { isZebra } from "../fetch/zebra.ts";
 import type { BlockSource, ChainBlock } from "./chain.ts";
@@ -62,6 +63,7 @@ export async function fetchBlocks(opts: FetchBlocksOptions): Promise<{ blocks: C
     for (const s of list) if (!contacted.includes(s)) contacted.push(s);
   };
   const byHeight = new Map<number, ChainBlock>();
+  const links: BlockLink[] = [];
   let bytes = 0;
   let done = 0;
   let failure: Error | null = null;
@@ -71,7 +73,7 @@ export async function fetchBlocks(opts: FetchBlocksOptions): Promise<{ blocks: C
   // `retries` times. Servers that disagree, or send different bytes, are never retried: that
   // is a real warning and stops the scan.
   const retries = opts.retries ?? 3;
-  const security = /disagree|different bytes|wants a password|refused the password|refusing to send/;
+  const security = /disagree|do(?:es)? not link|different bytes|wants a password|refused the password|refusing to send/;
   let next = 0;
   async function getGroup(group: number[]) {
     for (let attempt = 0; ; attempt++) {
@@ -86,6 +88,7 @@ export async function fetchBlocks(opts: FetchBlocksOptions): Promise<{ blocks: C
           timeoutMs: opts.timeoutMs,
         });
         touch(res.serversContacted);
+        links.push(...(res.blockLinks ?? []));
         return res;
       } catch (e) {
         if (e instanceof FetchError) touch(e.serversContacted);
@@ -122,6 +125,8 @@ export async function fetchBlocks(opts: FetchBlocksOptions): Promise<{ blocks: C
   if (failure) {
     throw new BlockFetchError(`could not download every block from ${from} to ${to}: ${(failure as Error).message}`, contacted);
   }
+  const unlinked = checkBlockLinks(links);
+  if (unlinked) throw new BlockFetchError(`could not download every block from ${from} to ${to}: ${unlinked}`, contacted);
   const blocks = heights.map((h) => byHeight.get(h)!);
   return {
     blocks,

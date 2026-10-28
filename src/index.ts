@@ -23,6 +23,7 @@ export { readTransaction, readTransactionWithId, parseAddress, decoderInfo, type
 
 // Work out the winners, price and refunds of a set of bids.
 export { decide, groupBidPayments, type Bid, type Outcome } from "./rules.ts";
+export { sellerViewAt, pricesReadableAt, earlyOpenings, type SellerSight } from "./seller-view.ts";
 
 // Read every block of a round from a chain file, and fetch blocks and transactions from two independent servers.
 export { validateChainFile, blocksInRange, ScanInputError, type ChainFile, type ChainBlock, type ChainTx, type BlockSource } from "./scan/chain.ts";

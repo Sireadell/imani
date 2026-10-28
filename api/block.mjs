@@ -76,15 +76,17 @@ function decodeRawTransaction(buf) {
 function decodeCompactBlock(buf) {
   let height = 0;
   let hash = "";
+  let prevHash;
   const txids = [];
   for (const f of decodeMessage(buf)) {
     if (f.field === 2 && f.varint !== void 0) height = Number(f.varint);
     if (f.field === 3 && f.bytes) hash = bytesToTxid(f.bytes);
+    if (f.field === 4 && f.bytes && f.bytes.length === 32) prevHash = bytesToTxid(f.bytes);
     if (f.field === 7 && f.bytes) {
       for (const t of decodeMessage(f.bytes)) if (t.field === 2 && t.bytes) txids.push(bytesToTxid(t.bytes));
     }
   }
-  return { height, hash, txids };
+  return { height, hash, prevHash, txids };
 }
 function decodeLightdInfo(buf) {
   const r = { version: "", vendor: "", chainName: "", blockHeight: 0 };
@@ -294,7 +296,8 @@ async function explorerGetBlock(base, height, opts) {
   if (typeof b.hash !== "string" || !txs) throw new Error("reply has no block hash or transaction list");
   const txids = txs.map((t) => t.txid);
   if (!txids.every((t) => typeof t === "string" && /^[0-9a-f]{64}$/i.test(t))) throw new Error("reply has a malformed transaction id");
-  return { height: Number(b.height), hash: b.hash.toLowerCase(), txids: txids.map((t) => t.toLowerCase()) };
+  const prev = [b.previous_block_hash, b.previousBlockHash, b.previousblockhash, b.prevHash].find((x) => typeof x === "string" && /^[0-9a-f]{64}$/i.test(x));
+  return { height: Number(b.height), hash: b.hash.toLowerCase(), prevHash: prev?.toLowerCase(), txids: txids.map((t) => t.toLowerCase()) };
 }
 
 // src/fetch/zebra.ts
@@ -348,7 +351,8 @@ async function zebraGetBlock(server, height, opts) {
     }
     txs.push({ txid: t.txid.toLowerCase(), hex: t.hex.toLowerCase() });
   }
-  return { height: Number(r.height), hash: r.hash.toLowerCase(), txids: txs.map((t) => t.txid), txs };
+  const prevHash = typeof r.previousblockhash === "string" && HASH_RE.test(r.previousblockhash) ? r.previousblockhash.toLowerCase() : void 0;
+  return { height: Number(r.height), hash: r.hash.toLowerCase(), prevHash, txids: txs.map((t) => t.txid), txs };
 }
 async function zebraGetTransaction(server, txid, opts) {
   const r = await rpc(server, "getrawtransaction", [txid, 1], opts);
@@ -386,6 +390,20 @@ function checkTxBytes(txHex, expectedTxid) {
   }
   if (got !== want) return `bytes hash to a different txid ${got}`;
   if (idOrNull(txHex.slice(0, -2)) === want) return "extra bytes after the end of the transaction";
+  return null;
+}
+
+// src/fetch/links.ts
+function checkBlockLinks(blocks) {
+  const byHeight = /* @__PURE__ */ new Map();
+  for (const b of blocks) byHeight.set(b.height, b);
+  for (const b of [...blocks].sort((x, y) => x.height - y.height)) {
+    const before = byHeight.get(b.height - 1);
+    if (!before || b.prevHash === void 0 || !before.hash) continue;
+    if (b.prevHash.toLowerCase() !== before.hash.toLowerCase()) {
+      return `block ${b.height} does not link to block ${before.height}: it says the block before it is ${b.prevHash}, but block ${before.height} is ${before.hash}. The servers sent blocks that do not belong to one chain. Not using them.`;
+    }
+  }
   return null;
 }
 
@@ -485,6 +503,7 @@ async function fetchTransactions(opts) {
     }
   }
   const heightOf = /* @__PURE__ */ new Map();
+  const blockLinks = [];
   const wanted = [...txidsIn];
   for (const h of heights) {
     const lists = [];
@@ -502,7 +521,7 @@ async function fetchTransactions(opts) {
         }
         const b = zb ? zb : isExplorer(server) ? await withRetry(server, () => explorerGetBlock(server.slice(EXPLORER_PREFIX.length), h, call)) : decodeCompactBlock(await withRetry(server, () => unary(server, "GetBlock", encodeBlockId(h), call)));
         if (b.height !== h || b.txids.length === 0) throw new Error(`block ${h} not returned`);
-        lists.push({ server, key: `${b.hash}:${b.txids.join(",")}`, txids: b.txids });
+        lists.push({ server, key: `${b.hash}:${b.txids.join(",")}`, txids: b.txids, hash: b.hash, prevHash: b.prevHash });
         ops.add(operatorOf(server));
       } catch (e) {
         problems.push({ server, error: `block ${h}: ${e.message}` });
@@ -513,11 +532,16 @@ async function fetchTransactions(opts) {
       fail(`could not get block ${h} from ${need} independent servers${why.length ? ` (${why.join("; ")})` : ""}`);
     }
     if (lists.some((l) => l.key !== lists[0].key)) fail(`servers disagree about block ${h}: ${lists.map((l) => l.server).join(" vs ")}`);
+    const prevs = [...new Set(lists.map((l) => l.prevHash).filter((p) => p !== void 0))];
+    if (prevs.length > 1) fail(`servers disagree about which block comes before block ${h}: ${lists.map((l) => l.server).join(" vs ")}`);
+    blockLinks.push({ height: h, hash: lists[0].hash, prevHash: prevs[0] });
     for (const t of lists[0].txids) {
       heightOf.set(t, h);
       if (!wanted.includes(t)) wanted.push(t);
     }
   }
+  const unlinked = checkBlockLinks(blockLinks);
+  if (unlinked) fail(unlinked);
   const copies = /* @__PURE__ */ new Map();
   for (const t of wanted) copies.set(t, []);
   const missing = () => wanted.filter((t) => copies.get(t).length < need);
@@ -579,7 +603,7 @@ async function fetchTransactions(opts) {
     if (fromBlock !== void 0 && height === void 0 && reported.length === 0) height = fromBlock;
     return { txid: t, hex: list[0].hex, height, server: list[0].server, confirmedBy: list.map((c) => c.server) };
   });
-  return { transactions, serversContacted: contacted, problems };
+  return { transactions, serversContacted: contacted, blockLinks, problems };
 }
 
 // src/relay/block-api.ts
