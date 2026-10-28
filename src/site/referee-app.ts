@@ -165,23 +165,13 @@ function render(o: Extract<RefereeOutcome, { ok: true }>, replies: BlockReply[] 
   out.appendChild(card);
 
   const acts = el("div", "acts");
-  const copy = el("button", "btn primary", "Copy link");
-  copy.type = "button";
-  copy.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(location.origin + location.pathname);
-      copy.textContent = "Link copied";
-    } catch {
-      copy.textContent = "Could not copy";
-    }
-  });
-  const dl = el("button", "btn", "Download certificate");
+  const dl = el("button", "btn primary", "Download summary (text)");
   dl.type = "button";
   dl.addEventListener("click", () => downloadCertificate(r.lotId, pass, passed, total, network, rows, v.checks));
   const again = el("button", "btn", "Run it again");
   again.type = "button";
   again.addEventListener("click", () => (lastFile ? void checkFile(lastFile.text, lastFile.name) : ask()));
-  acts.append(copy, dl, again);
+  acts.append(dl, again);
   out.appendChild(acts);
 
   out.appendChild(el("h3", undefined, "What the chain says, recomputed"));
@@ -302,7 +292,7 @@ function renderChecks(out: HTMLElement, o: Extract<RefereeOutcome, { ok: true }>
 
   if (pass) {
     out.appendChild(el("h3", undefined, "What stayed private"));
-    out.appendChild(el("p", "private", "\u25a0 Every bid amount   \u25a0 Who bid   \u25a0 Every bidder's wallet"));
+    out.appendChild(el("p", "private", "Hidden from anyone without the lot key: every bid amount, who bid, every wallet."));
   }
 }
 
