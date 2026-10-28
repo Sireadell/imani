@@ -2,8 +2,10 @@
 
 Every other example here was built offline with throwaway keys. This one was not. A real wallet (zecd 0.9.0-rc1) paid 3 bids into a fresh lot account on the public Zcash test network on 2026-10-11, and the lot paid 3 refunds back. Lot id `DRY-01`, 2 items, reserve 1,000,000 zatoshis. Test coins came from a public faucet and have no value.
 
+All 3 bids were paid from that one wallet, which we ran ourselves, and we also ran the lot. So this round shows the checker working on real chain data. It does not show independent bidders.
+
 ```sh
-npx @sireadell/imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --chain examples/testnet-01/chain.json
+node bin/imani.js check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --chain examples/testnet-01/chain.json
 ```
 
 Expected: `RESULT: PASS (21 of 21 checks passed)`. The scan reads all 34 blocks from 4,489,077 to 4,489,110 (80 transactions) and the lot key sees exactly the 6 below.
@@ -21,14 +23,14 @@ Each one can be looked up on a public test-network explorer. The explorer shows 
 | Refund to the 2,000,000 bid (change) | 500,000 | 4,489,100 | [f0056ba9a7](https://testnet.zecblock.com/tx/f0056ba9a72d113172d18e4da152cbf49227cdc36100708e73c723b78fef027f) |
 | Refund to the losing bid (in full) | 1,500,000 | 4,489,100 | [cca33721eb](https://testnet.zecblock.com/tx/cca33721ebe9a965850029aabb79301a9b7db33d02f6b82ec9f539b474189fb3) |
 
-The two top bids win and both pay the clearing price of 1,500,000 (the highest losing bid). Each bidder wrote their own refund address at the end of their bid memo, and each refund went to that address.
+The two top bids win and both pay the clearing price of 1,500,000 (the highest losing bid). Each bid memo ends with a refund address, and each refund went to the address in its bid's memo.
 
 ## Re-run it from the chain yourself
 
 `chain.json` is a saved copy of the blocks. To fetch the same blocks from public test-network servers instead of trusting the file:
 
 ```sh
-npx @sireadell/imani check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --fetch
+node bin/imani.js check --disclosure examples/testnet-01/disclosure.json --result examples/testnet-01/result.json --scan --fetch
 ```
 
 ## What is in the files
