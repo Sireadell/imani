@@ -95,7 +95,7 @@ p.ok { color: var(--fg); font-weight: 600; }
 p.bad { color: var(--bad); font-weight: 600; }
 
 /* Result card: title, certificate lines, stamp, buttons, grouped checks */
-#result [hidden] { display: none; }
+#result [hidden] { display: none !important; }
 h3.result-title { font-size: 28px; font-weight: 600; letter-spacing: -1px; color: var(--fg); margin: 6px 0 16px; }
 .banner .k { font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
 .banner.fail .k { color: var(--bad); }
