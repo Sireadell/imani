@@ -1,0 +1,66 @@
+{
+  "about": "Broken copies that cover the checks no other broken folder trips: a bad block height, a transaction listed twice, swapped transaction bytes, too many winners, a viewing key that shows more than the lot, and a missing block in the scan. Each copy changes one thing and fails on the checks listed. Copy 06 is checked with `--scan --chain` using its own chain.json.",
+  "copies": [
+    {
+      "name": "01-block-height-is-zero",
+      "changed": "disclosure.json",
+      "expectedFailingCheck": "close-height",
+      "expectedFailingChecks": [
+        "close-height"
+      ],
+      "story": "One disclosed transaction is listed at block height 0, which is not a real block, so its timing cannot be checked."
+    },
+    {
+      "name": "02-same-transaction-listed-twice",
+      "changed": "disclosure.json",
+      "expectedFailingCheck": "disclosure-txids-unique",
+      "expectedFailingChecks": [
+        "disclosure-txids-unique",
+        "bid-amounts",
+        "no-duplicate-bids",
+        "refunds-paid",
+        "refund-total"
+      ],
+      "story": "The seller lists the same bid transaction twice, so one payment is counted two times."
+    },
+    {
+      "name": "03-transaction-bytes-swapped",
+      "changed": "disclosure.json",
+      "expectedFailingCheck": "txids-match-bytes",
+      "expectedFailingChecks": [
+        "txids-match-bytes"
+      ],
+      "story": "The seller swaps the raw bytes of two transactions, so the ids they publish no longer belong to the transactions behind them."
+    },
+    {
+      "name": "04-more-winners-than-items",
+      "changed": "result.json",
+      "expectedFailingCheck": "winner-count",
+      "expectedFailingChecks": [
+        "winner-count",
+        "winners-and-price",
+        "refund-total"
+      ],
+      "story": "The lot has 2 items but the seller names 3 winners."
+    },
+    {
+      "name": "05-key-shows-a-payment-that-is-not-a-bid",
+      "changed": "disclosure.json",
+      "expectedFailingCheck": "key-hygiene",
+      "expectedFailingChecks": [
+        "key-hygiene"
+      ],
+      "story": "The lot's viewing key also shows a payment that is not a bid for this lot, so publishing the key would expose it. The seller should have used a fresh key for the lot."
+    },
+    {
+      "name": "06-one-block-missing-from-the-scan",
+      "changed": "chain.json",
+      "expectedFailingCheck": "scan-blocks-read",
+      "expectedFailingChecks": [
+        "scan-blocks-read"
+      ],
+      "chain": "chain.json",
+      "story": "The block file leaves out block 4200070, so a hidden bid could sit in the one block nobody read. The scan refuses to pass."
+    }
+  ]
+}
